@@ -4,77 +4,47 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main
-      style={{
-        height: "100vh",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#fefefe",
-        fontFamily: "sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "380px",
-          background: "white",
-          padding: "32px",
-          borderRadius: "16px",
-          boxShadow: "0 8px 28px rgba(0,0,0,0.1)",
-          textAlign: "center",
-        }}
-      >
-        <h1 style={{ marginBottom: "24px", fontSize: "24px", fontWeight: 800 }}>
-          Kreative 360º · Panel de IA
-        </h1>
+    <main className="flex min-h-screen bg-[#FF6B6B] text-black">
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          
+      {/* LEFT MENU (igual que antes) */}
+      <aside className="w-64 bg-white h-screen p-6 border-r flex flex-col">
+        
+        <h1 className="text-2xl font-bold mb-10">Kreative 360º</h1>
+
+        <nav className="flex flex-col gap-4">
           <Link
             href="/masivo"
-            style={{
-              padding: "12px 18px",
-              borderRadius: "12px",
-              background: "#ff6b6b",
-              color: "white",
-              fontWeight: 600,
-              textDecoration: "none",
-              textAlign: "center",
-              fontSize: "16px",
-            }}
+            className="block bg-white border rounded-lg py-3 px-4 text-center font-semibold shadow hover:bg-gray-100 transition"
           >
             Generador de Imágenes Masivo
           </Link>
 
           <Link
             href="/pictulab"
-            style={{
-              padding: "12px 18px",
-              borderRadius: "12px",
-              background: "#111",
-              color: "#ff6b6b",
-              fontWeight: 600,
-              textDecoration: "none",
-              textAlign: "center",
-              fontSize: "16px",
-            }}
+            className="block bg-white border rounded-lg py-3 px-4 text-center font-semibold shadow hover:bg-gray-100 transition"
           >
             Panel PicTULAB
           </Link>
+        </nav>
 
+        <div className="mt-auto text-xs text-gray-500">
+          © 2025 Kreative 360º
         </div>
+      </aside>
 
-        <p
-          style={{
-            marginTop: "28px",
-            fontSize: "12px",
-            color: "#888",
-          }}
-        >
-          © {new Date().getFullYear()} Kreative 360º
-        </p>
-      </div>
+      {/* MAIN PANEL */}
+      <section className="flex flex-1 items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-white mb-6">
+            Bienvenido al Panel de Herramientas IA
+          </h2>
+          <p className="text-white/90 mb-10">
+            Selecciona una de las opciones del menú para comenzar.
+          </p>
+        </div>
+      </section>
+
     </main>
   );
 }
+
