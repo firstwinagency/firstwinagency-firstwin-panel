@@ -1,56 +1,104 @@
-// /app/layout.tsx
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import "./globals.css";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useState } from "react";
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  // Página principal NO lleva menú
+  const isHome = pathname === "/";
 
   return (
     <html lang="es">
-      <body>
-        {/* Botón toggle */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="fixed top-4 left-4 z-50 bg-white text-black p-2 rounded shadow"
-        >
-          ☰
-        </button>
-
-        {/* Menú lateral */}
-        <aside
-          className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-40 p-6 transform transition-transform ${
-            open ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <h2 className="text-2xl font-bold mb-8 text-[#FF6D6D]">Kreative 360º</h2>
-
-          <nav className="flex flex-col gap-4">
-            <Link
-              href="/masivo"
-              className="p-3 bg-gray-100 rounded hover:bg-gray-200 shadow"
+      <body style={{ background: "#0b0c0e" }}>
+        
+        {/* sidebar solo en masivo y pictulab */}
+        {!isHome && (
+          <>
+            {/* botón menú */}
+            <button
+              onClick={() => setOpen(!open)}
+              style={{
+                position: "fixed",
+                top: 20,
+                left: 20,
+                zIndex: 40,
+                background: "#fff",
+                width: 42,
+                height: 42,
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                fontSize: 22,
+              }}
             >
-              Generador de Imágenes Masivo
-            </Link>
+              ☰
+            </button>
 
-            <Link
-              href="/pictulab"
-              className="p-3 bg-gray-100 rounded hover:bg-gray-200 shadow"
+            {/* sidebar */}
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: open ? 0 : "-260px",
+                width: 260,
+                height: "100vh",
+                background: "white",
+                borderRight: "1px solid #eee",
+                padding: "28px 18px",
+                zIndex: 35,
+                transition: "left 0.3s ease",
+                display: "flex",
+                flexDirection: "column",
+              }}
             >
-              Panel PicTULAB
-            </Link>
-          </nav>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: "#FF6D6D", marginBottom: 24 }}>
+                Kreative 360º
+              </h1>
 
-          <footer className="absolute bottom-4 left-6 text-xs text-gray-500">
-            © 2025 Kreative 360º
-          </footer>
-        </aside>
+              <Link
+                href="/masivo"
+                style={{
+                  padding: "14px 16px",
+                  background: "#fff",
+                  borderRadius: 12,
+                  border: "1px solid #ddd",
+                  marginBottom: 12,
+                  fontWeight: 600,
+                  color: "#000",
+                }}
+              >
+                Generador de Imágenes Masivo
+              </Link>
 
-        {/* Contenido del panel */}
-        <div>{children}</div>
+              <Link
+                href="/pictulab"
+                style={{
+                  padding: "14px 16px",
+                  background: "#fff",
+                  borderRadius: 12,
+                  border: "1px solid #ddd",
+                  marginBottom: 12,
+                  fontWeight: 600,
+                  color: "#000",
+                }}
+              >
+                Panel PicTULAB
+              </Link>
+
+              <p style={{ marginTop: "auto", color: "#666", fontSize: 12 }}>
+                © 2025 Kreative 360º
+              </p>
+            </div>
+          </>
+        )}
+
+        {children}
       </body>
     </html>
   );
 }
+
