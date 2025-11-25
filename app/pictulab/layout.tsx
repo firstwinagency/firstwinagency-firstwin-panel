@@ -1,4 +1,4 @@
-import "./globals.css";   // ← IMPORT CORRECTO Y OBLIGATORIO
+import "./globals.css";
 
 export const metadata = {
   title: "Panel PicTULAB — Kreative 360º",
