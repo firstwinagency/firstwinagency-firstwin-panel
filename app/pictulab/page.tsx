@@ -8,12 +8,15 @@ export default function PictuLabPage() {
   const [selectedSize, setSelectedSize] = useState("1:1 (cuadrado)");
   const [modeList, setModeList] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+
   const [zoom, setZoom] = useState(1);
+  const [format, setFormat] = useState("JPG");
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   const sizes = [
     { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
+
     { label: "2:2 (cuadrado)", size: "2000×2000", ratio: 1 },
 
     { label: "2:3 (vertical)", size: "832×1248", ratio: 0.66 },
@@ -30,10 +33,8 @@ export default function PictuLabPage() {
 
     { label: "A5 vertical (1748×2480 px)", size: "1748×2480", ratio: 0.7 },
     { label: "A5 horizontal (2480×1748 px)", size: "2480×1748", ratio: 1.42 },
-
     { label: "A4 vertical (2480×3508 px)", size: "2480×3508", ratio: 0.7 },
     { label: "A4 horizontal (3508×2480 px)", size: "3508×2480", ratio: 1.41 },
-
     { label: "A3 vertical (3508×4961 px)", size: "3508×4961", ratio: 0.7 },
     { label: "A3 horizontal (4961×3508 px)", size: "4961×3508", ratio: 1.41 }
   ];
@@ -47,8 +48,8 @@ export default function PictuLabPage() {
     function update() {
       if (!containerRef.current) return;
 
-      const maxW = containerRef.current.clientWidth * 0.8;
-      const maxH = containerRef.current.clientHeight * 0.8;
+      const maxW = containerRef.current.clientWidth * 0.85;
+      const maxH = containerRef.current.clientHeight * 0.85;
 
       let w = maxW;
       let h = w / ratio;
@@ -66,19 +67,20 @@ export default function PictuLabPage() {
     return () => window.removeEventListener("resize", update);
   }, [ratio]);
 
+  /** Subida imágenes */
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    const newImgs = [...uploadedImages];
+    const list = [...uploadedImages];
 
     Array.from(files).forEach(file => {
-      if (newImgs.length < 5) {
-        const r = new FileReader();
-        r.onload = () => {
-          newImgs.push(r.result as string);
-          setUploadedImages([...newImgs]);
+      if (list.length < 5) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          list.push(reader.result as string);
+          setUploadedImages([...list]);
         };
-        r.readAsDataURL(file);
+        reader.readAsDataURL(file);
       }
     });
   };
@@ -101,11 +103,16 @@ export default function PictuLabPage() {
       {/* SIDEBAR */}
       <aside className="sidebar">
 
+        {/* PROMPT */}
         <div className="sidebar-box">
           <h2>Prompt</h2>
-          <textarea placeholder="Describe la imagen..."></textarea>
+          <textarea
+            placeholder="Describe la imagen..."
+            className="w-full h-24 border border-gray-300 rounded-md p-2 text-sm"
+          />
         </div>
 
+        {/* IMÁGENES DE REFERENCIA */}
         <div className="sidebar-box">
           <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
@@ -114,7 +121,7 @@ export default function PictuLabPage() {
             <input type="file" multiple className="hidden" onChange={handleImageUpload} />
           </label>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "10px" }}>
+          <div className="grid grid-cols-2 gap-2 mt-2">
             {uploadedImages.map((img, i) => (
               <Image
                 key={i}
@@ -122,30 +129,39 @@ export default function PictuLabPage() {
                 width={200}
                 height={200}
                 alt="ref"
-                style={{
-                  width: "100%",
-                  height: "80px",
-                  borderRadius: "8px",
-                  objectFit: "cover",
-                }}
+                className="rounded-md object-cover h-20 w-full"
               />
             ))}
           </div>
         </div>
 
+        {/* RELACIÓN DE ASPECTO */}
         <div className="sidebar-box">
           <h2>Relación de aspecto</h2>
 
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-            <span style={{ fontSize: "14px" }}>Modo lista</span>
-            <input type="checkbox" checked={modeList} onChange={() => setModeList(!modeList)} />
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm">Modo lista</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={modeList}
+                onChange={() => setModeList(!modeList)}
+              />
+              <div className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-gray-800 transition-all"></div>
+              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
+            </label>
           </div>
 
           {modeList ? (
-            <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
+            <select
+              className="w-full border rounded-md p-2 text-sm"
+              value={selectedSize}
+              onChange={(e) => setSelectedSize(e.target.value)}
+            >
               {sizes.map(s => (
                 <option key={s.label} value={s.label}>
-                  {s.label} — {s.size}
+                  {s.label} — {s.size}px
                 </option>
               ))}
             </select>
@@ -172,43 +188,36 @@ export default function PictuLabPage() {
           )}
         </div>
 
+        {/* FORMATO */}
         <div className="sidebar-box">
           <h2>Selecciona el formato</h2>
-          <div style={{ display: "flex", gap: "8px" }}>
+
+          <div className="flex gap-2">
             {["JPG", "PNG", "WEBP", "BMP"].map(f => (
-              <button key={f} style={{ padding: "6px 10px", border: "1px solid #ccc", borderRadius: "6px" }}>
+              <button
+                key={f}
+                className={`format-btn ${format === f ? "active" : ""}`}
+                onClick={() => setFormat(f)}
+              >
                 {f}
               </button>
             ))}
           </div>
         </div>
 
-        <button style={{
-          width: "100%",
-          background: "black",
-          color: "white",
-          padding: "12px",
-          borderRadius: "10px",
-          marginTop: "12px",
-          cursor: "pointer"
-        }}>
+        <button className="w-full bg-black text-white py-3 rounded-md mt-3 hover:bg-gray-900">
           Generar imagen
         </button>
 
-        <p style={{ fontSize: "12px", color: "white", marginTop: "20px", textAlign: "center" }}>
+        <p className="text-xs text-white mt-5 text-center">
           © 2025 Kreative 360º — Panel PicTULAB
         </p>
+
       </aside>
 
       {/* PREVIEW */}
       <section className="preview-zone">
-        <div ref={containerRef} style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
+        <div ref={containerRef} className="w-full h-full flex items-center justify-center">
           <div
             className="preview-inner"
             style={{
@@ -216,7 +225,7 @@ export default function PictuLabPage() {
               height: previewDims.h * zoom,
             }}
           >
-            Vista previa ({selected?.size})
+            Vista previa ({selected?.size}px)
           </div>
         </div>
       </section>
