@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { PRESETS } from "../lib/presets";
+import { PRESETS } from "../../lib/presets";
 
 /* ===========================
    Utils
