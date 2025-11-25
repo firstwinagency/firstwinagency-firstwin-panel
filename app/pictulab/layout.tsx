@@ -12,7 +12,7 @@ export default function PictuLabLayout({
 }) {
   return (
     <html lang="es">
-      <body className="pictulab-body bg-white text-black">
+      <body className="pictulab-body" style={{ display: "flex", width: "100%", height: "100%" }}>
         {children}
       </body>
     </html>
