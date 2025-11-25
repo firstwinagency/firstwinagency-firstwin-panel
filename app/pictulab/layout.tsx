@@ -9,7 +9,7 @@ export default function PictuLabLayout({
 }) {
   return (
     <html lang="es">
-      <body className="pictu-wrapper">
+      <body className="pictu-body">
         {children}
       </body>
     </html>
