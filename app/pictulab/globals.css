@@ -1,7 +1,11 @@
-/* ==== IMPORTS ==== */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:wght@400&family=Inter:wght@300;400;500;600&display=swap');
+/* -------------------------------------------
+   IMPORTACIÓN FUENTES
+------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
 
-/* ==== RESET ==== */
+/* -------------------------------------------
+   RESET
+------------------------------------------- */
 * {
   margin: 0;
   padding: 0;
@@ -13,184 +17,196 @@ html, body {
   height: 100%;
   overflow: hidden;
   font-family: "Inter", sans-serif;
-  background: #ffffff;
+  background: #FFF;
+  color: #111;
 }
 
-/* ==== SCROLL ==== */
-::-webkit-scrollbar { width: 7px; height: 7px;}
-::-webkit-scrollbar-thumb { background: #c3c3c3; border-radius: 10px; }
+/* Scroll aesthetic */
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-thumb {
+  background: #c4c4c4;
+  border-radius: 8px;
+}
 
-/* ============================================================
+/* -------------------------------------------
    SIDEBAR
-============================================================ */
+------------------------------------------- */
 .sidebar {
   width: 315px;
   background: #FF6B6B;
-  padding: 86px 22px 22px 22px;
+  padding: 26px;
+  padding-top: 85px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
+  border-right: 1px solid rgba(0,0,0,0.1);
 }
 
 .sidebar-box {
-  background: #ffffff;
+  background: #FFF;
   padding: 18px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.08);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10);
 }
 
 .sidebar-box h2 {
   font-family: "DM Serif Display", serif;
-  font-size: 18px;
-  color: #202020;
+  font-size: 17px;
   margin-bottom: 12px;
 }
 
-/* TEXTOS */
-.sidebar-box p,
-.sidebar-box span {
+/* Prevent overflow of long texts */
+.sidebar-box span,
+.sidebar-box p {
   font-size: 13px;
   color: #444;
-  line-height: 1.25;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* PROMPT */
+/* Textarea */
 .sidebar-box textarea {
   width: 100%;
-  border: 1px solid #dcdcdc;
-  background: #fafafa;
+  height: 85px;
   border-radius: 10px;
-  font-size: 13px;
+  background: #FAFAFA;
+  border: 1px solid #DDD;
   padding: 10px;
   resize: none;
-  height: 85px;
 }
 
-/* IMÁGENES DE REFERENCIA */
+/* Image upload */
 .sidebar-box label {
+  width: 100%;
   display: block;
   text-align: center;
-  padding: 25px 0;
+  padding: 22px 0;
+  border: 1px dashed #CCC;
+  background: #FAFAFA;
   border-radius: 12px;
-  border: 1px dashed #c7c7c7;
-  background: #fafafa;
   cursor: pointer;
   font-size: 13px;
-  white-space: normal;
+  overflow: hidden;
 }
 
-/* ============================================================
-   RELACIÓN DE ASPECTO
-============================================================ */
+/* -------------------------------------------
+   ASPECT RATIO GRID
+------------------------------------------- */
 .aspect-list {
   display: flex;
-  gap: 12px;
   overflow-x: auto;
+  gap: 12px;
   padding-bottom: 8px;
 }
 
 .aspect-item {
-  width: 108px;
-  padding: 10px 6px;
+  width: 110px;
+  padding: 10px 7px;
   border-radius: 12px;
-  border: 1px solid #dcdcdc;
-  background: white;
-  cursor: pointer;
+  border: 1px solid #DDD;
+  background: #FFF;
   text-align: center;
-  transition: 0.15s;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.aspect-item:hover { border-color: #000; }
+.aspect-item:hover {
+  border-color: #000;
+}
+
 .aspect-item.active {
   border-color: #000;
-  background: #f4f4f4;
-  box-shadow: 0 0 6px rgba(0,0,0,0.15);
+  background: #F6F6F6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
-
-/* 3 LÍNEAS */
-.aspect-item .ratio { font-weight: 600; font-size: 13px; }
-.aspect-item .type  { font-size: 12px; color: #777; }
-.aspect-item .px    { font-size: 12px; color: #666; }
 
 .mini-rect {
+  width: 40px;
+  height: 40px;
   background: #e6e6e6;
-  margin: 0 auto 6px auto;
   border-radius: 3px;
+  margin: 0 auto 6px auto;
 }
 
-/* LIST MODE SELECT */
+.aspect-item .ratio {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.aspect-item .type,
+.aspect-item .px {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Dropdown */
 select {
   width: 100%;
   padding: 8px;
-  border-radius: 10px;
-  border: 1px solid #dcdcdc;
-  background: #fafafa;
   font-size: 13px;
+  border-radius: 10px;
+  border: 1px solid #CCC;
+  background: #FAFAFA;
 }
 
-/* ============================================================
-   BOTONES FORMATO
-============================================================ */
-.sidebar-box .format-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: nowrap;
-}
-
+/* -------------------------------------------
+   FORMAT BUTTONS
+------------------------------------------- */
 .format-btn {
-  padding: 8px 14px;
+  padding: 9px 16px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #CCC;
+  background: #FFF;
   font-size: 13px;
   cursor: pointer;
-  background: white;
-  white-space: nowrap;
   transition: 0.15s;
+  white-space: nowrap;
 }
-.format-btn:hover { background: #f1f1f1; }
+
+.format-btn:hover {
+  background: #F1F1F1;
+}
+
 .format-btn.active {
   background: #000;
-  color: #fff;
+  color: #FFF;
   border-color: #000;
 }
 
-/* ============================================================
-   BOTÓN GENERAR
-============================================================ */
+/* -------------------------------------------
+   GENERATE BUTTON
+------------------------------------------- */
 .btn-generate {
   width: 100%;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 600;
   background: #000;
-  color: #fff;
-  border: none;
+  padding: 14px 0;
   border-radius: 10px;
+  color: #FFF;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  border: none;
 }
-.btn-generate:hover { background: #222; }
 
-/* ============================================================
-   TOP BAR
-============================================================ */
+/* -------------------------------------------
+   TOPBAR
+------------------------------------------- */
 .topbar {
   position: fixed;
+  top: 0;
   left: 315px;
   right: 0;
-  top: 0;
-  height: 58px;
+  height: 60px;
   background: white;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #DDD;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   padding-right: 25px;
-  z-index: 20;
+  z-index: 50;
 }
 
 .zoom-controls {
@@ -198,56 +214,55 @@ select {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .btn-zoom {
   padding: 4px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: white;
+  border: 1px solid #CCC;
   cursor: pointer;
+  background: #FFF;
 }
 
-/* IMPORT / EXPORT */
 .btn-import {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid #CCC;
   padding: 7px 14px;
-  margin-right: 8px;
+  border-radius: 6px;
+  background: #FFF;
 }
+
 .btn-export {
   background: #FF6B6B;
-  border-radius: 6px;
   padding: 7px 14px;
-  color: white;
+  color: #FFF;
+  border-radius: 6px;
+  border: none;
 }
 
-/* ============================================================
-   PREVIEW ZONE
-============================================================ */
+/* -------------------------------------------
+   PREVIEW AREA
+------------------------------------------- */
 .preview-zone {
   flex: 1;
   height: 100vh;
   background: url("/coral-grid.svg") repeat;
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding-top: 58px;
+  justify-content: center;
+  padding-top: 60px;
 }
 
 .preview-inner {
   background: rgba(255,255,255,0.95);
+  border: 1px solid #BBB;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   border-radius: 6px;
-  border: 1px solid #bbb;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
   display: flex;
-  justify-content: center;
   align-items: center;
-  color: #444;
-  font-size: 14px;
-  max-width: 88%;
-  max-height: 88%;
+  justify-content: center;
+  text-align: center;
+  color: #333;
+  font-size: 15px;
 }
 
