@@ -1,4 +1,7 @@
-/* ==== RESET ==== */
+/* ============================================================
+   RESET
+============================================================ */
+
 * {
   margin: 0;
   padding: 0;
@@ -11,17 +14,33 @@ html, body {
   font-family: "Inter", sans-serif;
 }
 
-/* ==== SCROLL ==== */
+/* ============================================================
+   SCROLLBARS
+============================================================ */
+
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #c3c3c3;
   border-radius: 10px;
 }
 
+/* ============================================================
+   ESTILOS GLOBALes BASE (FirstWin)
+============================================================ */
+/* Si FirstWin usa otros estilos globales, puedes añadirlos aquí.
+   Este bloque está limpio para evitar conflictos. */
+
+
+/* ============================================================
+   PIC2LAB — ESTILOS ORIGINALES COMPLETOS
+============================================================ */
+
 /* ==== SIDEBAR ==== */
+
 .sidebar {
   width: 320px;
   background: #FF6B6B;
@@ -38,14 +57,21 @@ html, body {
   border-radius: 14px;
 }
 
-/* ==== INPUTS SIDE ==== */
 .sidebar-box h2 {
   font-size: 15px;
   font-weight: 700;
   margin-bottom: 8px;
 }
 
+/* ==== INPUTS SIDE ==== */
+
+.sidebar textarea,
+.sidebar select {
+  font-family: "Inter", sans-serif;
+}
+
 /* ==== ASPECT LIST ==== */
+
 .aspect-list {
   display: flex;
   gap: 14px;
@@ -62,6 +88,7 @@ html, body {
   text-align: center;
   cursor: pointer;
   transition: 0.15s;
+  background: white;
 }
 
 .aspect-item:hover {
@@ -78,32 +105,16 @@ html, body {
   margin: 0;
 }
 
-/* small ratio preview rectangles */
+/* mini-rect preview */
+
 .mini-rect {
   background: #e0e0e0;
   margin: 0 auto 6px auto;
   border-radius: 3px;
 }
 
-/* ==== PREVIEW AREA ==== */
-.preview-zone {
-  flex: 1;
-  height: 100vh;
-  background: url("/coral-grid.svg") repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.preview-inner {
-  background: rgba(255,255,255,0.90);
-  border: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* ==== TOP BAR ==== */
+
 .topbar {
   position: fixed;
   left: 320px;
@@ -116,6 +127,7 @@ html, body {
   align-items: center;
   justify-content: flex-end;
   padding-right: 25px;
+  z-index: 50;
 }
 
 .zoom-controls {
@@ -134,6 +146,12 @@ html, body {
   cursor: pointer;
 }
 
+.btn-zoom:hover {
+  background: #f1f1f1;
+}
+
+/* Buttons Import / Export */
+
 .btn-import {
   background: white;
   border: 1px solid #bbb;
@@ -143,6 +161,10 @@ html, body {
   cursor: pointer;
 }
 
+.btn-import:hover {
+  background: #f9f9f9;
+}
+
 .btn-export {
   background: #FF6D6D;
   color: white;
@@ -150,6 +172,49 @@ html, body {
   padding: 7px 16px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.btn-export:hover {
+  background: #ff5a5a;
+}
+
+/* ==== PREVIEW AREA ==== */
+
+.preview-zone {
+  flex: 1;
+  height: 100vh;
+  background: url("/coral-grid.svg") repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-inner {
+  background: rgba(255,255,255,0.90);
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+}
+
+/* ==== BUTTONS ==== */
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  background: black;
+  color: white;
+  border-radius: 8px;
+  border: none;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.btn:hover {
+  background: #333;
 }
 
 
