@@ -1,29 +1,67 @@
-/* Fondo cuadriculado rosa tipo Pic2Lab */
-.pictu-body {
+/* Fondo cuadriculado rosa del panel */
+.pictu-wrapper {
   background: repeating-linear-gradient(
       to right,
-      rgba(255, 100, 100, 0.08) 0,
-      rgba(255, 100, 100, 0.08) 1px,
+      rgba(255, 100, 100, 0.06) 0,
+      rgba(255, 100, 100, 0.06) 1px,
       transparent 1px,
       transparent 24px
     ),
     repeating-linear-gradient(
       to bottom,
-      rgba(255, 100, 100, 0.08) 0,
-      rgba(255, 100, 100, 0.08) 1px,
+      rgba(255, 100, 100, 0.06) 0,
+      rgba(255, 100, 100, 0.06) 1px,
       transparent 1px,
       transparent 24px
     );
+  min-height: 100vh;
+}
+
+/* Estilo general */
+body, input, textarea, button {
+  font-family: 'Inter', sans-serif;
 }
 
 /* Sidebar */
 aside {
-  background-color: #ff6b6b;
+  background: #ff6b6b !important;
+  border-right: 1px solid rgba(0,0,0,0.06);
 }
 
-/* Panel de previsualización */
+aside h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #000;
+}
+
+/* Caja blanca del sidebar */
+aside > div {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* Botones */
+button {
+  transition: 0.15s ease;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+/* Vista previa */
 .preview-box {
-  border: 1px solid #ccc;
   border-radius: 12px;
-  background: rgba(255,255,255,0.93);
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border: 1px solid #ddd;
+}
+
+/* Scroll dentro del panel */
+section::-webkit-scrollbar {
+  width: 8px;
+}
+
+section::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
 }
