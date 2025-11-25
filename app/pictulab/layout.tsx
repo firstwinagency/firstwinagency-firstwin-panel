@@ -2,10 +2,14 @@
 
 import "./globals.css";
 
-export default function PictuLabLayout({ children }: { children: React.ReactNode }) {
+export default function PictuLabLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="es">
-      <body className="pictu-body">
+      <body className="pictu-wrapper">
         {children}
       </body>
     </html>
