@@ -9,6 +9,15 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: "Inter", sans-serif;
+  overflow: hidden;
+}
+
+/* ==== ROOT WRAPPER ==== */
+.pictu-root {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
 }
 
 /* ==== SCROLL ==== */
@@ -30,6 +39,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 22px;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 .sidebar-box {
@@ -38,7 +49,7 @@ html, body {
   border-radius: 14px;
 }
 
-/* ==== INPUTS SIDE ==== */
+/* TITULOS */
 .sidebar-box h2 {
   font-size: 15px;
   font-weight: 700;
@@ -73,15 +84,19 @@ html, body {
   box-shadow: 0 0 5px rgba(0,0,0,0.2);
 }
 
-.aspect-item p {
-  font-size: 11px;
-  margin: 0;
-}
-
 .mini-rect {
   background: #e0e0e0;
   margin: 0 auto 6px auto;
   border-radius: 3px;
+}
+
+/* ==== INPUTS ==== */
+textarea, select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
 }
 
 /* ==== PREVIEW AREA ==== */
@@ -92,6 +107,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: auto;
 }
 
 .preview-inner {
@@ -100,6 +116,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #444;
 }
 
 /* ==== TOP BAR ==== */
@@ -115,6 +132,7 @@ html, body {
   align-items: center;
   justify-content: flex-end;
   padding-right: 25px;
+  z-index: 30;
 }
 
 .zoom-controls {
@@ -150,4 +168,5 @@ html, body {
   border-radius: 6px;
   cursor: pointer;
 }
+
 
