@@ -1,4 +1,4 @@
-/* RESET */
+/* ==== RESET ==== */
 * {
   margin: 0;
   padding: 0;
@@ -9,37 +9,112 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: "Inter", sans-serif;
-  background: #ffffff;
 }
 
-/* SCROLL */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ==== SCROLL ==== */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
 ::-webkit-scrollbar-thumb {
   background: #c3c3c3;
   border-radius: 10px;
 }
 
-/* ROOT */
-.pictulab-root {
-  width: 100%;
-  height: 100%;
+/* ==== SIDEBAR ==== */
+.sidebar {
+  width: 320px;
+  background: #FF6B6B;
+  padding: 24px;
+  padding-top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
-/* TOPBAR */
+.sidebar-box {
+  background: white;
+  padding: 14px;
+  border-radius: 14px;
+}
+
+/* ==== INPUTS SIDE ==== */
+.sidebar-box h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* ==== ASPECT LIST ==== */
+.aspect-list {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.aspect-item {
+  flex-shrink: 0;
+  width: 90px;
+  padding: 8px;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.aspect-item:hover {
+  border-color: black;
+}
+
+.aspect-item.active {
+  border-color: black;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+.aspect-item p {
+  font-size: 11px;
+  margin: 0;
+}
+
+.mini-rect {
+  background: #e0e0e0;
+  margin: 0 auto 6px auto;
+  border-radius: 3px;
+}
+
+/* ==== PREVIEW AREA ==== */
+.preview-zone {
+  flex: 1;
+  height: 100vh;
+  background: url("/coral-grid.svg") repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-inner {
+  background: rgba(255,255,255,0.90);
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==== TOP BAR ==== */
 .topbar {
   position: fixed;
-  top: 0;
-  left: 0;
+  left: 320px;
   right: 0;
+  top: 0;
   height: 60px;
   background: white;
   border-bottom: 1px solid #ddd;
-  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 0 20px;
+  padding-right: 25px;
 }
 
 .zoom-controls {
@@ -47,7 +122,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .btn-zoom {
@@ -58,103 +133,21 @@ html, body {
   cursor: pointer;
 }
 
-.btn-import,
-.btn-export {
-  padding: 8px 18px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
 .btn-import {
   background: white;
   border: 1px solid #bbb;
+  padding: 7px 16px;
+  border-radius: 6px;
+  margin-right: 10px;
+  cursor: pointer;
 }
 
 .btn-export {
   background: #FF6D6D;
   color: white;
   border: 1px solid transparent;
-}
-
-/* SIDEBAR */
-.sidebar {
-  position: fixed;
-  top: 60px;
-  left: 0;
-  width: 320px;
-  height: calc(100vh - 60px);
-  background: #FF6B6B;
-  padding: 22px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.sidebar-box {
-  background: white;
-  padding: 16px;
-  border-radius: 14px;
-}
-
-.sidebar-box h2 {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-/* ASPECT LIST */
-.aspect-list {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-}
-
-.aspect-item {
-  width: 90px;
-  padding: 8px;
-  border: 1px solid #d4d4d4;
-  border-radius: 12px;
-  text-align: center;
+  padding: 7px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: 0.15s;
-}
-
-.aspect-item:hover {
-  border-color: black;
-}
-
-.aspect-item.active {
-  border-color: black;
-  box-shadow: 0 0 6px rgba(0,0,0,0.25);
-}
-
-.mini-rect {
-  background: #e0e0e0;
-  margin: 0 auto 6px auto;
-  border-radius: 3px;
-}
-
-/* PREVIEW */
-.preview-zone {
-  margin-left: 320px;
-  padding-top: 60px;
-  height: 100vh;
-  background: url("/coral-grid.svg") repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
-
-.preview-inner {
-  background: rgba(255,255,255,0.90);
-  border: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
