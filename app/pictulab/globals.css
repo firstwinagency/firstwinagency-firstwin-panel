@@ -9,15 +9,6 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: "Inter", sans-serif;
-  overflow: hidden;
-}
-
-/* ==== ROOT WRAPPER ==== */
-.pictu-root {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  background: #ffffff;
 }
 
 /* ==== SCROLL ==== */
@@ -39,8 +30,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 22px;
-  overflow-y: auto;
-  height: 100vh;
 }
 
 .sidebar-box {
@@ -49,7 +38,7 @@ html, body {
   border-radius: 14px;
 }
 
-/* TITULOS */
+/* ==== TITULOS ==== */
 .sidebar-box h2 {
   font-size: 15px;
   font-weight: 700;
@@ -66,13 +55,27 @@ html, body {
 
 .aspect-item {
   flex-shrink: 0;
-  width: 90px;
-  padding: 8px;
+  width: 100px;
+  padding: 10px 6px;
   border: 1px solid #d4d4d4;
   border-radius: 12px;
   text-align: center;
   cursor: pointer;
   transition: 0.15s;
+  background: white;
+
+  /* PARA QUE EL TEXTO NO SE DESBORDE */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* Alto uniforme */
+  height: 110px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .aspect-item:hover {
@@ -84,22 +87,41 @@ html, body {
   box-shadow: 0 0 5px rgba(0,0,0,0.2);
 }
 
+.aspect-item p {
+  font-size: 11px;
+  margin: 2px 0;
+}
+
+/* mini preview ratio box */
 .mini-rect {
   background: #e0e0e0;
-  margin: 0 auto 6px auto;
+  margin-bottom: 6px;
   border-radius: 3px;
 }
 
-/* ==== INPUTS ==== */
-textarea, select {
-  width: 100%;
-  padding: 8px;
+/* ==== FORMAT BUTTONS ==== */
+.format-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: 1px solid #c8c8c8;
+  background: white;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.15s;
 }
 
-/* ==== PREVIEW AREA ==== */
+.format-btn:hover {
+  border-color: black;
+}
+
+.format-btn.active {
+  background: black;
+  color: white;
+  border-color: black;
+}
+
+/* ==== PREVIEW ==== */
 .preview-zone {
   flex: 1;
   height: 100vh;
@@ -107,16 +129,14 @@ textarea, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: auto;
 }
 
 .preview-inner {
-  background: rgba(255,255,255,0.90);
+  background: rgba(255,255,255,0.92);
   border: 1px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #444;
 }
 
 /* ==== TOP BAR ==== */
@@ -132,7 +152,7 @@ textarea, select {
   align-items: center;
   justify-content: flex-end;
   padding-right: 25px;
-  z-index: 30;
+  z-index: 40;
 }
 
 .zoom-controls {
@@ -168,5 +188,6 @@ textarea, select {
   border-radius: 6px;
   cursor: pointer;
 }
+
 
 
