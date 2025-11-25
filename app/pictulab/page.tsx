@@ -42,8 +42,8 @@ export default function PictuLabPage() {
     function update() {
       if (!containerRef.current) return;
 
-      const maxW = containerRef.current.clientWidth * 0.85;
-      const maxH = containerRef.current.clientHeight * 0.85;
+      const maxW = containerRef.current.clientWidth * 0.72;
+      const maxH = (containerRef.current.clientHeight - 60) * 0.82;
 
       let w = maxW;
       let h = w / ratio;
@@ -211,7 +211,10 @@ export default function PictuLabPage() {
 
         {/* PREVIEW */}
         <section className="preview-zone">
-          <div ref={containerRef} className="w-full h-full flex items-center justify-center">
+          <div
+            ref={containerRef}
+            className="w-full h-full flex items-center justify-center pt-[60px]"
+          >
             <div
               className="preview-inner"
               style={{
@@ -228,3 +231,4 @@ export default function PictuLabPage() {
     </>
   );
 }
+
