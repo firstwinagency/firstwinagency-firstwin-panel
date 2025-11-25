@@ -1,0 +1,29 @@
+/* Fondo cuadriculado rosa tipo Pic2Lab */
+.pictu-body {
+  background: repeating-linear-gradient(
+      to right,
+      rgba(255, 100, 100, 0.08) 0,
+      rgba(255, 100, 100, 0.08) 1px,
+      transparent 1px,
+      transparent 24px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 100, 100, 0.08) 0,
+      rgba(255, 100, 100, 0.08) 1px,
+      transparent 1px,
+      transparent 24px
+    );
+}
+
+/* Sidebar */
+aside {
+  background-color: #ff6b6b;
+}
+
+/* Panel de previsualización */
+.preview-box {
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.93);
+}
