@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function PictuLabPage() {
   const [selectedSize, setSelectedSize] = useState("1:1 (cuadrado)");
-  const [modeList, setModeList] = useState(false);
+  const [modeList, setModeList] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
@@ -14,8 +14,8 @@ export default function PictuLabPage() {
   const [zoom, setZoom] = useState(1);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
 
+  // 🔥 TODAS LAS RELACIONES DE ASPECTO EXACTAS QUE ME PASASTE
   const sizes = [
     { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
     { label: "2:2 (cuadrado)", size: "2000×2000", ratio: 1 },
@@ -45,45 +45,44 @@ export default function PictuLabPage() {
     const files = e.target.files;
     if (!files) return;
 
-    const newImages = [...uploadedImages];
+    const newImgs = [...uploadedImages];
 
     Array.from(files).forEach((file) => {
-      if (newImages.length < 5) {
+      if (newImgs.length < 5) {
         const reader = new FileReader();
         reader.onload = () => {
-          newImages.push(reader.result as string);
-          setUploadedImages([...newImages]);
+          newImgs.push(reader.result as string);
+          setUploadedImages([...newImgs]);
         };
         reader.readAsDataURL(file);
       }
     });
   };
 
-  const removeImage = (index: number) => {
-    const imgs = [...uploadedImages];
-    imgs.splice(index, 1);
-    setUploadedImages(imgs);
+  const removeImage = (i: number) => {
+    const arr = [...uploadedImages];
+    arr.splice(i, 1);
+    setUploadedImages(arr);
   };
 
-  // ---- AUTOSCALE LOGIC (VERSION A) ----
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
     function update() {
-      if (!containerRef.current || !selectedRatio) return;
+      if (!containerRef.current) return;
 
-      const maxW = containerRef.current.clientWidth * 0.9;
-      const maxH = containerRef.current.clientHeight * 0.8;
+      const maxW = containerRef.current.clientWidth * 0.75;
+      const maxH = containerRef.current.clientHeight * 0.75;
 
-      let targetW = maxW;
-      let targetH = targetW / selectedRatio;
+      let w = maxW;
+      let h = w / selectedRatio;
 
-      if (targetH > maxH) {
-        targetH = maxH;
-        targetW = targetH * selectedRatio;
+      if (h > maxH) {
+        h = maxH;
+        w = h * selectedRatio;
       }
 
-      setPreviewDims({ w: targetW, h: targetH });
+      setPreviewDims({ w, h });
     }
 
     update();
@@ -110,10 +109,11 @@ export default function PictuLabPage() {
 
       {/* SIDEBAR */}
       <aside className="w-80 bg-[#FF6B6B] p-4 flex flex-col gap-4 pt-20">
+
         {/* PROMPT */}
         <div className="bg-white p-3 rounded-xl">
           <h2 className="font-semibold mb-1">Prompt</h2>
-          <textarea placeholder="Describe brevemente la imagen que quieres generar..." className="w-full h-24 p-2 border border-gray-200 rounded-md text-sm"></textarea>
+          <textarea className="w-full h-24 p-2 border rounded-md text-sm" placeholder="Describe brevemente la imagen…"></textarea>
         </div>
 
         {/* IMAGES */}
@@ -122,16 +122,24 @@ export default function PictuLabPage() {
 
           <label className="block border border-dashed rounded-md py-8 text-center text-sm cursor-pointer">
             <span>Haz clic o arrastra imágenes aquí</span>
-            <input type="file" className="hidden" multiple onChange={handleImageUpload} />
+            <input type="file" multiple className="hidden" onChange={handleImageUpload} />
           </label>
 
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 mt-2">
             {uploadedImages.map((img, i) => (
               <div key={i} className="relative cursor-pointer"
-                onClick={() => { setViewerImage(img); setIsViewerOpen(true); }}>
-                <Image src={img} width={200} height={200} alt="ref" className="rounded-md object-cover h-20 w-full" />
-                <button onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                  className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs">X</button>
+                onClick={() => {
+                  setViewerImage(img);
+                  setIsViewerOpen(true);
+                }}
+              >
+                <Image src={img} alt="ref" width={200} height={200} className="h-20 w-full object-cover rounded-md" />
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                  className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs"
+                >
+                  X
+                </button>
               </div>
             ))}
           </div>
@@ -139,43 +147,45 @@ export default function PictuLabPage() {
 
         {/* ASPECT RATIO */}
         <div className="bg-white p-3 rounded-xl">
-
           <h2 className="font-semibold mb-2">Relación de aspecto</h2>
 
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm">Modo lista</span>
-
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" checked={modeList} onChange={() => setModeList(!modeList)} />
-              <div className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-gray-800 transition-all"></div>
-              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
+              <div className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-gray-800"></div>
+              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition"></div>
             </label>
           </div>
 
-          {modeList && (
+          {modeList ? (
             <div className="flex overflow-x-auto gap-3 pb-2">
               {sizes.map((item) => (
-                <div key={item.label} onClick={() => setSelectedSize(item.label)}
-                  className={`flex-shrink-0 w-24 p-2 border rounded-lg text-center cursor-pointer transition-all ${selectedSize === item.label ? "border-black shadow-md" : "border-gray-300"}`}>
-                  
-                  <div className="mx-auto mb-1 bg-gray-200 rounded-sm"
+                <div
+                  key={item.label}
+                  onClick={() => setSelectedSize(item.label)}
+                  className={`flex-shrink-0 w-24 p-2 border rounded-lg text-center cursor-pointer transition-all ${
+                    selectedSize === item.label ? "border-black shadow-md" : "border-gray-300"
+                  }`}
+                >
+                  <div
+                    className="mx-auto mb-1 bg-gray-200 rounded-sm"
                     style={{
                       width: item.ratio >= 1 ? "36px" : `${36 * item.ratio}px`,
-                      height: item.ratio <= 1 ? "36px" : `${36 / item.ratio}px`
-                    }}>
-                  </div>
-
+                      height: item.ratio <= 1 ? "36px" : `${36 / item.ratio}px`,
+                    }}
+                  ></div>
                   <p className="text-xs font-medium leading-3">{item.label}</p>
                   <p className="text-[11px] text-gray-600 font-semibold">{item.size} px</p>
                 </div>
               ))}
             </div>
-          )}
-
-          {!modeList && (
-            <select className="w-full border rounded-md p-2 text-sm"
+          ) : (
+            <select
               value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}>
+              onChange={(e) => setSelectedSize(e.target.value)}
+              className="w-full border rounded-md p-2 text-sm"
+            >
               {sizes.map((item) => (
                 <option key={item.label} value={item.label}>
                   {item.label} — {item.size} px
@@ -183,7 +193,6 @@ export default function PictuLabPage() {
               ))}
             </select>
           )}
-
         </div>
 
         {/* FORMAT */}
@@ -192,14 +201,14 @@ export default function PictuLabPage() {
 
           <div className="flex gap-2 justify-between">
             {["JPG", "PNG", "WEBP", "BMP"].map((f) => (
-              <button key={f} className="px-4 py-1 border rounded-md min-w-[62px] text-center flex justify-center items-center">
+              <button key={f} className="px-4 py-1 border rounded-md min-w-[62px] text-center">
                 {f}
               </button>
             ))}
           </div>
         </div>
 
-        <button onClick={() => setIsLoading(true)} className="mt-4 bg-black text-white py-2 rounded-lg hover:bg-gray-800">
+        <button className="mt-4 bg-black text-white py-2 rounded-lg hover:bg-gray-800">
           Generar imagen
         </button>
 
@@ -210,35 +219,43 @@ export default function PictuLabPage() {
 
       {/* PREVIEW */}
       <section className="flex-1 h-screen overflow-auto bg-[url('/coral-grid.svg')] bg-repeat flex items-center justify-center">
-
         <div ref={containerRef} className="w-full h-full flex items-center justify-center">
 
-          <div style={{
-            width: previewDims.w * zoom,
-            height: previewDims.h * zoom,
-            border: "1px solid #ccc",
-            background: "rgba(255,255,255,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#444"
-          }}>
+          <div
+            style={{
+              width: previewDims.w * zoom,
+              height: previewDims.h * zoom,
+              border: "1px solid #ccc",
+              background: "rgba(255,255,255,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#444",
+              borderRadius: 4,
+            }}
+          >
             Vista previa ({selectedSizeLabel} px)
           </div>
 
         </div>
-
       </section>
 
       {/* IMAGE VIEWER */}
       {isViewerOpen && viewerImage && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setIsViewerOpen(false)}>
-          <Image src={viewerImage} alt="visualizador" width={1000} height={1000}
-            className="rounded-lg shadow-lg max-h-[85vh] object-contain" />
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={() => setIsViewerOpen(false)}
+        >
+          <Image
+            src={viewerImage}
+            alt="preview"
+            width={1000}
+            height={1000}
+            className="rounded-lg shadow-lg max-h-[85vh] object-contain"
+          />
         </div>
       )}
-
     </main>
   );
 }
+
