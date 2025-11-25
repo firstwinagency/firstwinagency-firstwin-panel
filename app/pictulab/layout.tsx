@@ -1,4 +1,4 @@
-import "../globals.css";
+import "./globals.css";   // ← IMPORT CORRECTO Y OBLIGATORIO
 
 export const metadata = {
   title: "Panel PicTULAB — Kreative 360º",
@@ -8,17 +8,7 @@ export const metadata = {
 export default function PictuLabLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body
-        style={{
-          margin: 0,
-          padding: 0,
-          width: "100%",
-          height: "100vh",
-          overflow: "hidden",
-          display: "flex",
-          background: "white",
-        }}
-      >
+      <body style={{ width: "100%", height: "100%", overflow: "hidden" }}>
         {children}
       </body>
     </html>
