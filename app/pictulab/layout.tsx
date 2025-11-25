@@ -1,4 +1,4 @@
-import "./globals.css";
+import "../globals.css";
 
 export const metadata = {
   title: "Panel PicTULAB — Kreative 360º",
@@ -8,7 +8,17 @@ export const metadata = {
 export default function PictuLabLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className="pictu-root">
+      <body
+        style={{
+          margin: 0,
+          padding: 0,
+          width: "100%",
+          height: "100vh",
+          overflow: "hidden",
+          display: "flex",
+          background: "white",
+        }}
+      >
         {children}
       </body>
     </html>
