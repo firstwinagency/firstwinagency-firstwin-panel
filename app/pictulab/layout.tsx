@@ -1,19 +1,15 @@
 // app/pictulab/layout.tsx
-import "../pictulab/globals.css";
+import "./globals.css";
 
 export const metadata = {
-  title: "Panel PicTULAB - Kreative 360º",
-  description: "Generador y editor avanzado de imágenes",
+  title: "Panel PicTULAB",
+  description: "Kreative 360º — Panel para generar imágenes",
 };
 
-export default function PictuLabLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className="pictu-body">
-        <div className="pictu-wrapper">
-          {children}
-        </div>
-      </body>
+      <body className="pictu-body">{children}</body>
     </html>
   );
 }
