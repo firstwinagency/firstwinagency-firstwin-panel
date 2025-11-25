@@ -1,7 +1,4 @@
-/* ============================================================
-   RESET
-============================================================ */
-
+/* RESET */
 * {
   margin: 0;
   padding: 0;
@@ -12,122 +9,37 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: "Inter", sans-serif;
+  background: #ffffff;
 }
 
-/* ============================================================
-   SCROLLBARS
-============================================================ */
-
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-
+/* SCROLL */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb {
   background: #c3c3c3;
   border-radius: 10px;
 }
 
-/* ============================================================
-   ESTILOS GLOBALes BASE (FirstWin)
-============================================================ */
-/* Si FirstWin usa otros estilos globales, puedes añadirlos aquí.
-   Este bloque está limpio para evitar conflictos. */
-
-
-/* ============================================================
-   PIC2LAB — ESTILOS ORIGINALES COMPLETOS
-============================================================ */
-
-/* ==== SIDEBAR ==== */
-
-.sidebar {
-  width: 320px;
-  background: #FF6B6B;
-  padding: 24px;
-  padding-top: 90px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
+/* ROOT */
+.pictulab-root {
+  width: 100%;
+  height: 100%;
 }
 
-.sidebar-box {
-  background: white;
-  padding: 14px;
-  border-radius: 14px;
-}
-
-.sidebar-box h2 {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-/* ==== INPUTS SIDE ==== */
-
-.sidebar textarea,
-.sidebar select {
-  font-family: "Inter", sans-serif;
-}
-
-/* ==== ASPECT LIST ==== */
-
-.aspect-list {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-}
-
-.aspect-item {
-  flex-shrink: 0;
-  width: 90px;
-  padding: 8px;
-  border: 1px solid #d4d4d4;
-  border-radius: 12px;
-  text-align: center;
-  cursor: pointer;
-  transition: 0.15s;
-  background: white;
-}
-
-.aspect-item:hover {
-  border-color: black;
-}
-
-.aspect-item.active {
-  border-color: black;
-  box-shadow: 0 0 5px rgba(0,0,0,0.2);
-}
-
-.aspect-item p {
-  font-size: 11px;
-  margin: 0;
-}
-
-/* mini-rect preview */
-
-.mini-rect {
-  background: #e0e0e0;
-  margin: 0 auto 6px auto;
-  border-radius: 3px;
-}
-
-/* ==== TOP BAR ==== */
-
+/* TOPBAR */
 .topbar {
   position: fixed;
-  left: 320px;
-  right: 0;
   top: 0;
+  left: 0;
+  right: 0;
   height: 60px;
   background: white;
   border-bottom: 1px solid #ddd;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-right: 25px;
-  z-index: 50;
+  gap: 12px;
+  padding: 0 20px;
 }
 
 .zoom-controls {
@@ -135,7 +47,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .btn-zoom {
@@ -146,47 +58,96 @@ html, body {
   cursor: pointer;
 }
 
-.btn-zoom:hover {
-  background: #f1f1f1;
+.btn-import,
+.btn-export {
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
 }
-
-/* Buttons Import / Export */
 
 .btn-import {
   background: white;
   border: 1px solid #bbb;
-  padding: 7px 16px;
-  border-radius: 6px;
-  margin-right: 10px;
-  cursor: pointer;
-}
-
-.btn-import:hover {
-  background: #f9f9f9;
 }
 
 .btn-export {
   background: #FF6D6D;
   color: white;
   border: 1px solid transparent;
-  padding: 7px 16px;
-  border-radius: 6px;
+}
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 320px;
+  height: calc(100vh - 60px);
+  background: #FF6B6B;
+  padding: 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-box {
+  background: white;
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.sidebar-box h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* ASPECT LIST */
+.aspect-list {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.aspect-item {
+  width: 90px;
+  padding: 8px;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+  text-align: center;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: 0.15s;
 }
 
-.btn-export:hover {
-  background: #ff5a5a;
+.aspect-item:hover {
+  border-color: black;
 }
 
-/* ==== PREVIEW AREA ==== */
+.aspect-item.active {
+  border-color: black;
+  box-shadow: 0 0 6px rgba(0,0,0,0.25);
+}
 
+.mini-rect {
+  background: #e0e0e0;
+  margin: 0 auto 6px auto;
+  border-radius: 3px;
+}
+
+/* PREVIEW */
 .preview-zone {
-  flex: 1;
+  margin-left: 320px;
+  padding-top: 60px;
   height: 100vh;
   background: url("/coral-grid.svg") repeat;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: auto;
 }
 
 .preview-inner {
@@ -195,26 +156,5 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #444;
 }
-
-/* ==== BUTTONS ==== */
-
-.btn {
-  width: 100%;
-  padding: 12px;
-  background: black;
-  color: white;
-  border-radius: 8px;
-  border: none;
-  text-align: center;
-  cursor: pointer;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
-.btn:hover {
-  background: #333;
-}
-
 
