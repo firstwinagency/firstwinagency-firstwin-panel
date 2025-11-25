@@ -1,14 +1,20 @@
-import "./globals.css";
+import "../globals.css";
 
 export const metadata = {
-  title: "Firstwin Panel",
-  description: "Panel interno Kreative 360º",
+  title: "Panel PicTULAB — Kreative 360º",
+  description: "Panel interno para generación de imágenes",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function PictuLabLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body className="pictulab-body bg-white text-black">
+        {children}
+      </body>
     </html>
   );
 }
