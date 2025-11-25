@@ -4,21 +4,25 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 export default function PictuLabPage() {
+
   const [selectedSize, setSelectedSize] = useState("1:1 (cuadrado)");
   const [modeList, setModeList] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [format, setFormat] = useState("JPG");
   const [zoom, setZoom] = useState(1);
+  const [format, setFormat] = useState("JPG");
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  /* ============================================================
+     LISTA DE TAMAÑOS COMPLETA
+  ============================================================ */
   const sizes = [
     { label: "1:1 (cuadrado)", type: "(cuadrado)", size: "1024×1024", ratio: 1 },
     { label: "2:2 (cuadrado)", type: "(cuadrado)", size: "2000×2000", ratio: 1 },
-    
-    { label: "2:3 (vertical)",  type: "(vertical)", size: "832×1248",  ratio: 0.66 },
-    { label: "3:4 (vertical)",  type: "(vertical)", size: "864×1184",  ratio: 0.73 },
-    { label: "4:5 (vertical)",  type: "(vertical)", size: "896×1152",  ratio: 0.78 },
+
+    { label: "2:3 (vertical)", type: "(vertical)", size: "832×1248", ratio: 0.66 },
+    { label: "3:4 (vertical)", type: "(vertical)", size: "864×1184", ratio: 0.73 },
+    { label: "4:5 (vertical)", type: "(vertical)", size: "896×1152", ratio: 0.78 },
     { label: "9:16 (vertical)", type: "(vertical)", size: "768×1344", ratio: 0.56 },
     { label: "21:9 (vertical)", type: "(vertical)", size: "672×1536", ratio: 0.43 },
 
@@ -39,55 +43,65 @@ export default function PictuLabPage() {
   const selected = sizes.find(s => s.label === selectedSize);
   const ratio = selected?.ratio ?? 1;
 
-  const [previewDims, setPreviewDims] = useState({ w: 500, h: 500 });
+  /* ============================================================
+     CÁLCULO DEL LIENZO (FIX DEFINITIVO)
+  ============================================================ */
+  const [previewDims, setPreviewDims] = useState({ w: 300, h: 300 });
 
   useEffect(() => {
     function update() {
       if (!containerRef.current) return;
 
-      const W = containerRef.current.clientWidth * 0.82;
-      const H = containerRef.current.clientHeight * 0.82;
+      const maxW = containerRef.current.clientWidth * 0.75;
+      const maxH = containerRef.current.clientHeight * 0.75;
 
-      let w = W;
+      let w = maxW;
       let h = w / ratio;
 
-      if (h > H) {
-        h = H;
+      if (h > maxH) {
+        h = maxH;
         w = h * ratio;
       }
+
       setPreviewDims({ w, h });
     }
+
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, [ratio]);
 
+  /* ============================================================
+     SUBIDA DE IMÁGENES
+  ============================================================ */
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
-    const updated = [...uploadedImages];
+    const list = [...uploadedImages];
 
     Array.from(files).forEach(file => {
-      if (updated.length < 5) {
-        const r = new FileReader();
-        r.onload = () => {
-          updated.push(r.result as string);
-          setUploadedImages([...updated]);
+      if (list.length < 5) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          list.push(reader.result as string);
+          setUploadedImages([...list]);
         };
-        r.readAsDataURL(file);
+        reader.readAsDataURL(file);
       }
     });
   };
 
+  /* ============================================================
+     RENDER
+  ============================================================ */
   return (
     <>
-      {/* TOPBAR */}
+      {/* TOP BAR */}
       <div className="topbar">
         <div className="zoom-controls">
-          <button className="btn-zoom" onClick={() => setZoom(z => Math.max(0.4, z - 0.1))}>-</button>
+          <button className="btn-zoom" onClick={() => setZoom(z => Math.max(0.2, z - 0.1))}>-</button>
           <span>{Math.round(zoom * 100)}%</span>
-          <button className="btn-zoom" onClick={() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
+          <button className="btn-zoom" onClick={() => setZoom(z => Math.min(5, z + 0.1))}>+</button>
           <button className="btn-zoom" onClick={() => setZoom(1)}>Reset</button>
         </div>
 
@@ -95,6 +109,7 @@ export default function PictuLabPage() {
         <button className="btn-export">Exportar</button>
       </div>
 
+      {/* LAYOUT PRINCIPAL */}
       <div style={{ display: "flex", height: "100vh", width: "100%" }}>
 
         {/* SIDEBAR */}
@@ -103,14 +118,17 @@ export default function PictuLabPage() {
           {/* PROMPT */}
           <div className="sidebar-box">
             <h2>Prompt</h2>
-            <textarea placeholder="Describe la imagen..." />
+            <textarea
+              placeholder="Describe la imagen..."
+              className="w-full"
+            />
           </div>
 
           {/* IMÁGENES */}
           <div className="sidebar-box">
             <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
-            <label>
+            <label className="upload-box">
               <span>Haz clic o arrastra imágenes</span>
               <input type="file" multiple className="hidden" onChange={handleImageUpload} />
             </label>
@@ -129,20 +147,36 @@ export default function PictuLabPage() {
             </div>
           </div>
 
-          {/* RELACIÓN DE ASPECTO */}
+          {/* ASPECT RATIO */}
           <div className="sidebar-box">
             <h2>Relación de aspecto</h2>
 
             <div className="flex items-center justify-between mb-2">
-              <span>Modo lista</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" checked={modeList} onChange={() => setModeList(!modeList)} />
-                <div className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-gray-800 transition-all"></div>
-                <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
+              <span className="text-sm">Modo lista</span>
+
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={modeList}
+                  onChange={() => setModeList(!modeList)}
+                />
+                <span className="slider" />
               </label>
             </div>
 
-            {!modeList ? (
+            {modeList ? (
+              <select
+                className="select-mode"
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+              >
+                {sizes.map(s => (
+                  <option key={s.label} value={s.label}>
+                    {s.label} — {s.size}px
+                  </option>
+                ))}
+              </select>
+            ) : (
               <div className="aspect-list">
                 {sizes.map(s => (
                   <div
@@ -153,36 +187,28 @@ export default function PictuLabPage() {
                     <div
                       className="mini-rect"
                       style={{
-                        width: s.ratio >= 1 ? "40px" : `${40 * s.ratio}px`,
-                        height: s.ratio <= 1 ? "40px" : `${40 / s.ratio}px`,
+                        width: s.ratio >= 1 ? "38px" : `${38 * s.ratio}px`,
+                        height: s.ratio <= 1 ? "38px" : `${38 / s.ratio}px`,
                       }}
                     />
-                    <p className="ratio">{s.label.split(" ")[0]}</p>
+                    <p className="ratio">{s.label}</p>
                     <p className="type">{s.type}</p>
                     <p className="px">{s.size}px</p>
                   </div>
                 ))}
               </div>
-            ) : (
-              <select value={selectedSize} onChange={e => setSelectedSize(e.target.value)}>
-                {sizes.map(s => (
-                  <option key={s.label} value={s.label}>
-                    {s.label} — {s.size}px
-                  </option>
-                ))}
-              </select>
             )}
           </div>
 
           {/* FORMATO */}
           <div className="sidebar-box">
-            <h2>Formato</h2>
-            <div className="format-row">
+            <h2>Selecciona el formato</h2>
+            <div className="flex gap-2 flex-nowrap">
               {["JPG", "PNG", "WEBP", "BMP"].map(f => (
                 <button
                   key={f}
-                  onClick={() => setFormat(f)}
                   className={`format-btn ${format === f ? "active" : ""}`}
+                  onClick={() => setFormat(f)}
                 >
                   {f}
                 </button>
@@ -190,19 +216,28 @@ export default function PictuLabPage() {
             </div>
           </div>
 
-          <button className="btn-generate">Generar imagen</button>
-          <p className="text-xs text-white text-center mt-4">© 2025 Kreative 360º — Panel PicTULAB</p>
+          {/* GENERAR */}
+          <button className="w-full bg-black text-white py-3 rounded-md mt-3">
+            Generar imagen
+          </button>
+
+          <p className="text-xs text-white mt-5 text-center">
+            © 2025 Kreative 360º — Panel PicTULAB
+          </p>
 
         </aside>
 
-        {/* PREVIEW */}
+        {/* PREVIEW ZONE */}
         <section className="preview-zone">
-          <div ref={containerRef} className="w-full h-full flex justify-center items-center">
+          <div
+            ref={containerRef}
+            className="w-full h-full flex items-center justify-center"
+          >
             <div
               className="preview-inner"
               style={{
                 width: previewDims.w * zoom,
-                height: previewDims.h * zoom
+                height: previewDims.h * zoom,
               }}
             >
               Vista previa ({selected?.size}px)
