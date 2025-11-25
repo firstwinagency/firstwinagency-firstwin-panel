@@ -14,7 +14,6 @@ export default function PictuLabPage() {
   const [zoom, setZoom] = useState(1);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
 
   const sizes = [
     { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
@@ -65,7 +64,6 @@ export default function PictuLabPage() {
     setUploadedImages(imgs);
   };
 
-  // ---- AUTOSCALE LOGIC (VERSION A) ----
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
@@ -95,52 +93,47 @@ export default function PictuLabPage() {
     <main className="flex min-h-screen bg-white text-black">
 
       {/* TOP BAR */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b flex items-center justify-end px-6 py-3">
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b flex items-center justify-end px-6 py-3 topbar">
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 zoom-controls">
+          <button className="btn-zoom" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
           <span className="px-2">{Math.round(zoom * 100)}%</span>
-          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
-          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom(1)}>Reset</button>
+          <button className="btn-zoom" onClick={() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
+          <button className="btn-zoom" onClick={() => setZoom(1)}>Reset</button>
         </div>
 
-        <button className="border px-4 py-2 rounded-md bg-white hover:bg-gray-100">Importar</button>
-        <button className="border px-4 py-2 rounded-md text-white font-semibold" style={{ background: "#FF6D6D" }}>Exportar</button>
+        <button className="btn-import">Importar</button>
+        <button className="btn-export">Exportar</button>
       </div>
 
       {/* SIDEBAR */}
-      <aside className="w-80 bg-[#FF6B6B] p-4 flex flex-col gap-4 pt-20">
-        {/* PROMPT */}
-        <div className="bg-white p-3 rounded-xl">
-          <h2 className="font-semibold mb-1">Prompt</h2>
-          <textarea placeholder="Describe brevemente la imagen que quieres generar..." className="w-full h-24 p-2 border border-gray-200 rounded-md text-sm"></textarea>
+      <aside className="sidebar">
+
+        <div className="sidebar-box">
+          <h2>Prompt</h2>
+          <textarea className="w-full h-24 p-2 border rounded-md text-sm" placeholder="Describe la imagen..."></textarea>
         </div>
 
-        {/* IMAGES */}
-        <div className="bg-white p-3 rounded-xl">
-          <h2 className="font-semibold mb-1">Imágenes de referencia ({uploadedImages.length}/5)</h2>
+        <div className="sidebar-box">
+          <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
           <label className="block border border-dashed rounded-md py-8 text-center text-sm cursor-pointer">
-            <span>Haz clic o arrastra imágenes aquí</span>
+            <span>Sube o arrastra imágenes</span>
             <input type="file" className="hidden" multiple onChange={handleImageUpload} />
           </label>
 
           <div className="mt-2 grid grid-cols-2 gap-2">
             {uploadedImages.map((img, i) => (
-              <div key={i} className="relative cursor-pointer"
-                onClick={() => { setViewerImage(img); setIsViewerOpen(true); }}>
+              <div key={i} className="relative cursor-pointer" onClick={() => { setViewerImage(img); setIsViewerOpen(true); }}>
                 <Image src={img} width={200} height={200} alt="ref" className="rounded-md object-cover h-20 w-full" />
-                <button onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                  className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs">X</button>
+                <button onClick={(e) => { e.stopPropagation(); removeImage(i); }} className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs">X</button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ASPECT RATIO */}
-        <div className="bg-white p-3 rounded-xl">
-
-          <h2 className="font-semibold mb-2">Relación de aspecto</h2>
+        <div className="sidebar-box">
+          <h2>Relación de aspecto</h2>
 
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm">Modo lista</span>
@@ -153,20 +146,18 @@ export default function PictuLabPage() {
           </div>
 
           {modeList && (
-            <div className="flex overflow-x-auto gap-3 pb-2">
+            <div className="aspect-list">
               {sizes.map((item) => (
                 <div key={item.label} onClick={() => setSelectedSize(item.label)}
-                  className={`flex-shrink-0 w-24 p-2 border rounded-lg text-center cursor-pointer transition-all ${selectedSize === item.label ? "border-black shadow-md" : "border-gray-300"}`}>
-                  
-                  <div className="mx-auto mb-1 bg-gray-200 rounded-sm"
+                  className={`aspect-item ${selectedSize === item.label ? "active" : ""}`}>
+                  <div className="mini-rect"
                     style={{
                       width: item.ratio >= 1 ? "36px" : `${36 * item.ratio}px`,
                       height: item.ratio <= 1 ? "36px" : `${36 / item.ratio}px`
                     }}>
                   </div>
-
-                  <p className="text-xs font-medium leading-3">{item.label}</p>
-                  <p className="text-[11px] text-gray-600 font-semibold">{item.size} px</p>
+                  <p>{item.label}</p>
+                  <p>{item.size} px</p>
                 </div>
               ))}
             </div>
@@ -183,54 +174,35 @@ export default function PictuLabPage() {
               ))}
             </select>
           )}
-
         </div>
 
-        {/* FORMAT */}
-        <div className="bg-white p-3 rounded-xl">
-          <h2 className="font-semibold mb-2">Selecciona el formato</h2>
-
-          <div className="flex gap-2 justify-between">
+        <div className="sidebar-box">
+          <h2>Selecciona el formato</h2>
+          <div className="flex gap-2">
             {["JPG", "PNG", "WEBP", "BMP"].map((f) => (
-              <button key={f} className="px-4 py-1 border rounded-md min-w-[62px] text-center flex justify-center items-center">
-                {f}
-              </button>
+              <button key={f} className="px-4 py-1 border rounded-md w-full text-center">{f}</button>
             ))}
           </div>
         </div>
 
-        <button onClick={() => setIsLoading(true)} className="mt-4 bg-black text-white py-2 rounded-lg hover:bg-gray-800">
-          Generar imagen
-        </button>
+        <button className="btn">Generar imagen</button>
 
         <p className="text-xs text-white text-center mt-auto">
           © 2025 Kreative 360º — Panel PicTULAB
         </p>
       </aside>
 
-      {/* PREVIEW */}
-      <section className="flex-1 h-screen overflow-auto bg-[url('/coral-grid.svg')] bg-repeat flex items-center justify-center">
-
+      <section className="preview-zone">
         <div ref={containerRef} className="w-full h-full flex items-center justify-center">
-
-          <div style={{
+          <div className="preview-inner" style={{
             width: previewDims.w * zoom,
             height: previewDims.h * zoom,
-            border: "1px solid #ccc",
-            background: "rgba(255,255,255,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#444"
           }}>
             Vista previa ({selectedSizeLabel} px)
           </div>
-
         </div>
-
       </section>
 
-      {/* IMAGE VIEWER */}
       {isViewerOpen && viewerImage && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
           onClick={() => setIsViewerOpen(false)}>
