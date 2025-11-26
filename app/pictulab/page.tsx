@@ -6,7 +6,6 @@ import Image from "next/image";
 export default function PictuLabPage() {
   const [selectedSize, setSelectedSize] = useState("1:1 (cuadrado)");
   const [modeList, setModeList] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
@@ -14,7 +13,7 @@ export default function PictuLabPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  /* 🔥 LISTA COMPLETA DE TAMAÑOS (TODOS LOS QUE HAS PEDIDO) */
+  /* LISTA COMPLETA DE TAMAÑOS */
   const sizes = [
     { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
     { label: "2:2 (cuadrado)", size: "2000×2000", ratio: 1 },
@@ -41,13 +40,13 @@ export default function PictuLabPage() {
     { label: "A3 horizontal", size: "4961×3508", ratio: 1.41 },
   ];
 
-  const selectedSizeObj = sizes.find((s) => s.label === selectedSize);
-  const selectedRatio = selectedSizeObj?.ratio ?? 1;
-  const selectedLabel = selectedSizeObj?.size;
+  const selectedObj = sizes.find((s) => s.label === selectedSize);
+  const selectedRatio = selectedObj?.ratio ?? 1;
+  const selectedLabel = selectedObj?.size;
 
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
-  /* 🔥 Resize dinámico */
+  /* Resize dinámico del lienzo */
   useEffect(() => {
     function update() {
       if (!containerRef.current) return;
@@ -71,6 +70,7 @@ export default function PictuLabPage() {
     return () => window.removeEventListener("resize", update);
   }, [selectedRatio, zoom]);
 
+  /* FILE UPLOAD */
   const handleFiles = (e: any) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -97,50 +97,79 @@ export default function PictuLabPage() {
 
   return (
     <>
-      {/* 🔥 TOPBAR FUERA DEL MAIN (CORRECCIÓN CRÍTICA) */}
+      {/* TOP BAR */}
       <div className="topbar">
         <div className="zoom-controls">
-          <button className="btn-zoom" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
+          <button className="btn-zoom" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}>
+            -
+          </button>
           <span>{Math.round(zoom * 100)}%</span>
-          <button className="btn-zoom" onClick={() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
-          <button className="btn-zoom" onClick={() => setZoom(1)}>Reset</button>
+          <button className="btn-zoom" onClick={() => setZoom((z) => Math.min(3, z + 0.1))}>
+            +
+          </button>
+          <button className="btn-zoom" onClick={() => setZoom(1)}>
+            Reset
+          </button>
         </div>
 
         <button className="btn-zoom">Importar</button>
-        <button className="btn-zoom" style={{ background: "#FF6D6D", color: "#fff" }}>Exportar</button>
+        <button className="btn-zoom" style={{ background: "#FF6D6D", color: "#fff" }}>
+          Exportar
+        </button>
       </div>
 
-      {/* 🔥 LAYOUT PRINCIPAL */}
+      {/* LAYOUT */}
       <main className="flex min-h-screen">
 
-        {/* SIDEBAR ORIGINAL */}
+        {/* SIDEBAR */}
         <aside className="sidebar">
+
           <div className="sidebar-box">
             <h2>Prompt</h2>
             <textarea placeholder="Describe brevemente la imagen que quieres generar..."></textarea>
           </div>
 
+          {/* IMÁGENES DE REFERENCIA — CON upload-area */}
           <div className="sidebar-box">
             <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
-            <label>
-              <span>Haz clic o arrastra imágenes aquí</span>
-              <input type="file" multiple className="hidden" onChange={handleFiles} />
+            <label className="upload-area">
+              <span>Sube o arrastra imágenes</span>
+              <input type="file" className="hidden" multiple onChange={handleFiles} />
             </label>
 
             <div className="image-grid mt-2 grid grid-cols-2 gap-2">
               {uploadedImages.map((img, i) => (
-                <div key={i} className="relative" onClick={() => { setViewerImage(img); setIsViewerOpen(true); }}>
-                  <Image src={img} width={200} height={200} alt="ref" className="rounded-md object-cover h-20 w-full" />
+                <div
+                  key={i}
+                  className="relative"
+                  onClick={() => {
+                    setViewerImage(img);
+                    setIsViewerOpen(true);
+                  }}
+                >
+                  <Image
+                    src={img}
+                    width={200}
+                    height={200}
+                    alt="ref"
+                    className="rounded-md object-cover h-20 w-full"
+                  />
                   <button
-                    onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeImage(i);
+                    }}
                     className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs"
-                  >X</button>
+                  >
+                    X
+                  </button>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* RELACIÓN DE ASPECTO */}
           <div className="sidebar-box">
             <h2>Relación de aspecto</h2>
 
@@ -151,7 +180,7 @@ export default function PictuLabPage() {
               </div>
             </div>
 
-            {modeList && (
+            {modeList ? (
               <div className="aspect-list">
                 {sizes.map((s) => (
                   <div
@@ -172,10 +201,12 @@ export default function PictuLabPage() {
                   </div>
                 ))}
               </div>
-            )}
-
-            {!modeList && (
-              <select className="aspect-select" value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
+            ) : (
+              <select
+                className="aspect-select"
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+              >
                 {sizes.map((s) => (
                   <option key={s.label} value={s.label}>
                     {s.label} — {s.size} px
@@ -185,11 +216,14 @@ export default function PictuLabPage() {
             )}
           </div>
 
+          {/* FORMATO */}
           <div className="sidebar-box">
             <h2>Selecciona el formato</h2>
             <div className="format-buttons">
               {["JPG", "PNG", "WEBP", "BMP"].map((f) => (
-                <button key={f} className="format-btn">{f}</button>
+                <button key={f} className="format-btn">
+                  {f}
+                </button>
               ))}
             </div>
           </div>
@@ -201,7 +235,7 @@ export default function PictuLabPage() {
           </p>
         </aside>
 
-        {/* 🔥 PREVIEW: AHORA SÍ TOMA TODO EL ESPACIO Y MUESTRA EL CUADRICULADO */}
+        {/* PREVIEW */}
         <section className="preview-zone" ref={containerRef}>
           <div
             className="preview-inner"
@@ -215,16 +249,24 @@ export default function PictuLabPage() {
         </section>
       </main>
 
-      {/* VISOR DE IMAGEN AMPLIADA */}
+      {/* VISOR */}
       {isViewerOpen && viewerImage && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-             onClick={() => setIsViewerOpen(false)}>
-          <Image src={viewerImage} alt="big view" width={1200} height={1200}
-                 className="rounded-lg shadow-lg max-h-[85vh]" />
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={() => setIsViewerOpen(false)}
+        >
+          <Image
+            src={viewerImage}
+            alt="big view"
+            width={1200}
+            height={1200}
+            className="rounded-lg shadow-lg max-h-[85vh]"
+          />
         </div>
       )}
     </>
   );
 }
+
 
 
