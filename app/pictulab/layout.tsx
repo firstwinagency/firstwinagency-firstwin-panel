@@ -12,7 +12,10 @@ export default function PictuLabLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <head />
+      <body className="bg-white text-black antialiased w-full h-full">
+        {children}
+      </body>
     </html>
   );
 }
