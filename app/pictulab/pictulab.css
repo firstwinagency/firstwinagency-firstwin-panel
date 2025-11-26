@@ -17,15 +17,15 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: url("/coral-grid.svg") repeat !important; /* FONDO CUADRICULADO */
+  background: url("/coral-grid.svg") repeat !important;
   font-family: "Inter", sans-serif;
   color: #15181c;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Forzar alturas reales (CORRECCIÓN) */
+/* Forzar alturas reales */
 main {
-  height: 100vh !important;  /* YA NO restamos la topbar */
+  height: 100vh !important;
   display: flex;
 }
 
@@ -40,11 +40,11 @@ main {
 }
 
 /* ============================================================
-   SIDEBAR — LLEGA HASTA ABAJO
+   SIDEBAR
 ============================================================ */
 .sidebar {
   width: 320px;
-  height: 100vh !important;      /* CORRECTO */
+  height: 100vh !important;
   background: #ff6b6b;
   padding: 22px;
   padding-top: 85px;
@@ -54,7 +54,6 @@ main {
   overflow-y: auto;
 }
 
-/* Caja base de la sidebar */
 .sidebar-box {
   background: white;
   padding: 18px 16px;
@@ -70,15 +69,6 @@ main {
   margin-bottom: 8px;
 }
 
-.sidebar-box p,
-.sidebar-box span {
-  font-size: 13px;
-  color: #444;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .sidebar-box textarea {
   width: 100%;
   height: 90px;
@@ -91,8 +81,11 @@ main {
 }
 
 /* ============================================================
-   INPUT FILE — ESTILO ORIGINAL EXACTO
+   INPUT FILE — ESTILO ORIGINAL PERFECTO
 ============================================================ */
+
+/* 🚨 ELIMINADO TOTALMENTE EL ESTILO ANTIGUO QUE ROMPÍA EL BLOQUE */
+/* (antes .sidebar-box label {...}) */
 
 .upload-area {
   width: 100%;
@@ -126,7 +119,6 @@ main {
 /* ============================================================
    RELACIÓN DE ASPECTO
 ============================================================ */
-
 .aspect-list {
   display: flex;
   gap: 10px;
@@ -166,7 +158,6 @@ main {
   font-weight: 600;
   font-size: 12px;
 }
-
 .aspect-item .px {
   font-size: 11px;
   color: #555;
@@ -291,9 +282,8 @@ main {
 }
 
 /* ============================================================
-   PREVIEW ZONE — ARREGLADO DEFINITIVO
+   PREVIEW ZONE
 ============================================================ */
-
 .preview-zone {
   flex: 1 !important;
   height: 100vh !important;
@@ -303,7 +293,6 @@ main {
   align-items: center;
 }
 
-/* Lienzo */
 .preview-inner {
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid #ccc;
@@ -322,4 +311,3 @@ main {
 /* ============================================================
    FINAL
 ============================================================ */
-
