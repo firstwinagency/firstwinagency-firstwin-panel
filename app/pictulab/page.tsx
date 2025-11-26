@@ -14,7 +14,6 @@ export default function PictuLabPage() {
   const [zoom, setZoom] = useState(1);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
 
   const sizes = [
     { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
@@ -34,7 +33,7 @@ export default function PictuLabPage() {
     { label: "A4 vertical (2480×3508 px)", size: "2480×3508", ratio: 0.7 },
     { label: "A4 horizontal (3508×2480 px)", size: "3508×2480", ratio: 1.41 },
     { label: "A3 vertical (3508×4961 px)", size: "3508×4961", ratio: 0.7 },
-    { label: "A3 horizontal (4961×3508 px)", size: "4961×3508", ratio: 1.41 }
+    { label: "A3 horizontal (4961×3508 px)", size: "4961×3508", ratio: 1.41 },
   ];
 
   const selectedSizeObj = sizes.find((s) => s.label === selectedSize);
@@ -65,7 +64,6 @@ export default function PictuLabPage() {
     setUploadedImages(imgs);
   };
 
-  // ---- AUTOSCALE LOGIC (VERSION A) ----
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
@@ -93,19 +91,25 @@ export default function PictuLabPage() {
 
   return (
     <main className="flex min-h-screen bg-white text-black">
-
       {/* TOP BAR */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b flex items-center justify-end px-6 py-3">
-
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
+          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}>
+            -
+          </button>
           <span className="px-2">{Math.round(zoom * 100)}%</span>
-          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
-          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom(1)}>Reset</button>
+          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom((z) => Math.min(3, z + 0.1))}>
+            +
+          </button>
+          <button className="border px-3 py-1 rounded-md" onClick={() => setZoom(1)}>
+            Reset
+          </button>
         </div>
 
         <button className="border px-4 py-2 rounded-md bg-white hover:bg-gray-100">Importar</button>
-        <button className="border px-4 py-2 rounded-md text-white font-semibold" style={{ background: "#FF6D6D" }}>Exportar</button>
+        <button className="border px-4 py-2 rounded-md text-white font-semibold" style={{ background: "#FF6D6D" }}>
+          Exportar
+        </button>
       </div>
 
       {/* SIDEBAR */}
@@ -113,7 +117,10 @@ export default function PictuLabPage() {
         {/* PROMPT */}
         <div className="bg-white p-3 rounded-xl">
           <h2 className="font-semibold mb-1">Prompt</h2>
-          <textarea placeholder="Describe brevemente la imagen que quieres generar..." className="w-full h-24 p-2 border border-gray-200 rounded-md text-sm"></textarea>
+          <textarea
+            placeholder="Describe brevemente la imagen que quieres generar..."
+            className="w-full h-24 p-2 border border-gray-200 rounded-md text-sm"
+          ></textarea>
         </div>
 
         {/* IMAGES */}
@@ -127,11 +134,24 @@ export default function PictuLabPage() {
 
           <div className="mt-2 grid grid-cols-2 gap-2">
             {uploadedImages.map((img, i) => (
-              <div key={i} className="relative cursor-pointer"
-                onClick={() => { setViewerImage(img); setIsViewerOpen(true); }}>
+              <div
+                key={i}
+                className="relative cursor-pointer"
+                onClick={() => {
+                  setViewerImage(img);
+                  setIsViewerOpen(true);
+                }}
+              >
                 <Image src={img} width={200} height={200} alt="ref" className="rounded-md object-cover h-20 w-full" />
-                <button onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                  className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs">X</button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(i);
+                  }}
+                  className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs"
+                >
+                  X
+                </button>
               </div>
             ))}
           </div>
@@ -139,7 +159,6 @@ export default function PictuLabPage() {
 
         {/* ASPECT RATIO */}
         <div className="bg-white p-3 rounded-xl">
-
           <h2 className="font-semibold mb-2">Relación de aspecto</h2>
 
           <div className="flex items-center justify-between mb-2">
@@ -155,15 +174,20 @@ export default function PictuLabPage() {
           {modeList && (
             <div className="flex overflow-x-auto gap-3 pb-2">
               {sizes.map((item) => (
-                <div key={item.label} onClick={() => setSelectedSize(item.label)}
-                  className={`flex-shrink-0 w-24 p-2 border rounded-lg text-center cursor-pointer transition-all ${selectedSize === item.label ? "border-black shadow-md" : "border-gray-300"}`}>
-                  
-                  <div className="mx-auto mb-1 bg-gray-200 rounded-sm"
+                <div
+                  key={item.label}
+                  onClick={() => setSelectedSize(item.label)}
+                  className={`flex-shrink-0 w-24 p-2 border rounded-lg text-center cursor-pointer transition-all ${
+                    selectedSize === item.label ? "border-black shadow-md" : "border-gray-300"
+                  }`}
+                >
+                  <div
+                    className="mx-auto mb-1 bg-gray-200 rounded-sm"
                     style={{
                       width: item.ratio >= 1 ? "36px" : `${36 * item.ratio}px`,
-                      height: item.ratio <= 1 ? "36px" : `${36 / item.ratio}px`
-                    }}>
-                  </div>
+                      height: item.ratio <= 1 ? "36px" : `${36 / item.ratio}px`,
+                    }}
+                  ></div>
 
                   <p className="text-xs font-medium leading-3">{item.label}</p>
                   <p className="text-[11px] text-gray-600 font-semibold">{item.size} px</p>
@@ -173,9 +197,11 @@ export default function PictuLabPage() {
           )}
 
           {!modeList && (
-            <select className="w-full border rounded-md p-2 text-sm"
+            <select
+              className="w-full border rounded-md p-2 text-sm"
               value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}>
+              onChange={(e) => setSelectedSize(e.target.value)}
+            >
               {sizes.map((item) => (
                 <option key={item.label} value={item.label}>
                   {item.label} — {item.size} px
@@ -183,7 +209,6 @@ export default function PictuLabPage() {
               ))}
             </select>
           )}
-
         </div>
 
         {/* FORMAT */}
@@ -203,42 +228,38 @@ export default function PictuLabPage() {
           Generar imagen
         </button>
 
-        <p className="text-xs text-white text-center mt-auto">
-          © 2025 Kreative 360º — Panel PicTULAB
-        </p>
+        <p className="text-xs text-white text-center mt-auto">© 2025 Kreative 360º — Panel PicTULAB</p>
       </aside>
 
       {/* PREVIEW */}
       <section className="flex-1 h-screen overflow-auto bg-[url('/coral-grid.svg')] bg-repeat flex items-center justify-center">
-
         <div ref={containerRef} className="w-full h-full flex items-center justify-center">
-
-          <div style={{
-            width: previewDims.w * zoom,
-            height: previewDims.h * zoom,
-            border: "1px solid #ccc",
-            background: "rgba(255,255,255,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#444"
-          }}>
+          <div
+            style={{
+              width: previewDims.w * zoom,
+              height: previewDims.h * zoom,
+              border: "1px solid #ccc",
+              background: "rgba(255,255,255,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#444",
+            }}
+          >
             Vista previa ({selectedSizeLabel} px)
           </div>
-
         </div>
-
       </section>
 
       {/* IMAGE VIEWER */}
       {isViewerOpen && viewerImage && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setIsViewerOpen(false)}>
-          <Image src={viewerImage} alt="visualizador" width={1000} height={1000}
-            className="rounded-lg shadow-lg max-h-[85vh] object-contain" />
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={() => setIsViewerOpen(false)}
+        >
+          <Image src={viewerImage} alt="visualizador" width={1000} height={1000} className="rounded-lg shadow-lg max-h-[85vh] object-contain" />
         </div>
       )}
-
     </main>
   );
 }
