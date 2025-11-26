@@ -1,268 +1,38 @@
-/* -------------------------------------------
-   IMPORTACIÓN FUENTES
-------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-
-/* -------------------------------------------
-   RESET
-------------------------------------------- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  font-family: "Inter", sans-serif;
-  background: #FFF;
-  color: #111;
-}
-
-/* Scroll aesthetic */
-::-webkit-scrollbar { width: 7px; }
-::-webkit-scrollbar-thumb {
-  background: #c4c4c4;
-  border-radius: 8px;
-}
-
-/* -------------------------------------------
-   SIDEBAR
-------------------------------------------- */
-.sidebar {
-  width: 315px;
-  background: #FF6B6B;
-  padding: 26px;
-  padding-top: 85px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  border-right: 1px solid rgba(0,0,0,0.1);
-}
-
-.sidebar-box {
-  background: #FFF;
-  padding: 18px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,0.1);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.10);
-}
-
-.sidebar-box h2 {
-  font-family: "DM Serif Display", serif;
-  font-size: 17px;
-  margin-bottom: 12px;
-}
-
-/* Prevent overflow of long texts */
-.sidebar-box span,
-.sidebar-box p {
-  font-size: 13px;
-  color: #444;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Textarea */
+/* ==== PROMPT TEXTAREA (estilos reales del panel original) ==== */
 .sidebar-box textarea {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  -webkit-tap-highlight-color: transparent;
+
+  /* Variables originales del panel */
+  --fw-bg: #0b0c0e;
+  --fw-surface: #0f1113;
+  --fw-border: #2a2d31;
+  --fw-text: #e7e9ee;
+  --fw-subtle: #9aa0a6;
+  --brand-accent: #ff6d6d;
+  --brand-accent-ink: #15181c;
+  --brand-accent-glow: hsla(0,100%,71%,.25);
+
+  -webkit-font-smoothing: antialiased;
+
+  border: 0 solid #e5e7eb;
+  box-sizing: border-box;
+
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+
+  margin: 0;
   width: 100%;
-  height: 85px;
-  border-radius: 10px;
-  background: #FAFAFA;
-  border: 1px solid #DDD;
-  padding: 10px;
-  resize: none;
+  height: 6rem;              /* 96px exactos */
+  resize: vertical;
+  border-radius: 0.375rem;   /* 6px */
+  border-width: 1px;
+  padding: 0.5rem;           /* 8px */
+  font-size: .875rem;        /* 14px */
+  line-height: 1.25rem;      /* 20px */
 }
-
-/* Image upload */
-.sidebar-box label {
-  width: 100%;
-  display: block;
-  text-align: center;
-  padding: 22px 0;
-  border: 1px dashed #CCC;
-  background: #FAFAFA;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 13px;
-  overflow: hidden;
-}
-
-/* -------------------------------------------
-   ASPECT RATIO GRID
-------------------------------------------- */
-.aspect-list {
-  display: flex;
-  overflow-x: auto;
-  gap: 12px;
-  padding-bottom: 8px;
-}
-
-.aspect-item {
-  width: 110px;
-  padding: 10px 7px;
-  border-radius: 12px;
-  border: 1px solid #DDD;
-  background: #FFF;
-  text-align: center;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.aspect-item:hover {
-  border-color: #000;
-}
-
-.aspect-item.active {
-  border-color: #000;
-  background: #F6F6F6;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.mini-rect {
-  width: 40px;
-  height: 40px;
-  background: #e6e6e6;
-  border-radius: 3px;
-  margin: 0 auto 6px auto;
-}
-
-.aspect-item .ratio {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.aspect-item .type,
-.aspect-item .px {
-  font-size: 12px;
-  color: #777;
-}
-
-/* Dropdown */
-select {
-  width: 100%;
-  padding: 8px;
-  font-size: 13px;
-  border-radius: 10px;
-  border: 1px solid #CCC;
-  background: #FAFAFA;
-}
-
-/* -------------------------------------------
-   FORMAT BUTTONS
-------------------------------------------- */
-.format-btn {
-  padding: 9px 16px;
-  border-radius: 8px;
-  border: 1px solid #CCC;
-  background: #FFF;
-  font-size: 13px;
-  cursor: pointer;
-  transition: 0.15s;
-  white-space: nowrap;
-}
-
-.format-btn:hover {
-  background: #F1F1F1;
-}
-
-.format-btn.active {
-  background: #000;
-  color: #FFF;
-  border-color: #000;
-}
-
-/* -------------------------------------------
-   GENERATE BUTTON
-------------------------------------------- */
-.btn-generate {
-  width: 100%;
-  background: #000;
-  padding: 14px 0;
-  border-radius: 10px;
-  color: #FFF;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-}
-
-/* -------------------------------------------
-   TOPBAR
-------------------------------------------- */
-.topbar {
-  position: fixed;
-  top: 0;
-  left: 315px;
-  right: 0;
-  height: 60px;
-  background: white;
-  border-bottom: 1px solid #DDD;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 25px;
-  z-index: 50;
-}
-
-.zoom-controls {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 6px;
-}
-
-.btn-zoom {
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid #CCC;
-  cursor: pointer;
-  background: #FFF;
-}
-
-.btn-import {
-  border: 1px solid #CCC;
-  padding: 7px 14px;
-  border-radius: 6px;
-  background: #FFF;
-}
-
-.btn-export {
-  background: #FF6B6B;
-  padding: 7px 14px;
-  color: #FFF;
-  border-radius: 6px;
-  border: none;
-}
-
-/* -------------------------------------------
-   PREVIEW AREA
-------------------------------------------- */
-.preview-zone {
-  flex: 1;
-  height: 100vh;
-  background: url("/coral-grid.svg") repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-top: 60px;
-}
-
-.preview-inner {
-  background: rgba(255,255,255,0.95);
-  border: 1px solid #BBB;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #333;
-  font-size: 15px;
-}
-
