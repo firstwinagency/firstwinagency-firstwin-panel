@@ -1,38 +1,315 @@
-/* ==== PROMPT TEXTAREA (estilos reales del panel original) ==== */
-.sidebar-box textarea {
-  -webkit-text-size-adjust: 100%;
-  tab-size: 4;
-  -webkit-tap-highlight-color: transparent;
+/* ============================================================
+   FUENTES
+============================================================ */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap");
 
-  /* Variables originales del panel */
-  --fw-bg: #0b0c0e;
-  --fw-surface: #0f1113;
-  --fw-border: #2a2d31;
-  --fw-text: #e7e9ee;
-  --fw-subtle: #9aa0a6;
-  --brand-accent: #ff6d6d;
-  --brand-accent-ink: #15181c;
-  --brand-accent-glow: hsla(0,100%,71%,.25);
-
-  -webkit-font-smoothing: antialiased;
-
-  border: 0 solid #e5e7eb;
-  box-sizing: border-box;
-
-  font-family: inherit;
-  font-feature-settings: inherit;
-  font-variation-settings: inherit;
-  font-weight: inherit;
-  letter-spacing: inherit;
-  color: inherit;
-
+/* ============================================================
+   RESET
+============================================================ */
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
   width: 100%;
-  height: 6rem;              /* 96px exactos */
-  resize: vertical;
-  border-radius: 0.375rem;   /* 6px */
-  border-width: 1px;
-  padding: 0.5rem;           /* 8px */
-  font-size: .875rem;        /* 14px */
-  line-height: 1.25rem;      /* 20px */
+  height: 100%;
+  overflow: hidden;
+  background: #ffffff;
+  font-family: "Inter", sans-serif;
+  color: #15181c;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 10px;
+}
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
+.sidebar {
+  width: 320px;
+  background: #ff6b6b;
+  padding: 22px;
+  padding-top: 85px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.sidebar-box {
+  background: white;
+  padding: 18px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Títulos */
+.sidebar-box h2 {
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* Textos */
+.sidebar-box p,
+.sidebar-box span {
+  font-size: 13px;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* TEXTAREA */
+.sidebar-box textarea {
+  width: 100%;
+  height: 90px;
+  border-radius: 8px;
+  border: 1px solid #dcdcdc;
+  background: #fafafa;
+  resize: none;
+  padding: 10px;
+  font-size: 13px;
+}
+
+/* INPUT FILE */
+.sidebar-box label {
+  display: block;
+  width: 100%;
+  background: #fafafa;
+  border: 1px dashed #bbbbbb;
+  border-radius: 12px;
+  text-align: center;
+  padding: 25px 0;
+  font-size: 13px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.sidebar-box label span {
+  white-space: nowrap;
+}
+
+/* Galería miniaturas */
+.image-grid img {
+  border-radius: 10px;
+  object-fit: cover;
+  width: 100%;
+  height: 80px;
+}
+
+/* ============================================================
+   RELACIÓN DE ASPECTO
+============================================================ */
+
+/* LISTA HORIZONTAL */
+.aspect-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.aspect-item {
+  flex-shrink: 0;
+  width: 110px;
+  border: 1px solid #dcdcdc;
+  border-radius: 12px;
+  padding: 8px 6px;
+  cursor: pointer;
+  transition: 0.15s;
+  background: white;
+  text-align: center;
+}
+
+.aspect-item:hover {
+  border-color: black;
+}
+
+.aspect-item.active {
+  border-color: black;
+  background: #f5f5f5;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Mini preview shape */
+.mini-rect {
+  background: #e7e7e7;
+  margin: 0 auto 6px auto;
+  border-radius: 3px;
+}
+
+/* Texto formato 3 columnas */
+.aspect-item .ratio {
+  font-weight: 600;
+  font-size: 12px;
+}
+.aspect-item .type {
+  color: #777;
+  font-size: 11px;
+}
+.aspect-item .px {
+  font-size: 11px;
+  color: #555;
+}
+
+/* SELECT (modo lista) */
+.aspect-select {
+  width: 100%;
+  padding: 9px;
+  border-radius: 10px;
+  border: 1px solid #dcdcdc;
+  background: #fafafa;
+  font-size: 13px;
+  outline: none;
+}
+
+/* Toggle Modo Lista */
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.toggle.active {
+  background: #000;
+}
+.toggle.active .toggle-thumb {
+  transform: translateX(20px);
+}
+
+/* ============================================================
+   FORMATO (JPG / PNG / WEBP / BMP)
+============================================================ */
+.format-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.format-btn {
+  flex: 1;
+  padding: 7px 0;
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.format-btn.active {
+  background: #000;
+  color: white;
+  border-color: #000;
+}
+
+/* ============================================================
+   BOTÓN GENERAR
+============================================================ */
+.generate-btn {
+  width: 100%;
+  padding: 12px 0;
+  background: #000;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* ============================================================
+   TOP BAR
+============================================================ */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 320px;
+  right: 0;
+  height: 60px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 25px;
+  z-index: 40;
+}
+
+.zoom-controls {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.btn-zoom {
+  padding: 4px 12px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* ============================================================
+   PREVIEW ZONE
+============================================================ */
+.preview-zone {
+  flex: 1;
+  height: 100vh;
+  background: url("/coral-grid.svg") repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 60px;
+}
+
+.preview-inner {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  text-align: center;
+  font-size: 14px;
+  max-width: 90%;
+  max-height: 90%;
 }
