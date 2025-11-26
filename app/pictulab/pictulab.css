@@ -16,11 +16,17 @@ html,
 body {
   width: 100%;
   height: 100%;
-  overflow: hidden;
   background: #ffffff;
   font-family: "Inter", sans-serif;
   color: #15181c;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Forzar alturas reales */
+main {
+  height: calc(100vh - 60px) !important; /* resta la topbar */
+  display: flex;
 }
 
 /* Scrollbars */
@@ -55,7 +61,6 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Títulos */
 .sidebar-box h2 {
   font-family: "Inter", sans-serif;
   font-size: 15px;
@@ -63,7 +68,6 @@ body {
   margin-bottom: 8px;
 }
 
-/* Textos */
 .sidebar-box p,
 .sidebar-box span {
   font-size: 13px;
@@ -73,7 +77,6 @@ body {
   text-overflow: ellipsis;
 }
 
-/* TEXTAREA */
 .sidebar-box textarea {
   width: 100%;
   height: 90px;
@@ -85,7 +88,7 @@ body {
   font-size: 13px;
 }
 
-/* INPUT FILE */
+/* Input file */
 .sidebar-box label {
   display: block;
   width: 100%;
@@ -103,7 +106,7 @@ body {
   white-space: nowrap;
 }
 
-/* Galería miniaturas */
+/* Miniaturas */
 .image-grid img {
   border-radius: 10px !important;
   object-fit: cover !important;
@@ -153,10 +156,6 @@ body {
 .aspect-item .ratio {
   font-weight: 600;
   font-size: 12px;
-}
-.aspect-item .type {
-  color: #777;
-  font-size: 11px;
 }
 .aspect-item .px {
   font-size: 11px;
@@ -209,7 +208,6 @@ body {
 /* ============================================================
    FORMATO
 ============================================================ */
-
 .format-buttons {
   display: flex;
   gap: 8px;
@@ -234,7 +232,6 @@ body {
 /* ============================================================
    BOTÓN GENERAR
 ============================================================ */
-
 .generate-btn {
   width: 100%;
   padding: 12px 0;
@@ -250,7 +247,6 @@ body {
 /* ============================================================
    TOP BAR
 ============================================================ */
-
 .topbar {
   position: fixed;
   top: 0;
@@ -285,19 +281,19 @@ body {
 }
 
 /* ============================================================
-   PREVIEW ZONE — (CORREGIDO)
+   PREVIEW ZONE — ARREGLADO DEFINITIVO
 ============================================================ */
 
 .preview-zone {
-  flex: 1;
-  height: 100vh;
+  flex: 1 !important;
+  height: 100% !important;
   background: url("/coral-grid.svg") repeat !important;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top: 60px;
 }
 
+/* Lienzo */
 .preview-inner {
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid #ccc;
