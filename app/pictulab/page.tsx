@@ -13,29 +13,23 @@ export default function PictuLabPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  /* LISTA COMPLETA DE TAMAÑOS */
   const sizes = [
     { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
     { label: "2:2 (cuadrado)", size: "2000×2000", ratio: 1 },
-
     { label: "2:3 (vertical)", size: "832×1248", ratio: 0.66 },
     { label: "3:4 (vertical)", size: "864×1184", ratio: 0.73 },
     { label: "4:5 (vertical)", size: "896×1152", ratio: 0.78 },
     { label: "9:16 (vertical)", size: "768×1344", ratio: 0.56 },
     { label: "21:9 (vertical)", size: "672×1536", ratio: 0.43 },
-
     { label: "3:2 (horizontal)", size: "1248×832", ratio: 1.5 },
     { label: "4:3 (horizontal)", size: "1184×864", ratio: 1.37 },
     { label: "5:4 (horizontal)", size: "1152×896", ratio: 1.28 },
     { label: "16:9 (horizontal)", size: "1344×768", ratio: 1.77 },
     { label: "21:9 (horizontal)", size: "1536×672", ratio: 2.28 },
-
     { label: "A5 vertical", size: "1748×2480", ratio: 0.7 },
     { label: "A5 horizontal", size: "2480×1748", ratio: 1.42 },
-
     { label: "A4 vertical", size: "2480×3508", ratio: 0.7 },
     { label: "A4 horizontal", size: "3508×2480", ratio: 1.41 },
-
     { label: "A3 vertical", size: "3508×4961", ratio: 0.7 },
     { label: "A3 horizontal", size: "4961×3508", ratio: 1.41 },
   ];
@@ -46,7 +40,6 @@ export default function PictuLabPage() {
 
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
-  /* Resize dinámico del lienzo */
   useEffect(() => {
     function update() {
       if (!containerRef.current) return;
@@ -70,7 +63,6 @@ export default function PictuLabPage() {
     return () => window.removeEventListener("resize", update);
   }, [selectedRatio, zoom]);
 
-  /* FILE UPLOAD */
   const handleFiles = (e: any) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -100,42 +92,38 @@ export default function PictuLabPage() {
       {/* TOP BAR */}
       <div className="topbar">
         <div className="zoom-controls">
-          <button className="btn-zoom" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}>
-            -
-          </button>
+          <button className="btn-zoom" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}>-</button>
           <span>{Math.round(zoom * 100)}%</span>
-          <button className="btn-zoom" onClick={() => setZoom((z) => Math.min(3, z + 0.1))}>
-            +
-          </button>
-          <button className="btn-zoom" onClick={() => setZoom(1)}>
-            Reset
-          </button>
+          <button className="btn-zoom" onClick={() => setZoom((z) => Math.min(3, z + 0.1))}>+</button>
+          <button className="btn-zoom" onClick={() => setZoom(1)}>Reset</button>
         </div>
 
         <button className="btn-zoom">Importar</button>
-        <button className="btn-zoom" style={{ background: "#FF6D6D", color: "#fff" }}>
-          Exportar
-        </button>
+        <button className="btn-zoom" style={{ background: "#FF6D6D", color: "#fff" }}>Exportar</button>
       </div>
 
-      {/* LAYOUT */}
       <main className="flex min-h-screen">
 
         {/* SIDEBAR */}
         <aside className="sidebar">
-
+          
           <div className="sidebar-box">
             <h2>Prompt</h2>
             <textarea placeholder="Describe brevemente la imagen que quieres generar..."></textarea>
           </div>
 
-          {/* IMÁGENES DE REFERENCIA — CON upload-area */}
+          {/* IMÁGENES DE REFERENCIA (CORREGIDO) */}
           <div className="sidebar-box">
             <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
             <label className="upload-area">
               <span>Sube o arrastra imágenes</span>
-              <input type="file" className="hidden" multiple onChange={handleFiles} />
+              <input
+                type="file"
+                multiple
+                onChange={handleFiles}
+                style={{ display: "none" }}
+              />
             </label>
 
             <div className="image-grid mt-2 grid grid-cols-2 gap-2">
@@ -155,6 +143,7 @@ export default function PictuLabPage() {
                     alt="ref"
                     className="rounded-md object-cover h-20 w-full"
                   />
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -202,11 +191,7 @@ export default function PictuLabPage() {
                 ))}
               </div>
             ) : (
-              <select
-                className="aspect-select"
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-              >
+              <select className="aspect-select" value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
                 {sizes.map((s) => (
                   <option key={s.label} value={s.label}>
                     {s.label} — {s.size} px
@@ -221,9 +206,7 @@ export default function PictuLabPage() {
             <h2>Selecciona el formato</h2>
             <div className="format-buttons">
               {["JPG", "PNG", "WEBP", "BMP"].map((f) => (
-                <button key={f} className="format-btn">
-                  {f}
-                </button>
+                <button key={f} className="format-btn">{f}</button>
               ))}
             </div>
           </div>
@@ -267,6 +250,4 @@ export default function PictuLabPage() {
     </>
   );
 }
-
-
 
