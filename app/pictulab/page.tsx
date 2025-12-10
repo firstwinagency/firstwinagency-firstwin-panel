@@ -13,6 +13,9 @@ export default function PictuLabPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // 🔥 NECESARIO PARA EL FIX DEL UPLOAD
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const sizes = [
     { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
     { label: "2:2 (cuadrado)", size: "2000×2000", ratio: 1 },
@@ -106,20 +109,31 @@ export default function PictuLabPage() {
 
         {/* SIDEBAR */}
         <aside className="sidebar">
-          
+
+          {/* PROMPT */}
           <div className="sidebar-box">
             <h2>Prompt</h2>
             <textarea placeholder="Describe brevemente la imagen que quieres generar..."></textarea>
           </div>
 
-          {/* IMÁGENES DE REFERENCIA (CORREGIDO DEFINITIVO) */}
+          {/* IMÁGENES DE REFERENCIA — FIX DEFINITIVO */}
           <div className="sidebar-box">
             <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
-            <label className="upload-area">
+            <div
+              className="upload-area"
+              onClick={() => fileInputRef.current?.click()}
+            >
               <span>Sube o arrastra imágenes</span>
-              <input type="file" multiple onChange={handleFiles} className="hidden" />
-            </label>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden-input"
+              multiple
+              onChange={handleFiles}
+            />
 
             <div className="image-grid mt-2 grid grid-cols-2 gap-2">
               {uploadedImages.map((img, i) => (
@@ -138,7 +152,6 @@ export default function PictuLabPage() {
                     alt="ref"
                     className="rounded-md object-cover h-20 w-full"
                   />
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -186,7 +199,11 @@ export default function PictuLabPage() {
                 ))}
               </div>
             ) : (
-              <select className="aspect-select" value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
+              <select
+                className="aspect-select"
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+              >
                 {sizes.map((s) => (
                   <option key={s.label} value={s.label}>
                     {s.label} — {s.size} px
@@ -227,7 +244,6 @@ export default function PictuLabPage() {
         </section>
       </main>
 
-      {/* VISOR */}
       {isViewerOpen && viewerImage && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
@@ -245,5 +261,4 @@ export default function PictuLabPage() {
     </>
   );
 }
-
 
