@@ -41,7 +41,6 @@ export default function PictuLabPage() {
 
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
-  // 🔥 Resizing dinámico del lienzo
   useEffect(() => {
     function update() {
       if (!containerRef.current) return;
@@ -106,7 +105,6 @@ export default function PictuLabPage() {
 
       <main className="flex min-h-screen">
 
-        {/* SIDEBAR */}
         <aside className="sidebar">
 
           {/* PROMPT */}
@@ -154,7 +152,7 @@ export default function PictuLabPage() {
 
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // Evita abrir visor
+                      e.stopPropagation();
                       removeImage(i);
                     }}
                     className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs"
@@ -244,10 +242,10 @@ export default function PictuLabPage() {
         </section>
       </main>
 
-      {/* VISOR AMPLIADO — FUNCIONANDO */}
+      {/* VISOR AMPLIADO FUNCIONAL */}
       {isViewerOpen && viewerImage && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+          className="viewer-overlay"
           onClick={() => setIsViewerOpen(false)}
         >
           <Image
@@ -255,11 +253,12 @@ export default function PictuLabPage() {
             alt="big view"
             width={1400}
             height={1400}
-            className="rounded-lg shadow-lg max-h-[90vh] max-w-[90vw] object-contain"
+            className="object-contain"
           />
         </div>
       )}
     </>
   );
 }
+
 
