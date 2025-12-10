@@ -81,7 +81,7 @@ main {
 }
 
 /* ============================================================
-   INPUT FILE — ESTILO PERFECTO
+   INPUT FILE — ÁREA PERFECTA
 ============================================================ */
 .upload-area {
   width: 100%;
@@ -199,6 +199,7 @@ main {
 .toggle.active {
   background: #000;
 }
+
 .toggle.active .toggle-thumb {
   transform: translateX(20px);
 }
@@ -298,7 +299,7 @@ main {
   align-items: center !important;
   justify-content: center !important;
   color: #444;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
   text-align: center;
   font-size: 14px;
   max-width: 90%;
@@ -319,9 +320,8 @@ main {
 }
 
 /* ============================================================
-   VISOR DE IMAGEN AMPLIADA + ZOOM
+   VISOR DE IMAGEN AMPLIADA (NUNCA RECORTA)
 ============================================================ */
-
 .viewer-overlay {
   position: fixed !important;
   inset: 0 !important;
@@ -335,6 +335,9 @@ main {
 .viewer-image {
   max-width: 90vw !important;
   max-height: 90vh !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important; /* 🔥 Solución final: no recorta */
   transition: transform 0.25s ease;
   border-radius: 12px !important;
   box-shadow: 0px 0px 25px rgba(0,0,0,0.45);
@@ -342,7 +345,6 @@ main {
   cursor: zoom-in;
 }
 
-/* Cuando está ampliada */
 .viewer-image.zoomed {
   cursor: zoom-out;
 }
@@ -350,4 +352,5 @@ main {
 /* ============================================================
    FINAL
 ============================================================ */
+
 
