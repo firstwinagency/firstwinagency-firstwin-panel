@@ -12,8 +12,6 @@ export default function PictuLabPage() {
   const [zoom, setZoom] = useState(1);
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // 🔥 NECESARIO PARA EL FIX DEL UPLOAD
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const sizes = [
@@ -116,7 +114,7 @@ export default function PictuLabPage() {
             <textarea placeholder="Describe brevemente la imagen que quieres generar..."></textarea>
           </div>
 
-          {/* IMÁGENES DE REFERENCIA — FIX DEFINITIVO */}
+          {/* IMÁGENES DE REFERENCIA */}
           <div className="sidebar-box">
             <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
@@ -139,19 +137,21 @@ export default function PictuLabPage() {
               {uploadedImages.map((img, i) => (
                 <div
                   key={i}
-                  className="relative"
-                  onClick={() => {
+                  className="relative cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setViewerImage(img);
                     setIsViewerOpen(true);
                   }}
                 >
                   <Image
                     src={img}
-                    width={200}
-                    height={200}
+                    width={300}
+                    height={300}
                     alt="ref"
                     className="rounded-md object-cover h-20 w-full"
                   />
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -244,6 +244,7 @@ export default function PictuLabPage() {
         </section>
       </main>
 
+      {/* VISOR DE IMAGEN AMPLIADA */}
       {isViewerOpen && viewerImage && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
@@ -261,4 +262,3 @@ export default function PictuLabPage() {
     </>
   );
 }
-
