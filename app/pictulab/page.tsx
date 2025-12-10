@@ -10,6 +10,7 @@ export default function PictuLabPage() {
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -93,9 +94,9 @@ export default function PictuLabPage() {
       {/* TOP BAR */}
       <div className="topbar">
         <div className="zoom-controls">
-          <button className="btn-zoom" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
+          <button className="btn-zoom" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}>-</button>
           <span>{Math.round(zoom * 100)}%</span>
-          <button className="btn-zoom" onClick={() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
+          <button className="btn-zoom" onClick={() => setZoom((z) => Math.min(3, z + 0.1))}>+</button>
           <button className="btn-zoom" onClick={() => setZoom(1)}>Reset</button>
         </div>
 
@@ -104,9 +105,7 @@ export default function PictuLabPage() {
       </div>
 
       <main className="flex min-h-screen">
-
         <aside className="sidebar">
-
           {/* PROMPT */}
           <div className="sidebar-box">
             <h2>Prompt</h2>
@@ -137,9 +136,11 @@ export default function PictuLabPage() {
                 <div
                   key={i}
                   className="relative cursor-pointer"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setViewerImage(img);
                     setIsViewerOpen(true);
+                    setIsZoomed(false);
                   }}
                 >
                   <Image
@@ -242,18 +243,22 @@ export default function PictuLabPage() {
         </section>
       </main>
 
-      {/* VISOR AMPLIADO FUNCIONAL */}
+      {/* VISOR COMPLETO, NUNCA RECORTA, CON ZOOM */}
       {isViewerOpen && viewerImage && (
         <div
           className="viewer-overlay"
-          onClick={() => setIsViewerOpen(false)}
+          onClick={() => {
+            if (isZoomed) setIsZoomed(false);
+            else setIsViewerOpen(false);
+          }}
         >
-          <Image
+          <img
             src={viewerImage}
-            alt="big view"
-            width={1400}
-            height={1400}
-            className="object-contain"
+            className={`viewer-image ${isZoomed ? "zoomed" : ""}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsZoomed((z) => !z);
+            }}
           />
         </div>
       )}
