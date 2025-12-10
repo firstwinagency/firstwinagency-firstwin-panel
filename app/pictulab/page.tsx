@@ -41,6 +41,7 @@ export default function PictuLabPage() {
 
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
+  // 🔥 Resizing dinámico del lienzo
   useEffect(() => {
     function update() {
       if (!containerRef.current) return;
@@ -93,9 +94,9 @@ export default function PictuLabPage() {
       {/* TOP BAR */}
       <div className="topbar">
         <div className="zoom-controls">
-          <button className="btn-zoom" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}>-</button>
+          <button className="btn-zoom" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))}>-</button>
           <span>{Math.round(zoom * 100)}%</span>
-          <button className="btn-zoom" onClick={() => setZoom((z) => Math.min(3, z + 0.1))}>+</button>
+          <button className="btn-zoom" onClick={() => setZoom(z => Math.min(3, z + 0.1))}>+</button>
           <button className="btn-zoom" onClick={() => setZoom(1)}>Reset</button>
         </div>
 
@@ -138,8 +139,7 @@ export default function PictuLabPage() {
                 <div
                   key={i}
                   className="relative cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     setViewerImage(img);
                     setIsViewerOpen(true);
                   }}
@@ -154,7 +154,7 @@ export default function PictuLabPage() {
 
                   <button
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e.stopPropagation(); // Evita abrir visor
                       removeImage(i);
                     }}
                     className="absolute top-1 right-1 bg-black/70 text-white w-5 h-5 rounded text-xs"
@@ -244,21 +244,22 @@ export default function PictuLabPage() {
         </section>
       </main>
 
-      {/* VISOR DE IMAGEN AMPLIADA */}
+      {/* VISOR AMPLIADO — FUNCIONANDO */}
       {isViewerOpen && viewerImage && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
           onClick={() => setIsViewerOpen(false)}
         >
           <Image
             src={viewerImage}
             alt="big view"
-            width={1200}
-            height={1200}
-            className="rounded-lg shadow-lg max-h-[85vh]"
+            width={1400}
+            height={1400}
+            className="rounded-lg shadow-lg max-h-[90vh] max-w-[90vw] object-contain"
           />
         </div>
       )}
     </>
   );
 }
+
