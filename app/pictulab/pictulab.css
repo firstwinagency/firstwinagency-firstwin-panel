@@ -81,12 +81,10 @@ main {
 }
 
 /* ============================================================
-   INPUT FILE — ESTILO ORIGINAL PERFECTO
+   INPUT FILE — ESTILO PERFECTO
 ============================================================ */
 
-/* 🚨 ELIMINADO TOTALMENTE EL ESTILO ANTIGUO QUE ROMPÍA EL BLOQUE */
-/* (antes .sidebar-box label {...}) */
-
+/* Caja del uploader */
 .upload-area {
   width: 100%;
   background: #ffffff;
@@ -95,7 +93,7 @@ main {
   padding: 28px 0;
   text-align: center;
   cursor: pointer;
-  transition: .15s ease-in-out;
+  transition: 0.15s ease-in-out;
 }
 
 .upload-area:hover {
@@ -158,6 +156,7 @@ main {
   font-weight: 600;
   font-size: 12px;
 }
+
 .aspect-item .px {
   font-size: 11px;
   color: #555;
@@ -306,6 +305,19 @@ main {
   font-size: 14px;
   max-width: 90%;
   max-height: 90%;
+}
+
+/* ============================================================
+   FIX: OCULTAR INPUT REAL
+============================================================ */
+.hidden-input {
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
 /* ============================================================
