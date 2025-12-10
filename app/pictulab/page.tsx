@@ -112,18 +112,13 @@ export default function PictuLabPage() {
             <textarea placeholder="Describe brevemente la imagen que quieres generar..."></textarea>
           </div>
 
-          {/* IMÁGENES DE REFERENCIA (CORREGIDO) */}
+          {/* IMÁGENES DE REFERENCIA (CORREGIDO DEFINITIVO) */}
           <div className="sidebar-box">
             <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
             <label className="upload-area">
               <span>Sube o arrastra imágenes</span>
-              <input
-                type="file"
-                multiple
-                onChange={handleFiles}
-                style={{ display: "none" }}
-              />
+              <input type="file" multiple onChange={handleFiles} className="hidden" />
             </label>
 
             <div className="image-grid mt-2 grid grid-cols-2 gap-2">
@@ -250,4 +245,5 @@ export default function PictuLabPage() {
     </>
   );
 }
+
 
