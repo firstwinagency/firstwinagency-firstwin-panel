@@ -12,33 +12,44 @@ export default function PictuLabPage() {
   const [zoom, setZoom] = useState(1);
   const [isZoomed, setIsZoomed] = useState(false);
 
+  const [selectedFormat, setSelectedFormat] = useState("jpg");
+
+  // Imagen generada (estado final)
+  const [generated, setGenerated] = useState<{
+    base64: string;
+    mime: string;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const sizes = [
-    { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1 },
-    { label: "2:2 (cuadrado)", size: "2000×2000", ratio: 1 },
-    { label: "2:3 (vertical)", size: "832×1248", ratio: 0.66 },
-    { label: "3:4 (vertical)", size: "864×1184", ratio: 0.73 },
-    { label: "4:5 (vertical)", size: "896×1152", ratio: 0.78 },
-    { label: "9:16 (vertical)", size: "768×1344", ratio: 0.56 },
-    { label: "21:9 (vertical)", size: "672×1536", ratio: 0.43 },
-    { label: "3:2 (horizontal)", size: "1248×832", ratio: 1.5 },
-    { label: "4:3 (horizontal)", size: "1184×864", ratio: 1.37 },
-    { label: "5:4 (horizontal)", size: "1152×896", ratio: 1.28 },
-    { label: "16:9 (horizontal)", size: "1344×768", ratio: 1.77 },
-    { label: "21:9 (horizontal)", size: "1536×672", ratio: 2.28 },
-    { label: "A5 vertical", size: "1748×2480", ratio: 0.7 },
-    { label: "A5 horizontal", size: "2480×1748", ratio: 1.42 },
-    { label: "A4 vertical", size: "2480×3508", ratio: 0.7 },
-    { label: "A4 horizontal", size: "3508×2480", ratio: 1.41 },
-    { label: "A3 vertical", size: "3508×4961", ratio: 0.7 },
-    { label: "A3 horizontal", size: "4961×3508", ratio: 1.41 },
+    { label: "1:1 (cuadrado)", size: "1024×1024", ratio: 1, w: 1024, h: 1024 },
+    { label: "2:2 (cuadrado)", size: "2000×2000", ratio: 1, w: 2000, h: 2000 },
+    { label: "2:3 (vertical)", size: "832×1248", ratio: 0.66, w: 832, h: 1248 },
+    { label: "3:4 (vertical)", size: "864×1184", ratio: 0.73, w: 864, h: 1184 },
+    { label: "4:5 (vertical)", size: "896×1152", ratio: 0.78, w: 896, h: 1152 },
+    { label: "9:16 (vertical)", size: "768×1344", ratio: 0.56, w: 768, h: 1344 },
+    { label: "21:9 (vertical)", size: "672×1536", ratio: 0.43, w: 672, h: 1536 },
+    { label: "3:2 (horizontal)", size: "1248×832", ratio: 1.5, w: 1248, h: 832 },
+    { label: "4:3 (horizontal)", size: "1184×864", ratio: 1.37, w: 1184, h: 864 },
+    { label: "5:4 (horizontal)", size: "1152×896", ratio: 1.28, w: 1152, h: 896 },
+    { label: "16:9 (horizontal)", size: "1344×768", ratio: 1.77, w: 1344, h: 768 },
+    { label: "21:9 (horizontal)", size: "1536×672", ratio: 2.28, w: 1536, h: 672 },
+    { label: "A5 vertical", size: "1748×2480", ratio: 0.7, w: 1748, h: 2480 },
+    { label: "A5 horizontal", size: "2480×1748", ratio: 1.42, w: 2480, h: 1748 },
+    { label: "A4 vertical", size: "2480×3508", ratio: 0.7, w: 2480, h: 3508 },
+    { label: "A4 horizontal", size: "3508×2480", ratio: 1.41, w: 3508, h: 2480 },
+    { label: "A3 vertical", size: "3508×4961", ratio: 0.7, w: 3508, h: 4961 },
+    { label: "A3 horizontal", size: "4961×3508", ratio: 1.41, w: 4961, h: 3508 },
   ];
 
   const selectedObj = sizes.find((s) => s.label === selectedSize);
   const selectedRatio = selectedObj?.ratio ?? 1;
-  const selectedLabel = selectedObj?.size;
 
   const [previewDims, setPreviewDims] = useState({ w: 0, h: 0 });
 
@@ -89,6 +100,66 @@ export default function PictuLabPage() {
     setUploadedImages(arr);
   };
 
+  // ========= GENERACIÓN ==========
+  async function generateImage() {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    setGenerated(null);
+
+    const prompt = (
+      document.querySelector("textarea") as HTMLTextAreaElement
+    )?.value;
+
+    const payload = {
+      prompt,
+      refs: uploadedImages,
+      width: selectedObj?.w,
+      height: selectedObj?.h,
+      format: selectedFormat.toLowerCase(),
+    };
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+
+      if (!json.ok) {
+        alert("Error: " + json.error);
+        setIsGenerating(false);
+        return;
+      }
+
+      const img = json.image;
+      setGenerated(img);
+    } catch (e: any) {
+      alert("Error inesperado al generar la imagen.");
+    }
+
+    setIsGenerating(false);
+  }
+
+  // ========= EXPORTAR ==========
+  function exportImage() {
+    if (!generated) return;
+
+    const ext = selectedFormat.toLowerCase();
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")
+      .replace("T", "_")
+      .replace("Z", "");
+
+    const filename = `pictulab_${timestamp}.${ext}`;
+
+    const link = document.createElement("a");
+    link.href = `data:${generated.mime};base64,${generated.base64}`;
+    link.download = filename;
+    link.click();
+  }
+
   return (
     <>
       {/* TOP BAR */}
@@ -101,10 +172,19 @@ export default function PictuLabPage() {
         </div>
 
         <button className="btn-zoom">Importar</button>
-        <button className="btn-zoom" style={{ background: "#FF6D6D", color: "#fff" }}>Exportar</button>
+
+        <button
+          className="btn-zoom"
+          style={{ background: "#FF6D6D", color: "#fff" }}
+          onClick={exportImage}
+          disabled={!generated}
+        >
+          Exportar
+        </button>
       </div>
 
       <main className="flex min-h-screen">
+        {/* SIDEBAR */}
         <aside className="sidebar">
           {/* PROMPT */}
           <div className="sidebar-box">
@@ -112,24 +192,15 @@ export default function PictuLabPage() {
             <textarea placeholder="Describe brevemente la imagen que quieres generar..."></textarea>
           </div>
 
-          {/* IMÁGENES DE REFERENCIA */}
+          {/* REFERENCIAS */}
           <div className="sidebar-box">
             <h2>Imágenes de referencia ({uploadedImages.length}/5)</h2>
 
-            <div
-              className="upload-area"
-              onClick={() => fileInputRef.current?.click()}
-            >
+            <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
               <span>Sube o arrastra imágenes</span>
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden-input"
-              multiple
-              onChange={handleFiles}
-            />
+            <input ref={fileInputRef} type="file" multiple className="hidden-input" onChange={handleFiles} />
 
             <div className="image-grid mt-2 grid grid-cols-2 gap-2">
               {uploadedImages.map((img, i) => (
@@ -143,14 +214,7 @@ export default function PictuLabPage() {
                     setIsZoomed(false);
                   }}
                 >
-                  <Image
-                    src={img}
-                    width={300}
-                    height={300}
-                    alt="ref"
-                    className="rounded-md object-cover h-20 w-full"
-                  />
-
+                  <Image src={img} width={300} height={300} alt="ref" className="rounded-md object-cover h-20 w-full" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -198,11 +262,7 @@ export default function PictuLabPage() {
                 ))}
               </div>
             ) : (
-              <select
-                className="aspect-select"
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-              >
+              <select className="aspect-select" value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
                 {sizes.map((s) => (
                   <option key={s.label} value={s.label}>
                     {s.label} — {s.size} px
@@ -217,12 +277,25 @@ export default function PictuLabPage() {
             <h2>Selecciona el formato</h2>
             <div className="format-buttons">
               {["JPG", "PNG", "WEBP", "BMP"].map((f) => (
-                <button key={f} className="format-btn">{f}</button>
+                <button
+                  key={f}
+                  className={`format-btn ${selectedFormat === f.toLowerCase() ? "active-format" : ""}`}
+                  onClick={() => setSelectedFormat(f.toLowerCase())}
+                >
+                  {f}
+                </button>
               ))}
             </div>
           </div>
 
-          <button className="generate-btn">Generar imagen</button>
+          {/* GENERAR */}
+          <button className="generate-btn" onClick={generateImage} disabled={isGenerating}>
+            {isGenerating ? (
+              <div className="spinner"></div>
+            ) : (
+              "Generar imagen"
+            )}
+          </button>
 
           <p className="text-xs text-white text-center mt-auto">
             © 2025 Kreative 360º — Panel PicTULAB
@@ -236,14 +309,33 @@ export default function PictuLabPage() {
             style={{
               width: previewDims.w * zoom,
               height: previewDims.h * zoom,
+              position: "relative",
+              overflow: "hidden",
+              background: "#fff2",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            Vista previa ({selectedLabel} px)
+            {generated ? (
+              <img
+                src={`data:${generated.mime};base64,${generated.base64}`}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            ) : (
+              <span style={{ color: "#fff9" }}>
+                Vista previa ({selectedObj?.size})
+              </span>
+            )}
           </div>
         </section>
       </main>
 
-      {/* VISOR COMPLETO, NUNCA RECORTA, CON ZOOM */}
+      {/* VISOR COMPLETO */}
       {isViewerOpen && viewerImage && (
         <div
           className="viewer-overlay"
