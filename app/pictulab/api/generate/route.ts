@@ -16,8 +16,9 @@ export async function POST(req: Request) {
     const height = Number(body.height);
     const format = String(body.format || "jpg").toLowerCase();
 
-    // Motor IA proveniente del frontend
-    // (standard → v2 | pro → v3)
+    // Motor IA proveniente del frontend:
+    // Standard → "v2"
+    // Pro      → "v3"
     const engine = body.engine === "v3" ? "v3" : "v2";
 
     if (!prompt) {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generación con Gemini (maneja v2 / v3 internamente)
+    // GENERACIÓN GEMINI (el engine indica si usar v2 o v3)
     const imgObj = await generateImage(prompt, refs, engine);
 
     if (!imgObj?.base64) {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 
     const buf = Buffer.from(imgObj.base64, "base64");
 
-    // Ajuste final a la resolución exacta seleccionada
+    // AJUSTE A TAMAÑO EXACTO
     let img = sharp(buf).resize(width, height, { fit: "cover" });
 
     let finalBuf: Buffer;
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
         break;
 
       case "bmp":
-        // BMP no soportado → devolver PNG pero con MIME BMP
+        // Vercel no soporta BMP, devolvemos PNG con MIME BMP
         finalBuf = await img.png().toBuffer();
         mime = "image/bmp";
         break;
@@ -77,6 +78,7 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
+
   } catch (err: any) {
     return NextResponse.json(
       { ok: false, error: err?.message || "Error interno" },
