@@ -26,20 +26,20 @@ export async function POST(req: Request) {
     const mod: any = await import("../../../lib/gemini");
     const generateImageGemini25 = mod.generateImageGemini25;
 
-    // ==== GENERAMOS CON 1 IMAGEN ====
+    // ==== GENERAMOS IMAGEN ====
     const result = await generateImageGemini25(prompt, refs, 1);
 
     const baseImg = result[0];
 
-    // ==== PASAMOS A BUFFER ====
+    // ==== BUFFER BASE ====
     const buf = Buffer.from(baseImg.base64, "base64");
 
-    // ==== PROCESAMOS A TAMAÑO EXACTO ====
+    // ==== AJUSTAMOS TAMAÑO ====
     let img = sharp(buf).resize(width, height, {
       fit: "cover",
     });
 
-    // ==== FORMATO ====
+    // ==== FORMATO FINAL ====
     let finalBuf: Buffer;
     let mime = "";
 
@@ -55,7 +55,8 @@ export async function POST(req: Request) {
         break;
 
       case "bmp":
-        finalBuf = await img.bmp().toBuffer();
+        // 🔥 FIX PARA VERCEL: usar toFormat("bmp")
+        finalBuf = await img.toFormat("bmp").toBuffer();
         mime = "image/bmp";
         break;
 
