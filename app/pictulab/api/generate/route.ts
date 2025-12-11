@@ -16,7 +16,8 @@ export async function POST(req: Request) {
     const height = Number(body.height);
     const format = String(body.format || "jpg").toLowerCase();
 
-    // Nuevo: motor IA seleccionado desde el panel (v2 / v3)
+    // Motor IA proveniente del frontend
+    // (standard → v2 | pro → v3)
     const engine = body.engine === "v3" ? "v3" : "v2";
 
     if (!prompt) {
@@ -26,8 +27,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ========== GENERACIÓN CON GEMINI ==========
-    // generateImage(prompt, refs, engine)
+    // Generación con Gemini (maneja v2 / v3 internamente)
     const imgObj = await generateImage(prompt, refs, engine);
 
     if (!imgObj?.base64) {
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
     const buf = Buffer.from(imgObj.base64, "base64");
 
-    // ========== AJUSTAR A TAMAÑO EXACTO ==========
+    // Ajuste final a la resolución exacta seleccionada
     let img = sharp(buf).resize(width, height, { fit: "cover" });
 
     let finalBuf: Buffer;
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         break;
 
       case "bmp":
-        // BMP no es compatible con Vercel → devolvemos PNG pero con MIME BMP
+        // BMP no soportado → devolver PNG pero con MIME BMP
         finalBuf = await img.png().toBuffer();
         mime = "image/bmp";
         break;
@@ -84,3 +84,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
