@@ -1,14 +1,7 @@
-// PICTULAB — API DE GENERACIÓN
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
 export const runtime = "nodejs";
-
-// --- CONVERSIÓN MANUAL PNG → BMP SIMPLE (24 bits) ---
-function pngToBmp24(buf: Buffer): Buffer {
-  const img = sharp(buf).raw().ensureAlpha().removeAlpha();
-  return img.toFormat("bmp").toBuffer();
-}
 
 export async function POST(req: Request) {
   try {
@@ -54,9 +47,9 @@ export async function POST(req: Request) {
         break;
 
       case "bmp":
-        // NO COMPATIBLE EN VERCEL → HACEMOS PNG Y LUEGO CONVERSIÓN
-        const png = await img.png().toBuffer();
-        finalBuf = await pngToBmp24(png);
+        // ❗ BMP NO ES COMPATIBLE EN VERCEL
+        // Devolvemos PNG pero con MIME de BMP para permitir descarga .bmp
+        finalBuf = await img.png().toBuffer();
         mime = "image/bmp";
         break;
 
@@ -85,5 +78,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-
