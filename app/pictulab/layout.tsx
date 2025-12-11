@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function PictuLabLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body>{children}</body>
-    </html>
+    <div className="pictulab-wrapper">
+      {children}
+    </div>
   );
 }
