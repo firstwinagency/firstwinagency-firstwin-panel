@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
+import { generateImage } from "../../../../lib/gemini";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,9 @@ export async function POST(req: Request) {
     const height = Number(body.height);
     const format = String(body.format || "jpg").toLowerCase();
 
+    // Nuevo: motor IA seleccionado desde el panel (v2 / v3)
+    const engine = body.engine === "v3" ? "v3" : "v2";
+
     if (!prompt) {
       return NextResponse.json(
         { ok: false, error: "Falta prompt." },
@@ -21,13 +25,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==== MOTOR GEMINI ====
-    const mod: any = await import("../../../../lib/gemini");
-    const generateImageGemini25 = mod.generateImageGemini25;
+    // ==== MOTOR GEMINI (v2 ó v3) ====
+    const modelId =
+      engine === "v3"
+        ? "gemini-3.0-pro-image-preview"
+        : "gemini-2.5-flash-image-preview";
 
-    const result = await generateImageGemini25(prompt, refs, 1);
-    const base = result[0];
-    const buf = Buffer.from(base.base64, "base64");
+    const imgObj = await generateImage(modelId, prompt, refs);
+
+    const buf = Buffer.from(imgObj.base64, "base64");
 
     // ==== AJUSTE A TAMAÑO EXACTO ====
     let img = sharp(buf).resize(width, height, { fit: "cover" });
@@ -48,7 +54,6 @@ export async function POST(req: Request) {
 
       case "bmp":
         // ❗ BMP NO ES COMPATIBLE EN VERCEL
-        // Devolvemos PNG pero con MIME de BMP para permitir descarga .bmp
         finalBuf = await img.png().toBuffer();
         mime = "image/bmp";
         break;
@@ -78,3 +83,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
