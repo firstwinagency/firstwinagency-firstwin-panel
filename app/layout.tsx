@@ -9,36 +9,40 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Página principal NO lleva menú
-  const isHome = pathname === "/";
+  // Detectamos si NO estamos en home
+  const showMenu = pathname !== "/";
 
   return (
     <html lang="es">
       <body style={{ background: "#0b0c0e" }}>
-        
-        {/* sidebar solo en masivo y pictulab */}
-        {!isHome && (
+
+        {/* Mostrar menú en todas las páginas excepto la home */}
+        {showMenu && (
           <>
-            {/* botón menú */}
+            {/* Botón hamburguesa */}
             <button
               onClick={() => setOpen(!open)}
               style={{
                 position: "fixed",
                 top: 20,
                 left: 20,
-                zIndex: 40,
+                zIndex: 9999,
                 background: "#fff",
                 width: 42,
                 height: 42,
                 borderRadius: 8,
                 border: "1px solid #ddd",
                 fontSize: 22,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer"
               }}
             >
               ☰
             </button>
 
-            {/* sidebar */}
+            {/* Sidebar */}
             <div
               style={{
                 position: "fixed",
@@ -49,13 +53,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 background: "white",
                 borderRight: "1px solid #eee",
                 padding: "28px 18px",
-                zIndex: 35,
+                zIndex: 9998,
                 transition: "left 0.3s ease",
                 display: "flex",
                 flexDirection: "column",
               }}
             >
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: "#FF6D6D", marginBottom: 24 }}>
+              <h1
+                style={{
+                  fontSize: 26,
+                  fontWeight: 800,
+                  color: "#FF6D6D",
+                  marginBottom: 24
+                }}
+              >
                 Kreative 360º
               </h1>
 
@@ -69,7 +80,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   marginBottom: 12,
                   fontWeight: 600,
                   color: "#000",
+                  transition: "0.15s ease",
                 }}
+                onClick={() => setOpen(false)}
               >
                 Generador de Imágenes Masivo
               </Link>
@@ -84,7 +97,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   marginBottom: 12,
                   fontWeight: 600,
                   color: "#000",
+                  transition: "0.15s ease",
                 }}
+                onClick={() => setOpen(false)}
               >
                 Panel PicTULAB
               </Link>
