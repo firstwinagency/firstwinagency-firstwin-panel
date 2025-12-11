@@ -1,3 +1,4 @@
+// app/pictulab/api/generate/route.ts
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { generateImage } from "../../../../lib/gemini";
@@ -25,17 +26,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==== MOTOR GEMINI (v2 ó v3) ====
-    const modelId =
-      engine === "v3"
-        ? "gemini-3.0-pro-image-preview"
-        : "gemini-2.5-flash-image-preview";
+    // ========== GENERACIÓN CON GEMINI ==========
+    // generateImage(prompt, refs, engine)
+    const imgObj = await generateImage(prompt, refs, engine);
 
-    const imgObj = await generateImage(modelId, prompt, refs);
+    if (!imgObj?.base64) {
+      throw new Error("Gemini no devolvió imagen.");
+    }
 
     const buf = Buffer.from(imgObj.base64, "base64");
 
-    // ==== AJUSTE A TAMAÑO EXACTO ====
+    // ========== AJUSTAR A TAMAÑO EXACTO ==========
     let img = sharp(buf).resize(width, height, { fit: "cover" });
 
     let finalBuf: Buffer;
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
         break;
 
       case "bmp":
-        // ❗ BMP NO ES COMPATIBLE EN VERCEL
+        // BMP no es compatible con Vercel → devolvemos PNG pero con MIME BMP
         finalBuf = await img.png().toBuffer();
         mime = "image/bmp";
         break;
@@ -83,4 +84,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
