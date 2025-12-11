@@ -1,8 +1,14 @@
-// ESTE ENDPOINT ES SOLO PARA PICTULAB
+// PICTULAB — API DE GENERACIÓN
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
 export const runtime = "nodejs";
+
+// --- CONVERSIÓN MANUAL PNG → BMP SIMPLE (24 bits) ---
+function pngToBmp24(buf: Buffer): Buffer {
+  const img = sharp(buf).raw().ensureAlpha().removeAlpha();
+  return img.toFormat("bmp").toBuffer();
+}
 
 export async function POST(req: Request) {
   try {
@@ -22,23 +28,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==== CARGA MOTOR GEMINI ====
+    // ==== MOTOR GEMINI ====
     const mod: any = await import("../../../../lib/gemini");
     const generateImageGemini25 = mod.generateImageGemini25;
 
-    // ==== GENERAMOS 1 IMAGEN ====
     const result = await generateImageGemini25(prompt, refs, 1);
-    const baseImg = result[0];
+    const base = result[0];
+    const buf = Buffer.from(base.base64, "base64");
 
-    // ==== BASE64 → BUFFER ====
-    const buf = Buffer.from(baseImg.base64, "base64");
+    // ==== AJUSTE A TAMAÑO EXACTO ====
+    let img = sharp(buf).resize(width, height, { fit: "cover" });
 
-    // ==== AJUSTAMOS A WIDTH × HEIGHT EXACTO ====
-    let img = sharp(buf).resize(width, height, {
-      fit: "cover",
-    });
-
-    // ==== CONVERSIÓN DE FORMATO ====
     let finalBuf: Buffer;
     let mime = "";
 
@@ -54,8 +54,9 @@ export async function POST(req: Request) {
         break;
 
       case "bmp":
-        // COMPATIBLE CON VERCEL
-        finalBuf = await img.toFormat("bmp").toBuffer();
+        // NO COMPATIBLE EN VERCEL → HACEMOS PNG Y LUEGO CONVERSIÓN
+        const png = await img.png().toBuffer();
+        finalBuf = await pngToBmp24(png);
         mime = "image/bmp";
         break;
 
@@ -84,4 +85,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
