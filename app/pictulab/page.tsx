@@ -14,7 +14,6 @@ export default function PictuLabPage() {
 
   const [selectedFormat, setSelectedFormat] = useState("jpg");
 
-  // Imagen generada (estado final)
   const [generated, setGenerated] = useState<{
     base64: string;
     mime: string;
@@ -119,7 +118,7 @@ export default function PictuLabPage() {
     };
 
     try {
-      const res = await fetch("/api/generate", {
+      const res = await fetch("/pictulab/api/generate", {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -357,5 +356,6 @@ export default function PictuLabPage() {
     </>
   );
 }
+
 
 
