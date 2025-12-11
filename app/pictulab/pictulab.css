@@ -205,7 +205,7 @@ main {
 }
 
 /* ============================================================
-   FORMATO
+   FORMATO (BOTONES CORRECTAMENTE COLOREADOS)
 ============================================================ */
 .format-buttons {
   display: flex;
@@ -215,17 +215,34 @@ main {
 .format-btn {
   flex: 1;
   padding: 7px 0;
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #cfcfcf;
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
+  transition: all 0.2s ease;
+  color: #333;
 }
 
-.format-btn.active {
-  background: #000;
-  color: white;
-  border-color: #000;
+/* Hover */
+.format-btn:hover {
+  border-color: #ff6d6d;
+  color: #ff6d6d;
+}
+
+/* ACTIVO */
+.format-btn.active-format {
+  background: #ff6d6d !important;
+  color: #ffffff !important;
+  border-color: #ff6d6d !important;
+  box-shadow: 0 0 0 2px rgba(255, 109, 109, 0.25) !important;
+}
+
+/* Evitar hover sobre activo */
+.format-btn.active-format:hover {
+  background: #ff6d6d !important;
+  color: #ffffff !important;
+  border-color: #ff6d6d !important;
 }
 
 /* ============================================================
@@ -241,6 +258,22 @@ main {
   border-radius: 10px;
   cursor: pointer;
   transition: 0.2s;
+}
+
+/* Spinner opcional dentro */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid transparent;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================================
@@ -320,7 +353,7 @@ main {
 }
 
 /* ============================================================
-   VISOR DE IMAGEN AMPLIADA (NUNCA RECORTA)
+   VISOR DE IMAGEN AMPLIADA
 ============================================================ */
 .viewer-overlay {
   position: fixed !important;
@@ -337,7 +370,7 @@ main {
   max-height: 90vh !important;
   width: auto !important;
   height: auto !important;
-  object-fit: contain !important; /* 🔥 Solución final: no recorta */
+  object-fit: contain !important;
   transition: transform 0.25s ease;
   border-radius: 12px !important;
   box-shadow: 0px 0px 25px rgba(0,0,0,0.45);
@@ -352,5 +385,3 @@ main {
 /* ============================================================
    FINAL
 ============================================================ */
-
-
