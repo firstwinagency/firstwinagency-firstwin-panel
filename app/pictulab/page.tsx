@@ -14,6 +14,9 @@ export default function PictuLabPage() {
 
   const [selectedFormat, setSelectedFormat] = useState("jpg");
 
+  // ⭐ NUEVO: modelo IA elegido
+  const [selectedModel, setSelectedModel] = useState("standard");
+
   const [generated, setGenerated] = useState<{
     base64: string;
     mime: string;
@@ -115,6 +118,7 @@ export default function PictuLabPage() {
       width: selectedObj?.w,
       height: selectedObj?.h,
       format: selectedFormat.toLowerCase(),
+      model: selectedModel, // ⭐ NUEVO
     };
 
     try {
@@ -185,6 +189,7 @@ export default function PictuLabPage() {
       <main className="flex min-h-screen">
         {/* SIDEBAR */}
         <aside className="sidebar">
+
           {/* PROMPT */}
           <div className="sidebar-box">
             <h2>Prompt</h2>
@@ -287,6 +292,26 @@ export default function PictuLabPage() {
             </div>
           </div>
 
+          {/* ⭐ NUEVO: MOTOR IA */}
+          <div className="sidebar-box">
+            <h2>Motor IA</h2>
+            <div className="format-buttons">
+              <button
+                className={`format-btn model-btn ${selectedModel === "standard" ? "active-model" : ""}`}
+                onClick={() => setSelectedModel("standard")}
+              >
+                Standard
+              </button>
+
+              <button
+                className={`format-btn model-btn ${selectedModel === "pro" ? "active-model" : ""}`}
+                onClick={() => setSelectedModel("pro")}
+              >
+                Pro
+              </button>
+            </div>
+          </div>
+
           {/* GENERAR */}
           <button className="generate-btn" onClick={generateImage} disabled={isGenerating}>
             {isGenerating ? (
@@ -356,6 +381,5 @@ export default function PictuLabPage() {
     </>
   );
 }
-
 
 
