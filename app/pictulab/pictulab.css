@@ -224,13 +224,11 @@ main {
   color: #333;
 }
 
-/* Hover */
 .format-btn:hover {
   border-color: #ff6d6d;
   color: #ff6d6d;
 }
 
-/* ACTIVO */
 .format-btn.active-format {
   background: #ff6d6d !important;
   color: #ffffff !important;
@@ -238,11 +236,48 @@ main {
   box-shadow: 0 0 0 2px rgba(255, 109, 109, 0.25) !important;
 }
 
-/* Evitar hover sobre activo */
 .format-btn.active-format:hover {
   background: #ff6d6d !important;
   color: #ffffff !important;
   border-color: #ff6d6d !important;
+}
+
+/* ============================================================
+   MOTOR IA (Standard / Pro)
+============================================================ */
+.engine-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.engine-btn {
+  flex: 1;
+  padding: 7px 0;
+  background: #ffffff;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  color: #333;
+}
+
+.engine-btn:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+/* 🔥 Activo */
+.engine-btn.active {
+  background: #ff6b6b !important;
+  color: #ffffff !important;
+  border-color: #ff6b6b !important;
+  box-shadow: 0 0 0 2px rgba(255, 109, 109, 0.25) !important;
+}
+
+.engine-btn.active:hover {
+  background: #ff6b6b !important;
+  color: #fff !important;
 }
 
 /* ============================================================
@@ -260,7 +295,6 @@ main {
   transition: 0.2s;
 }
 
-/* Spinner opcional dentro */
 .spinner {
   width: 18px;
   height: 18px;
@@ -385,3 +419,4 @@ main {
 /* ============================================================
    FINAL
 ============================================================ */
+
