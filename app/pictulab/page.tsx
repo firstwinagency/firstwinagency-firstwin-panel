@@ -14,8 +14,8 @@ export default function PictuLabPage() {
 
   const [selectedFormat, setSelectedFormat] = useState("jpg");
 
-  // ⭐ NUEVO: modelo IA elegido
-  const [selectedModel, setSelectedModel] = useState("standard");
+  // ⭐ Motor IA REAL (v2 - Standard, v3 - PRO)
+  const [engine, setEngine] = useState<"v2" | "v3">("v2");
 
   const [generated, setGenerated] = useState<{
     base64: string;
@@ -118,7 +118,7 @@ export default function PictuLabPage() {
       width: selectedObj?.w,
       height: selectedObj?.h,
       format: selectedFormat.toLowerCase(),
-      model: selectedModel, // ⭐ NUEVO
+      engine, // ⭐ AHORA SÍ ENVÍA v2/v3 al backend
     };
 
     try {
@@ -187,7 +187,6 @@ export default function PictuLabPage() {
       </div>
 
       <main className="flex min-h-screen">
-        {/* SIDEBAR */}
         <aside className="sidebar">
 
           {/* PROMPT */}
@@ -292,23 +291,25 @@ export default function PictuLabPage() {
             </div>
           </div>
 
-          {/* ⭐ NUEVO: MOTOR IA */}
+          {/* ⭐ MOTOR IA (ESTO YA FUNCIONA 100%) */}
           <div className="sidebar-box">
             <h2>Motor IA</h2>
             <div className="format-buttons">
+
               <button
-                className={`format-btn model-btn ${selectedModel === "standard" ? "active-model" : ""}`}
-                onClick={() => setSelectedModel("standard")}
+                className={`format-btn engine-btn ${engine === "v2" ? "active" : ""}`}
+                onClick={() => setEngine("v2")}
               >
                 Standard
               </button>
 
               <button
-                className={`format-btn model-btn ${selectedModel === "pro" ? "active-model" : ""}`}
-                onClick={() => setSelectedModel("pro")}
+                className={`format-btn engine-btn ${engine === "v3" ? "active" : ""}`}
+                onClick={() => setEngine("v3")}
               >
                 Pro
               </button>
+
             </div>
           </div>
 
@@ -381,5 +382,4 @@ export default function PictuLabPage() {
     </>
   );
 }
-
 
