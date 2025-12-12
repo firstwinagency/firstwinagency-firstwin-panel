@@ -990,10 +990,15 @@ export default function Page() {
 
       <p style={{ marginTop: 6, color: "#15181C" }}>MVP Privado - Alejandro García</p>
 
-      {/* Grupo 1 – Fuente */}
+          {/* Grupo 1 – Fuente */}
       <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
         {(["csv", "url", "local"] as Mode[]).map((m) => {
-          const label = m === "csv" ? "Por fichero (CSV)" : m === "url" ? "Por URL" : "Desde mi PC";
+          const label =
+            m === "csv"
+              ? "Por fichero (CSV)"
+              : m === "url"
+              ? "Por URL"
+              : "Desde mi PC";
           const active = mode === m;
           return (
             <button
@@ -1015,7 +1020,87 @@ export default function Page() {
         })}
       </div>
 
-      {/* Tabla persistente de referencias */}
+      {/* Grupo 2 – Opciones de generación (SOLO UI) */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginTop: 10,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        {/* Selector de TAMAÑO / RELACIÓN DE ASPECTO */}
+        <select
+          defaultValue="1024x1024"
+          style={{
+            borderRadius: 10,
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            background: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <option value="1024x1024">1:1 (cuadrado) · 1024×1024</option>
+          <option value="2000x2000">2:2 (cuadrado) · 2000×2000</option>
+
+          <option value="832x1248">2:3 (vertical) · 832×1248</option>
+          <option value="864x1184">3:4 (vertical) · 864×1184</option>
+          <option value="896x1152">4:5 (vertical) · 896×1152</option>
+          <option value="768x1344">9:16 (vertical) · 768×1344</option>
+          <option value="672x1536">21:9 (vertical) · 672×1536</option>
+
+          <option value="1248x832">3:2 (horizontal) · 1248×832</option>
+          <option value="1184x864">4:3 (horizontal) · 1184×864</option>
+          <option value="1152x896">5:4 (horizontal) · 1152×896</option>
+          <option value="1344x768">16:9 (horizontal) · 1344×768</option>
+          <option value="1536x672">21:9 (horizontal) · 1536×672</option>
+
+          <option value="1748x2480">A5 vertical · 1748×2480</option>
+          <option value="2480x1748">A5 horizontal · 2480×1748</option>
+          <option value="2480x3508">A4 vertical · 2480×3508</option>
+          <option value="3508x2480">A4 horizontal · 3508×2480</option>
+          <option value="3508x4961">A3 vertical · 3508×4961</option>
+          <option value="4961x3508">A3 horizontal · 4961×3508</option>
+        </select>
+
+        {/* Selector de FORMATO */}
+        <select
+          defaultValue="jpg"
+          style={{
+            borderRadius: 10,
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            background: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <option value="jpg">JPG</option>
+          <option value="png">PNG</option>
+          <option value="webp">WEBP</option>
+          <option value="bmp">BMP</option>
+        </select>
+
+        {/* Selector de MOTOR IA */}
+        <select
+          defaultValue="standard"
+          style={{
+            borderRadius: 10,
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            background: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <option value="standard">Standard</option>
+          <option value="pro">Pro</option>
+        </select>
+      </div>
+
+    {/* Tabla persistente de referencias */}
       {batch.items.length > 0 && (
         <div
           style={{
