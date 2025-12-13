@@ -47,7 +47,7 @@ type GenMap = Record<string, ApiImage[]>;
 type EditMap = Record<string, string>;
 
 /* Cola CSV */
-type BatchItem = { ref: string; urls: string[] };
+type BatchItem = { ref: string; asin?: string; urls: string[] };
 type BatchState = { items: BatchItem[]; index: number; done: Set<string> };
 
 /** CSV helpers */
@@ -266,7 +266,8 @@ export default function Page() {
   const [localEnabled, setLocalEnabled] = useState<boolean[]>([]);
   const [localNames, setLocalNames] = useState<string[]>([]); // 🆕 nombres de archivos locales
   const [firstLocalBase, setFirstLocalBase] = useState<string>(""); // 🆕 base del 1º archivo (sin extensión)
-  const [zipName, setZipName] = useState<string>(""); // 🆕 editable, autocompletado en Local
+  const [zipNameRef, setZipNameRef] = useState<string>(""); // 🆕 editable, autocompletado en Local
+  const [zipNameAsin, setZipNameAsin] = useState<string>(""); // 🆕 ASIN editable
   const [zipInputKey, setZipInputKey] = useState<number>(0); // para forzar reset visual del input (botón X)
 
   const addLocalFiles = async (files: FileList | null) => {
@@ -279,7 +280,7 @@ export default function Page() {
     if (!firstLocalBase && toReadFiles.length > 0) {
       const base = toReadFiles[0].name.replace(/\.[^/.]+$/, "");
       setFirstLocalBase(base);
-      if (!zipName) setZipName(base);
+      if (!zipNameRef) setZipNameRef(base);
     }
 
     const readers = await Promise.all(
@@ -317,7 +318,8 @@ export default function Page() {
   // 🆕 Al entrar en modo URL, el nombre ZIP debe quedar vacío por defecto (editable manualmente)
   useEffect(() => {
     if (mode === "url") {
-      setZipName("");
+      setZipNameRef("");
+      setZipNameAsin("");
       setZipInputKey((k) => k + 1);
     }
   }, [mode]);
@@ -410,6 +412,19 @@ export default function Page() {
   /* ====== Referencia activa ====== */
   const activeRef =
     batch.items.length > 0 ? batch.items[batch.index]?.ref ?? "manual" : "manual";
+  const activeAsin = batch.items.length > 0 ? batch.items[batch.index]?.asin ?? "" : "";
+
+  // 🆕 Autocompletar nombres ZIP cuando cambia la referencia activa en modo CSV
+  useEffect(() => {
+    if (mode === "csv" && batch.items.length > 0) {
+      const currentItem = batch.items[batch.index];
+      if (currentItem) {
+        setZipNameRef(currentItem.ref || "");
+        setZipNameAsin(currentItem.asin || "");
+        setZipInputKey((k) => k + 1);
+      }
+    }
+  }, [batch.index, batch.items, mode]);
 
   /* ====== Orden de selección para descarga (0..n) ====== */
   type OrderMap = Record<string, number>; // key = `${ref}::${presetId}::${idx}`
@@ -463,15 +478,26 @@ export default function Page() {
       for (let i = start; i < lines.length; i++) {
         const cells = splitCSVLine(lines[i], delim);
         if (!cells.length) continue;
+        
+        // 🆕 Nueva estructura: A=referencia, B=ASIN (opcional), C-G=URLs
         const ref = (cells[0] || "").trim().replace(/\s+/g, " ");
-        let fields = cells.slice(1, 7);
-        if (cells.length === 2 && fields.length === 1) fields = parseUrls(fields[0] || "");
+        const asin = (cells[1] || "").trim(); // ASIN opcional
+        
+        // URLs: columnas C-G (índices 2-6)
+        let urlFields = cells.slice(2, 7);
+        
+        // Compatibilidad hacia atrás: si no hay suficientes columnas, intenta parsear desde B
+        if (cells.length <= 2) {
+          urlFields = [cells[1] || ""];
+        }
+        
         const urls: string[] = [];
-        for (const f of fields) {
+        for (const f of urlFields) {
           parseUrls(f || "").forEach((u) => { if (urls.length < 6) urls.push(u); });
         }
+        
         if (!ref || !urls.length) continue;
-        items.push({ ref, urls });
+        items.push({ ref, asin: asin || undefined, urls });
       }
 
       if (!items.length) { alert("No se encontraron filas válidas."); return; }
@@ -481,6 +507,11 @@ export default function Page() {
       setUrls(items[0].urls);
       setUrlEnabled(items[0].urls.map(() => true));
       setUrlInput(items[0].urls.join(" "));
+      
+      // 🆕 Autocompletar nombres ZIP
+      setZipNameRef(items[0].ref || "");
+      setZipNameAsin(items[0].asin || "");
+      
       alert(`Cargadas ${items.length} referencias.`);
     } catch (e) {
       console.error(e);
@@ -496,6 +527,10 @@ export default function Page() {
     setUrls(nextItem.urls);
     setUrlEnabled(nextItem.urls.map(() => true));
     setUrlInput(nextItem.urls.join(" "));
+    
+    // 🆕 Autocompletar nombres ZIP
+    setZipNameRef(nextItem.ref || "");
+    setZipNameAsin(nextItem.asin || "");
   };
 
   const markCurrentAsDone = () => {
@@ -508,7 +543,7 @@ export default function Page() {
   };
 
   /* ====== Descargar seleccionadas a ZIP ====== */
-  const handleDownloadSelected = async () => {
+  const handleDownloadSelected = async (useAsin: boolean = false) => {
     const zip = new JSZip();
     let added = 0;
 
@@ -516,15 +551,26 @@ export default function Page() {
     Object.keys(orderMap).forEach((k) => refs.add(k.split("::")[0]));
     if (refs.size === 0) refs.add(activeRef);
 
+    // 🆕 Determinar el nombre base según el modo seleccionado
+    let baseName = "";
+    if (useAsin) {
+      baseName = zipNameAsin.trim();
+      if (!baseName) {
+        alert("El campo ASIN está vacío. Rellénalo o usa el botón de Referencia.");
+        return;
+      }
+    } else {
+      baseName = zipNameRef.trim() || 
+        (mode === "local" ? (firstLocalBase.trim() || activeRef) : activeRef);
+    }
+
+    if (!baseName) {
+      alert("No hay nombre para el ZIP.");
+      return;
+    }
+
     for (const ref of refs) {
       const byRef = resultsByRef[ref] || {};
-
-      // ✅ NUEVA LÓGICA DE NOMBRES: carpeta por ref
-      const folderBase =
-        (zipName.trim() ||
-          (mode === "local" ? (firstLocalBase.trim() || ref) : ref));
-
-      const folder = zip.folder(folderBase) as JSZip;
 
       const entries = Object.entries(orderMap)
         .filter(([k]) => k.startsWith(`${ref}::`))
@@ -545,8 +591,9 @@ export default function Page() {
             ? "gif"
             : "jpg";
 
-        const filename = `${folderBase}_${order}.${ext}`;
-        folder.file(filename, img.base64, { base64: true });
+        // 🆕 Imágenes directamente en raíz del ZIP (sin carpeta interna)
+        const filename = `${baseName}_${order}.${ext}`;
+        zip.file(filename, img.base64, { base64: true });
         added++;
       }
     }
@@ -556,12 +603,7 @@ export default function Page() {
       return;
     }
 
-    // ✅ NUEVA LÓGICA: nombre del ZIP final
-    const zipBase =
-      (zipName.trim() ||
-        (mode === "local" ? (firstLocalBase.trim() || activeRef) : activeRef));
-    const finalName = `${zipBase}_images.zip`;
-
+    const finalName = `${baseName}_images.zip`;
     const blob = await zip.generateAsync({ type: "blob" });
     saveAs(blob, finalName);
   };
@@ -725,10 +767,10 @@ export default function Page() {
       alert("No hay referencias en la tabla.");
       return;
     }
-    const rows = [["referencia", "finalizada"]];
+    const rows = [["referencia", "asin", "finalizada"]];
     batch.items.forEach((it) => {
       const done = batch.done.has(it.ref) ? "Sí" : "No";
-      rows.push([it.ref, done]);
+      rows.push([it.ref, it.asin || "", done]);
     });
     const csv = rows
       .map((r) =>
@@ -1137,13 +1179,13 @@ export default function Page() {
             <strong>Referencias cargadas ({batch.items.length})</strong>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <small style={{ color: "#6b7280" }}>
-                Esta tabla no se limpia con “Refrescar panel”.
+                Esta tabla no se limpia con "Refrescar panel".
               </small>
               <button
                 onClick={exportReferencesCSV}
                 className="btn-ghost"
                 style={{ padding: "6px 10px" }}
-                title="Exportar CSV (referencia;finalizada)"
+                title="Exportar CSV (referencia;asin;finalizada)"
               >
                 CSV
               </button>
@@ -1172,6 +1214,7 @@ export default function Page() {
                 <tr style={{ background: "#f9fafb" }}>
                   <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Finalizada</th>
                   <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Referencia</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>ASIN</th>
                   <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Nº URLs</th>
                   <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Acciones</th>
                 </tr>
@@ -1210,6 +1253,9 @@ export default function Page() {
                             setUrls(it.urls);
                             setUrlEnabled(it.urls.map(() => true));
                             setUrlInput(it.urls.join(" "));
+                            // 🆕 Autocompletar nombres ZIP
+                            setZipNameRef(it.ref || "");
+                            setZipNameAsin(it.asin || "");
                           }}
                           style={{
                             background: "transparent",
@@ -1224,11 +1270,12 @@ export default function Page() {
                           {it.ref}
                         </button>
                       </td>
+                      <td style={{ padding: "8px 12px" }}>{it.asin || ""}</td>
                       <td style={{ padding: "8px 12px" }}>{it.urls.length}</td>
                       <td style={{ padding: "8px 12px" }}>
                         <button
                           onClick={() => {
-                            if (!confirm(`¿Eliminar la referencia “${it.ref}”?`)) return;
+                            if (!confirm(`¿Eliminar la referencia "${it.ref}"?`)) return;
                             setBatch((b) => {
                               const items = b.items.slice();
                               items.splice(i, 1);
@@ -1252,7 +1299,19 @@ export default function Page() {
           {/* Navegación simple de batch */}
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
             <button
-              onClick={() => setBatch((b) => ({ ...b, index: Math.max(0, b.index - 1) }))}
+              onClick={() => {
+                const prevIndex = Math.max(0, batch.index - 1);
+                const prevItem = batch.items[prevIndex];
+                setBatch((b) => ({ ...b, index: prevIndex }));
+                if (prevItem) {
+                  setUrls(prevItem.urls);
+                  setUrlEnabled(prevItem.urls.map(() => true));
+                  setUrlInput(prevItem.urls.join(" "));
+                  // 🆕 Autocompletar nombres ZIP
+                  setZipNameRef(prevItem.ref || "");
+                  setZipNameAsin(prevItem.asin || "");
+                }
+              }}
               disabled={batch.index === 0}
               style={{
                 border: "1px solid #e5e7eb", background: "#fff", color: "#111",
@@ -1294,7 +1353,7 @@ export default function Page() {
 
         <p style={{ marginTop: 6, color: "#4b5563" }}>
           {mode === "csv" &&
-            "Carga un CSV con: columna A referencia; columnas B–F con 1–6 URLs por producto."}
+            "Carga un CSV con: columna A referencia; B ASIN (opcional); C–G con 1–5 URLs por producto."}
           {mode === "url" &&
             "Pega 1–6 URLs (JPG/PNG) del mismo producto. Puedes separarlas por espacios; también aceptamos comas dentro de parámetros de la URL."}
           {mode === "local" &&
@@ -1438,7 +1497,7 @@ export default function Page() {
                 />
               </label>
               <small style={{ color: "#6b7280" }}>
-                Formato: Columna A = referencia; B–F = 1–6 URLs por producto.
+                Formato: Columna A = referencia; B = ASIN (opcional); C–G = 1–5 URLs por producto.
               </small>
             </div>
 
@@ -1539,7 +1598,7 @@ export default function Page() {
           <small style={{ color: "#6b7280" }}>(máx. 6)</small>
         </div>
 
-        {/* Fila: ZIP + Descargar + Marcar finalizada */}
+        {/* 🆕 Fila: DOS CAMPOS ZIP + DOS BOTONES */}
         <div
           style={{
             display: "flex",
@@ -1551,21 +1610,21 @@ export default function Page() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {/* Campo Referencia */}
             <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
               <input
-                key={zipInputKey}
-                value={zipName}
-                onChange={(e) => setZipName(e.target.value)}
-                placeholder="Nombre ZIP (opcional)"
+                key={`ref-${zipInputKey}`}
+                value={zipNameRef}
+                onChange={(e) => setZipNameRef(e.target.value)}
+                placeholder="Nombre ZIP (Referencia)"
                 style={{
                   border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 36px 8px 12px",
                   minWidth: 200,
                 }}
               />
-              {/* 🆕 Botón X para limpiar el nombre en un click */}
-              {zipName.trim() !== "" && (
+              {zipNameRef.trim() !== "" && (
                 <button
-                  onClick={() => { setZipName(""); setZipInputKey((k) => k + 1); }}
+                  onClick={() => { setZipNameRef(""); setZipInputKey((k) => k + 1); }}
                   title="Borrar nombre"
                   aria-label="Borrar nombre"
                   style={{
@@ -1580,15 +1639,60 @@ export default function Page() {
               )}
             </div>
 
+            {/* Campo ASIN */}
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <input
+                key={`asin-${zipInputKey}`}
+                value={zipNameAsin}
+                onChange={(e) => setZipNameAsin(e.target.value)}
+                placeholder="Nombre ZIP (ASIN)"
+                style={{
+                  border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 36px 8px 12px",
+                  minWidth: 200,
+                }}
+              />
+              {zipNameAsin.trim() !== "" && (
+                <button
+                  onClick={() => { setZipNameAsin(""); setZipInputKey((k) => k + 1); }}
+                  title="Borrar nombre"
+                  aria-label="Borrar nombre"
+                  style={{
+                    position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                    width: 22, height: 22, borderRadius: 6, border: "1px solid #e5e7eb",
+                    background: "#fff", color: "#111", cursor: "pointer", lineHeight: "20px",
+                    fontWeight: 800,
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Botón Referencia */}
             <button
-              onClick={handleDownloadSelected}
+              onClick={() => handleDownloadSelected(false)}
               style={{
                 borderRadius: 10, padding: "8px 12px",
                 background: "var(--brand-accent)", color: "var(--brand-accent-ink)",
                 fontWeight: 700, cursor: "pointer",
               }}
             >
-              Descargar seleccionadas (.zip)
+              Descargar ZIP (Referencia)
+            </button>
+
+            {/* Botón ASIN */}
+            <button
+              onClick={() => handleDownloadSelected(true)}
+              disabled={!zipNameAsin.trim()}
+              style={{
+                borderRadius: 10, padding: "8px 12px",
+                background: zipNameAsin.trim() ? "var(--brand-accent)" : "#e5e7eb",
+                color: zipNameAsin.trim() ? "var(--brand-accent-ink)" : "#9ca3af",
+                fontWeight: 700,
+                cursor: zipNameAsin.trim() ? "pointer" : "not-allowed",
+              }}
+            >
+              Descargar ZIP (ASIN)
             </button>
           </div>
 
@@ -1689,8 +1793,8 @@ export default function Page() {
                           : "jpg";
                       // 🆕 nombre sugerido para descarga individual en Local: usa el primer nombre local si existe
                       const suggestedName =
-                        mode === "local" && (zipName.trim() || firstLocalBase.trim())
-                          ? `${(zipName.trim() || firstLocalBase.trim())}.${ext}`
+                        mode === "local" && (zipNameRef.trim() || firstLocalBase.trim())
+                          ? `${(zipNameRef.trim() || firstLocalBase.trim())}.${ext}`
                           : undefined;
 
                       return (
@@ -1967,7 +2071,7 @@ export default function Page() {
                 }}
               />
               <small style={{ color: "#9aa0a6" }}>
-                Déjalo vacío para usar el prompt por defecto o escribe tu prompt para los “Custom”.
+                Déjalo vacío para usar el prompt por defecto o escribe tu prompt para los "Custom".
               </small>
             </div>
 
@@ -2083,4 +2187,4 @@ export default function Page() {
       )}
     </div>
   );
-       }
+}
