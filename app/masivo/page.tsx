@@ -232,6 +232,11 @@ type Overrides = {
    =========================== */
 
 export default function Page() {
+  /* ====== Estados para los selectores ====== */
+  const [imageSize, setImageSize] = useState<string>("1024x1024");
+  const [imageFormat, setImageFormat] = useState<string>("jpg");
+  const [engine, setEngine] = useState<"standard" | "pro">("standard");
+
   /* ====== Modo de carga ====== */
   const [mode, setMode] = useState<Mode>("url");
 
@@ -852,6 +857,9 @@ export default function Page() {
     // Para presets custom, usamos un preset base existente (compatibilidad con backend)
     const basePresetId = isCustom ? (PRESETS[0]?.id || presetId) : presetId;
 
+    // Parsear tamaño/resolución
+    const [width, height] = imageSize.split('x').map(Number);
+
     try {
       // activar loading SOLO de esta tarjeta
       setLoadingSet((prev) => {
@@ -868,6 +876,10 @@ export default function Page() {
           refs: refsToSend,
           count,
           overridePrompt,
+          width,
+          height,
+          format: imageFormat,
+          engine,
         }),
       });
       const data = await res.json();
@@ -1032,7 +1044,8 @@ export default function Page() {
       >
         {/* Selector de TAMAÑO / RELACIÓN DE ASPECTO */}
         <select
-          defaultValue="1024x1024"
+          value={imageSize}
+          onChange={(e) => setImageSize(e.target.value)}
           style={{
             borderRadius: 10,
             padding: "8px 12px",
@@ -1067,7 +1080,8 @@ export default function Page() {
 
         {/* Selector de FORMATO */}
         <select
-          defaultValue="jpg"
+          value={imageFormat}
+          onChange={(e) => setImageFormat(e.target.value)}
           style={{
             borderRadius: 10,
             padding: "8px 12px",
@@ -1085,7 +1099,8 @@ export default function Page() {
 
         {/* Selector de MOTOR IA */}
         <select
-          defaultValue="standard"
+          value={engine}
+          onChange={(e) => setEngine(e.target.value as "standard" | "pro")}
           style={{
             borderRadius: 10,
             padding: "8px 12px",
