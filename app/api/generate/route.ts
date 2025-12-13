@@ -9,6 +9,27 @@ export const runtime = "nodejs";
 type ApiImage = { base64: string; mime?: string };
 
 // =========================
+// Utils – refs → base64
+// =========================
+function isBase64(ref: string) {
+  return ref.startsWith("data:image/");
+}
+
+async function refToBase64(ref: string): Promise<string> {
+  if (isBase64(ref)) {
+    return ref.replace(/^data:image\/\w+;base64,/, "");
+  }
+
+  // URL → descargar → base64
+  const res = await fetch(ref);
+  if (!res.ok) {
+    throw new Error(`No se pudo descargar la imagen: ${ref}`);
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  return buf.toString("base64");
+}
+
+// =========================
 // GET – health check
 // =========================
 export async function GET() {
@@ -35,10 +56,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const refs: string[] = Array.isArray(body?.refs) ? body.refs : [];
+    const refsRaw: string[] = Array.isArray(body?.refs) ? body.refs : [];
     const presetId: string = String(body?.presetId || "");
     const countRaw = Number(body?.count);
-    const count = Math.max(1, Math.min(Number.isFinite(countRaw) ? countRaw : 1, 6));
+    const count = Math.max(
+      1,
+      Math.min(Number.isFinite(countRaw) ? countRaw : 1, 6)
+    );
 
     // Prompt desde override o preset
     let prompt: string = (body?.overridePrompt || "").trim();
@@ -47,29 +71,41 @@ export async function POST(req: Request) {
       prompt = (preset?.prompt || "").trim();
     }
     if (!prompt) {
-      prompt = "Generate one high-quality e-commerce product image using the references.";
+      prompt =
+        "Generate one high-quality e-commerce product image using the references.";
     }
 
-    if (!refs.length) {
+    if (!refsRaw.length) {
       return NextResponse.json(
-        { ok: false, error: "Faltan URLs de referencia" },
+        { ok: false, error: "Faltan imágenes de referencia" },
         { status: 400 }
       );
     }
 
     // =========================
-    // NUEVO MOTOR GEMINI SDK
+    // NORMALIZAR REFS → BASE64
     // =========================
-    // Usamos SIEMPRE v3 para mejor calidad ("Nano Banana Pro")
+    const refsBase64: string[] = [];
+    for (const r of refsRaw.slice(0, 6)) {
+      refsBase64.push(await refToBase64(r));
+    }
+
+    // =========================
+    // GEMINI (v3 – Pro)
+    // =========================
     const images: ApiImage[] = [];
 
     for (let i = 0; i < count; i++) {
-      const img = await generateImage(prompt, refs, "v3");
+      const img = await generateImage(prompt, refsBase64, "v3");
       images.push(img);
     }
 
-    // Normalizar sin recortar
-    const normalized = await Promise.all(images.map((im) => padToSquare1024(im)));
+    // =========================
+    // NORMALIZAR A 1024x1024
+    // =========================
+    const normalized = await Promise.all(
+      images.map((im) => padToSquare1024(im))
+    );
 
     return NextResponse.json(
       { ok: true, presetId, promptUsed: prompt, images: normalized },
@@ -84,7 +120,7 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// PAD A CUADRADO
+// PAD A CUADRADO 1024
 // =========================
 async function padToSquare1024(imgIn: ApiImage): Promise<ApiImage> {
   const bgColor = process.env.BG_SQUARE || "#ffffff";
@@ -105,9 +141,7 @@ async function padToSquare1024(imgIn: ApiImage): Promise<ApiImage> {
     return { base64: buf.toString("base64"), mime: "image/jpeg" };
   }
 
-  const resized = await img
-    .resize(target, target, { fit: "inside" })
-    .toBuffer();
+  const resized = await img.resize(target, target, { fit: "inside" }).toBuffer();
 
   const r = sharp(resized);
   const rMeta = await r.metadata();
