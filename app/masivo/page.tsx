@@ -319,11 +319,6 @@ export default function Page() {
 
   // Cantidad
   const [count, setCount] = useState<number>(1);
-   // 🆕 Opciones de generación
-const [imageSize, setImageSize] = useState("1024x1024");
-const [imageFormat, setImageFormat] = useState("jpg");
-const [engine, setEngine] = useState<"standard" | "pro">("standard");
-
   const handleCountChange = (v: string) => {
     let n = Number(v);
     if (Number.isNaN(n) || n < 1) n = 1;
@@ -868,17 +863,14 @@ const [engine, setEngine] = useState<"standard" | "pro">("standard");
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-  presetId: basePresetId,
-  refs: refsToSend,
-  count,
-  overridePrompt,
-  size: imageSize,
-  format: imageFormat,
-  engine,
-}),
-         
- const data = await res.json();
+        body: JSON.stringify({
+          presetId: basePresetId,
+          refs: refsToSend,
+          count,
+          overridePrompt,
+        }),
+      });
+      const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error en la generación");
       setResultsByRef((prev) => {
         const refKey = activeRef;
@@ -1028,97 +1020,85 @@ const [engine, setEngine] = useState<"standard" | "pro">("standard");
         })}
       </div>
 
- /* ===========================
-   Opciones de generación (ESTADO REAL)
-   =========================== */
+      {/* Grupo 2 – Opciones de generación (SOLO UI) */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginTop: 10,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        {/* Selector de TAMAÑO / RELACIÓN DE ASPECTO */}
+        <select
+          defaultValue="1024x1024"
+          style={{
+            borderRadius: 10,
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            background: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <option value="1024x1024">1:1 (cuadrado) · 1024×1024</option>
+          <option value="2000x2000">2:2 (cuadrado) · 2000×2000</option>
 
-/* 🆕 Estado REAL de opciones de generación */
-const [imageSize, setImageSize] = useState("1024x1024");
-const [imageFormat, setImageFormat] = useState("jpg");
-const [engine, setEngine] = useState<"standard" | "pro">("standard");
+          <option value="832x1248">2:3 (vertical) · 832×1248</option>
+          <option value="864x1184">3:4 (vertical) · 864×1184</option>
+          <option value="896x1152">4:5 (vertical) · 896×1152</option>
+          <option value="768x1344">9:16 (vertical) · 768×1344</option>
+          <option value="672x1536">21:9 (vertical) · 672×1536</option>
 
-/* Grupo 2 – Opciones de generación */
-<div
-  style={{
-    display: "flex",
-    gap: 12,
-    marginTop: 10,
-    flexWrap: "wrap",
-    alignItems: "center",
-  }}
->
-  {/* Selector de TAMAÑO / RELACIÓN DE ASPECTO */}
-  <select
-    value={imageSize}
-    onChange={(e) => setImageSize(e.target.value)}
-    style={{
-      borderRadius: 10,
-      padding: "8px 12px",
-      border: "1px solid #e5e7eb",
-      background: "#fff",
-      fontWeight: 600,
-      cursor: "pointer",
-    }}
-  >
-    <option value="1024x1024">1:1 (cuadrado) · 1024×1024</option>
-    <option value="2000x2000">2:2 (cuadrado) · 2000×2000</option>
+          <option value="1248x832">3:2 (horizontal) · 1248×832</option>
+          <option value="1184x864">4:3 (horizontal) · 1184×864</option>
+          <option value="1152x896">5:4 (horizontal) · 1152×896</option>
+          <option value="1344x768">16:9 (horizontal) · 1344×768</option>
+          <option value="1536x672">21:9 (horizontal) · 1536×672</option>
 
-    <option value="832x1248">2:3 (vertical) · 832×1248</option>
-    <option value="864x1184">3:4 (vertical) · 864×1184</option>
-    <option value="896x1152">4:5 (vertical) · 896×1152</option>
-    <option value="768x1344">9:16 (vertical) · 768×1344</option>
-    <option value="672x1536">21:9 (vertical) · 672×1536</option>
+          <option value="1748x2480">A5 vertical · 1748×2480</option>
+          <option value="2480x1748">A5 horizontal · 2480×1748</option>
+          <option value="2480x3508">A4 vertical · 2480×3508</option>
+          <option value="3508x2480">A4 horizontal · 3508×2480</option>
+          <option value="3508x4961">A3 vertical · 3508×4961</option>
+          <option value="4961x3508">A3 horizontal · 4961×3508</option>
+        </select>
 
-    <option value="1248x832">3:2 (horizontal) · 1248×832</option>
-    <option value="1184x864">4:3 (horizontal) · 1184×864</option>
-    <option value="1152x896">5:4 (horizontal) · 1152×896</option>
-    <option value="1344x768">16:9 (horizontal) · 1344×768</option>
-    <option value="1536x672">21:9 (horizontal) · 1536×672</option>
+        {/* Selector de FORMATO */}
+        <select
+          defaultValue="jpg"
+          style={{
+            borderRadius: 10,
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            background: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <option value="jpg">JPG</option>
+          <option value="png">PNG</option>
+          <option value="webp">WEBP</option>
+          <option value="bmp">BMP</option>
+        </select>
 
-    <option value="1748x2480">A5 vertical · 1748×2480</option>
-    <option value="2480x1748">A5 horizontal · 2480×1748</option>
-    <option value="2480x3508">A4 vertical · 2480×3508</option>
-    <option value="3508x2480">A4 horizontal · 3508×2480</option>
-    <option value="3508x4961">A3 vertical · 3508×4961</option>
-    <option value="4961x3508">A3 horizontal · 4961×3508</option>
-  </select>
-
-  {/* Selector de FORMATO */}
-  <select
-    value={imageFormat}
-    onChange={(e) => setImageFormat(e.target.value)}
-    style={{
-      borderRadius: 10,
-      padding: "8px 12px",
-      border: "1px solid #e5e7eb",
-      background: "#fff",
-      fontWeight: 600,
-      cursor: "pointer",
-    }}
-  >
-    <option value="jpg">JPG</option>
-    <option value="png">PNG</option>
-    <option value="webp">WEBP</option>
-    <option value="bmp">BMP</option>
-  </select>
-
-  {/* Selector de MOTOR IA */}
-  <select
-    value={engine}
-    onChange={(e) => setEngine(e.target.value as "standard" | "pro")}
-    style={{
-      borderRadius: 10,
-      padding: "8px 12px",
-      border: "1px solid #e5e7eb",
-      background: "#fff",
-      fontWeight: 600,
-      cursor: "pointer",
-    }}
-  >
-    <option value="standard">Standard</option>
-    <option value="pro">Pro</option>
-  </select>
-</div>
+        {/* Selector de MOTOR IA */}
+        <select
+          defaultValue="standard"
+          style={{
+            borderRadius: 10,
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            background: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <option value="standard">Standard</option>
+          <option value="pro">Pro</option>
+        </select>
+      </div>
 
     {/* Tabla persistente de referencias */}
       {batch.items.length > 0 && (
@@ -2088,4 +2068,4 @@ const [engine, setEngine] = useState<"standard" | "pro">("standard");
       )}
     </div>
   );
-}
+       }
