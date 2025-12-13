@@ -1298,7 +1298,7 @@ export default function Page() {
           {mode === "url" &&
             "Pega 1–6 URLs (JPG/PNG) del mismo producto. Puedes separarlas por espacios; también aceptamos comas dentro de parámetros de la URL."}
           {mode === "local" &&
-            "Carga 1–6 imágenes desde tu ordenador (JPG/PNG). Se usas solo en tu navegador."}
+            "Carga 1–6 imágenes desde tu ordenador (JPG/PNG). Se usan solo en tu navegador."}
         </p>
 
         {/* URL mode */}
@@ -1867,7 +1867,7 @@ export default function Page() {
                 {/* Botón generar */}
                 <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
                   <button
-                    onClick={() => handleGenerate(presetId)}
+                    onClick={() => handleGenerate(p.id)}
                     disabled={
                       activeSources.length === 0 ||
                       isLoading ||
@@ -1967,7 +1967,7 @@ export default function Page() {
                 }}
               />
               <small style={{ color: "#9aa0a6" }}>
-                Déjalo vacío para usar el prompt por defecto o escribe tu prompt para los "Custom".
+                Déjalo vacío para usar el prompt por defecto o escribe tu prompt para los “Custom”.
               </small>
             </div>
 
@@ -2083,4 +2083,4 @@ export default function Page() {
       )}
     </div>
   );
-}
+       }
