@@ -40,11 +40,15 @@ export async function POST(req: Request) {
     const presetId = String(body.presetId || "");
     const count = Math.max(1, Math.min(Number(body.count) || 1, 6));
 
-    // Motor IA
+    // 🔹 NUEVO: tamaño y formato (igual que Pic2Lab)
+    const width = Number(body.width) || 1024;
+    const height = Number(body.height) || 1024;
+    const format = String(body.format || "jpg").toLowerCase();
+
+    // 🔹 Motor IA
+    // standard → v2 | pro → v3
     const engine =
-      body.model === "pro" || body.engine === "pro"
-        ? "pro"
-        : "standard";
+      body.model === "pro" || body.engine === "pro" ? "v3" : "v2";
 
     // Prompt
     let prompt = (body.overridePrompt || "").trim();
@@ -67,20 +71,37 @@ export async function POST(req: Request) {
     }
 
     // refs → base64
-    const refs = [];
+    const refs: string[] = [];
     for (const r of refsRaw.slice(0, 6)) {
       refs.push(await refToBase64(r));
     }
 
-    // Generación
+    // =========================
+    // GENERACIÓN + PROCESADO
+    // =========================
     const images: ApiImage[] = [];
+
     for (let i = 0; i < count; i++) {
       const img = await generateImage(prompt, refs, engine);
-      images.push(await padToSquare1024(img));
+      const processed = await resizeAndFormat(
+        img,
+        width,
+        height,
+        format
+      );
+      images.push(processed);
     }
 
     return NextResponse.json(
-      { ok: true, presetId, images },
+      {
+        ok: true,
+        presetId,
+        width,
+        height,
+        format,
+        engine,
+        images,
+      },
       { status: 200 }
     );
   } catch (err: any) {
@@ -92,34 +113,47 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// PAD 1024x1024
+// Resize + formato (CLON Pic2Lab)
 // =========================
-async function padToSquare1024(imgIn: ApiImage): Promise<ApiImage> {
-  const target = 1024;
-  const bgColor = "#ffffff";
-
+async function resizeAndFormat(
+  imgIn: ApiImage,
+  width: number,
+  height: number,
+  format: string
+): Promise<ApiImage> {
   const input = Buffer.from(imgIn.base64, "base64");
-  const img = sharp(input).rotate();
 
-  const resized = await img.resize(target, target, { fit: "inside" }).toBuffer();
-  const meta = await sharp(resized).metadata();
+  let img = sharp(input, { limitInputPixels: false }).rotate();
+  img = img.resize(width, height, { fit: "cover" });
 
-  const left = Math.floor((target - (meta.width || target)) / 2);
-  const top = Math.floor((target - (meta.height || target)) / 2);
+  let finalBuf: Buffer;
+  let mime = "";
 
-  const out = await sharp(resized)
-    .extend({
-      top,
-      bottom: target - (meta.height || target) - top,
-      left,
-      right: target - (meta.width || target) - left,
-      background: bgColor,
-    })
-    .jpeg({ quality: 92 })
-    .toBuffer();
+  switch (format) {
+    case "png":
+      finalBuf = await img.png().toBuffer();
+      mime = "image/png";
+      break;
+
+    case "webp":
+      finalBuf = await img.webp().toBuffer();
+      mime = "image/webp";
+      break;
+
+    case "bmp":
+      // BMP no soportado nativamente → PNG con MIME BMP
+      finalBuf = await img.png().toBuffer();
+      mime = "image/bmp";
+      break;
+
+    default:
+      finalBuf = await img.jpeg({ quality: 95 }).toBuffer();
+      mime = "image/jpeg";
+      break;
+  }
 
   return {
-    base64: out.toString("base64"),
-    mime: "image/jpeg",
+    base64: finalBuf.toString("base64"),
+    mime,
   };
 }
