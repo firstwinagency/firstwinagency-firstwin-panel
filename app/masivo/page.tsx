@@ -234,28 +234,7 @@ type Overrides = {
 export default function Page() {
   /* ====== Modo de carga ====== */
   const [mode, setMode] = useState<Mode>("url");
-export default function Page() {
-  /* ====== Modo de carga ====== */
-  const [mode, setMode] = useState<Mode>("url");
 
-  /* ====== NUEVO: Opciones de generación (PictoLab-compatible) ====== */
-  const [selectedSize, setSelectedSize] = useState<{
-    label: string;
-    size: string;
-    ratio: number;
-    w: number;
-    h: number;
-  }>({
-    label: "1:1 (cuadrado)",
-    size: "1024×1024",
-    ratio: 1,
-    w: 1024,
-    h: 1024,
-  });
-
-  const [format, setFormat] = useState<"jpg" | "png" | "webp" | "bmp">("jpg");
-  const [engine, setEngine] = useState<"standard" | "pro">("standard");
-   
   /* ====== URL / CSV ====== */
   const [urlInput, setUrlInput] = useState("");
   const [urls, setUrls] = useState<string[]>([]);
