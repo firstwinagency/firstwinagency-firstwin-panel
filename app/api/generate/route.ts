@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const presetId = String(body.presetId || "");
     const count = Math.max(1, Math.min(Number(body.count) || 1, 6));
 
-    // 🔹 NUEVO: tamaño y formato (igual que Pic2Lab)
+    // 🔹 Tamaño y formato
     const width = Number(body.width) || 1024;
     const height = Number(body.height) || 1024;
     const format = String(body.format || "jpg").toLowerCase();
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
 
     for (let i = 0; i < count; i++) {
       const img = await generateImage(prompt, refs, engine);
-      const processed = await resizeAndFormat(
+      const processed = await resizeAndFormat300DPI(
         img,
         width,
         height,
@@ -113,9 +113,9 @@ export async function POST(req: Request) {
 }
 
 // =========================
-// Resize + formato (CLON Pic2Lab)
+// Resize + formato + 300 DPI
 // =========================
-async function resizeAndFormat(
+async function resizeAndFormat300DPI(
   imgIn: ApiImage,
   width: number,
   height: number,
@@ -123,31 +123,44 @@ async function resizeAndFormat(
 ): Promise<ApiImage> {
   const input = Buffer.from(imgIn.base64, "base64");
 
-  let img = sharp(input, { limitInputPixels: false }).rotate();
-  img = img.resize(width, height, { fit: "cover" });
+  let img = sharp(input, { limitInputPixels: false })
+    .rotate()
+    .resize(width, height, { fit: "cover" });
 
   let finalBuf: Buffer;
   let mime = "";
 
   switch (format) {
     case "png":
-      finalBuf = await img.png().toBuffer();
+      finalBuf = await img
+        .png()
+        .withMetadata({ density: 300 })
+        .toBuffer();
       mime = "image/png";
       break;
 
     case "webp":
-      finalBuf = await img.webp().toBuffer();
+      finalBuf = await img
+        .webp({ quality: 95 })
+        .withMetadata({ density: 300 })
+        .toBuffer();
       mime = "image/webp";
       break;
 
     case "bmp":
-      // BMP no soportado nativamente → PNG con MIME BMP
-      finalBuf = await img.png().toBuffer();
+      // BMP no soporta DPI → usamos PNG con density 300
+      finalBuf = await img
+        .png()
+        .withMetadata({ density: 300 })
+        .toBuffer();
       mime = "image/bmp";
       break;
 
     default:
-      finalBuf = await img.jpeg({ quality: 95 }).toBuffer();
+      finalBuf = await img
+        .jpeg({ quality: 95 })
+        .withMetadata({ density: 300 })
+        .toBuffer();
       mime = "image/jpeg";
       break;
   }
@@ -157,3 +170,4 @@ async function resizeAndFormat(
     mime,
   };
 }
+
