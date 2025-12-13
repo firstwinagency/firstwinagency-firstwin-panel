@@ -547,9 +547,8 @@ export default function Page() {
     const zip = new JSZip();
     let added = 0;
 
-    const refs = new Set<string>();
-    Object.keys(orderMap).forEach((k) => refs.add(k.split("::")[0]));
-    if (refs.size === 0) refs.add(activeRef);
+    // 🆕 SOLO usar la referencia activa, no todas las referencias en orderMap
+    const targetRef = activeRef;
 
     // 🆕 Determinar el nombre base según el modo seleccionado
     let baseName = "";
@@ -569,33 +568,32 @@ export default function Page() {
       return;
     }
 
-    for (const ref of refs) {
-      const byRef = resultsByRef[ref] || {};
+    // 🆕 Filtrar SOLO las entradas de la referencia activa
+    const entries = Object.entries(orderMap)
+      .filter(([k]) => k.startsWith(`${targetRef}::`))
+      .sort((a, b) => a[1] - b[1]);
 
-      const entries = Object.entries(orderMap)
-        .filter(([k]) => k.startsWith(`${ref}::`))
-        .sort((a, b) => a[1] - b[1]);
+    const byRef = resultsByRef[targetRef] || {};
 
-      for (const [k, order] of entries) {
-        const [, presetId, idxStr] = k.split("::");
-        const idx = Number(idxStr);
-        const imgs = byRef[presetId] || [];
-        const img = imgs[idx];
-        if (!img) continue;
-        const ext =
-          img.mime?.includes("png")
-            ? "png"
-            : img.mime?.includes("webp")
-            ? "webp"
-            : img.mime?.includes("gif")
-            ? "gif"
-            : "jpg";
+    for (const [k, order] of entries) {
+      const [, presetId, idxStr] = k.split("::");
+      const idx = Number(idxStr);
+      const imgs = byRef[presetId] || [];
+      const img = imgs[idx];
+      if (!img) continue;
+      const ext =
+        img.mime?.includes("png")
+          ? "png"
+          : img.mime?.includes("webp")
+          ? "webp"
+          : img.mime?.includes("gif")
+          ? "gif"
+          : "jpg";
 
-        // 🆕 Imágenes directamente en raíz del ZIP (sin carpeta interna)
-        const filename = `${baseName}_${order}.${ext}`;
-        zip.file(filename, img.base64, { base64: true });
-        added++;
-      }
+      // 🆕 Imágenes directamente en raíz del ZIP (sin carpeta interna)
+      const filename = `${baseName}_${order}.${ext}`;
+      zip.file(filename, img.base64, { base64: true });
+      added++;
     }
 
     if (!added) {
