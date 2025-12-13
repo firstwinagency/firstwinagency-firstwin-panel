@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 type ApiImage = { base64: string; mime?: string };
 
 // =========================
-// Utils – refs → base64
+// Utils
 // =========================
 function isBase64(ref: string) {
   return ref.startsWith("data:image/");
@@ -20,23 +20,13 @@ async function refToBase64(ref: string): Promise<string> {
     return ref.replace(/^data:image\/\w+;base64,/, "");
   }
 
-  // URL → descargar → base64
   const res = await fetch(ref);
   if (!res.ok) {
     throw new Error(`No se pudo descargar la imagen: ${ref}`);
   }
+
   const buf = Buffer.from(await res.arrayBuffer());
   return buf.toString("base64");
-}
-
-// =========================
-// GET – health check
-// =========================
-export async function GET() {
-  return NextResponse.json(
-    { ok: true, endpoint: "/api/generate" },
-    { status: 200 }
-  );
 }
 
 // =========================
@@ -44,120 +34,92 @@ export async function GET() {
 // =========================
 export async function POST(req: Request) {
   try {
-    const raw = await req.text();
-    let body: any = {};
+    const body = JSON.parse(await req.text());
 
-    try {
-      body = JSON.parse(raw || "{}");
-    } catch {
-      return NextResponse.json(
-        { ok: false, error: "Body JSON inválido" },
-        { status: 400 }
-      );
-    }
+    const refsRaw: string[] = Array.isArray(body.refs) ? body.refs : [];
+    const presetId = String(body.presetId || "");
+    const count = Math.max(1, Math.min(Number(body.count) || 1, 6));
 
-    const refsRaw: string[] = Array.isArray(body?.refs) ? body.refs : [];
-    const presetId: string = String(body?.presetId || "");
-    const countRaw = Number(body?.count);
-    const count = Math.max(
-      1,
-      Math.min(Number.isFinite(countRaw) ? countRaw : 1, 6)
-    );
+    // Motor IA
+    const engine =
+      body.model === "pro" || body.engine === "pro"
+        ? "pro"
+        : "standard";
 
-    // Prompt desde override o preset
-    let prompt: string = (body?.overridePrompt || "").trim();
+    // Prompt
+    let prompt = (body.overridePrompt || "").trim();
     if (!prompt) {
       const preset = PRESETS.find((p) => p.id === presetId);
-      prompt = (preset?.prompt || "").trim();
+      prompt = preset?.prompt || "";
     }
     if (!prompt) {
-      prompt =
-        "Generate one high-quality e-commerce product image using the references.";
+      return NextResponse.json(
+        { ok: false, error: "Falta prompt." },
+        { status: 400 }
+      );
     }
 
     if (!refsRaw.length) {
       return NextResponse.json(
-        { ok: false, error: "Faltan imágenes de referencia" },
+        { ok: false, error: "Faltan imágenes de referencia." },
         { status: 400 }
       );
     }
 
-    // =========================
-    // NORMALIZAR REFS → BASE64
-    // =========================
-    const refsBase64: string[] = [];
+    // refs → base64
+    const refs = [];
     for (const r of refsRaw.slice(0, 6)) {
-      refsBase64.push(await refToBase64(r));
+      refs.push(await refToBase64(r));
     }
 
-    // =========================
-    // GEMINI (v3 – Pro)
-    // =========================
+    // Generación
     const images: ApiImage[] = [];
-
     for (let i = 0; i < count; i++) {
-      const img = await generateImage(prompt, refsBase64, "v3");
-      images.push(img);
+      const img = await generateImage(prompt, refs, engine);
+      images.push(await padToSquare1024(img));
     }
-
-    // =========================
-    // NORMALIZAR A 1024x1024
-    // =========================
-    const normalized = await Promise.all(
-      images.map((im) => padToSquare1024(im))
-    );
 
     return NextResponse.json(
-      { ok: true, presetId, promptUsed: prompt, images: normalized },
+      { ok: true, presetId, images },
       { status: 200 }
     );
-  } catch (e: any) {
+  } catch (err: any) {
     return NextResponse.json(
-      { ok: false, error: String(e?.message || e) },
+      { ok: false, error: err?.message || "Error interno" },
       { status: 500 }
     );
   }
 }
 
 // =========================
-// PAD A CUADRADO 1024
+// PAD 1024x1024
 // =========================
 async function padToSquare1024(imgIn: ApiImage): Promise<ApiImage> {
-  const bgColor = process.env.BG_SQUARE || "#ffffff";
   const target = 1024;
+  const bgColor = "#ffffff";
 
   const input = Buffer.from(imgIn.base64, "base64");
-  let img = sharp(input, { limitInputPixels: false }).rotate();
-
-  const meta = await img.metadata();
-  const w = meta.width || 0;
-  const h = meta.height || 0;
-
-  if (w > 0 && h > 0 && w === h) {
-    const buf = await img
-      .resize(target, target, { fit: "inside" })
-      .jpeg({ quality: 92 })
-      .toBuffer();
-    return { base64: buf.toString("base64"), mime: "image/jpeg" };
-  }
+  const img = sharp(input).rotate();
 
   const resized = await img.resize(target, target, { fit: "inside" }).toBuffer();
+  const meta = await sharp(resized).metadata();
 
-  const r = sharp(resized);
-  const rMeta = await r.metadata();
-  const rw = rMeta.width || target;
-  const rh = rMeta.height || target;
+  const left = Math.floor((target - (meta.width || target)) / 2);
+  const top = Math.floor((target - (meta.height || target)) / 2);
 
-  const left = Math.floor((target - rw) / 2);
-  const right = target - rw - left;
-  const top = Math.floor((target - rh) / 2);
-  const bottom = target - rh - top;
-
-  const out = await r
-    .extend({ top, bottom, left, right, background: bgColor })
+  const out = await sharp(resized)
+    .extend({
+      top,
+      bottom: target - (meta.height || target) - top,
+      left,
+      right: target - (meta.width || target) - left,
+      background: bgColor,
+    })
     .jpeg({ quality: 92 })
     .toBuffer();
 
-  return { base64: out.toString("base64"), mime: "image/jpeg" };
+  return {
+    base64: out.toString("base64"),
+    mime: "image/jpeg",
+  };
 }
-
