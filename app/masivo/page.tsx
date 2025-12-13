@@ -863,14 +863,17 @@ export default function Page() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          presetId: basePresetId,
-          refs: refsToSend,
-          count,
-          overridePrompt,
-        }),
-      });
-      const data = await res.json();
+      body: JSON.stringify({
+  presetId: basePresetId,
+  refs: refsToSend,
+  count,
+  overridePrompt,
+  size: imageSize,
+  format: imageFormat,
+  engine,
+}),
+         
+ const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error en la generación");
       setResultsByRef((prev) => {
         const refKey = activeRef;
