@@ -860,23 +860,16 @@ export default function Page() {
         return next;
       });
 
-    const res = await fetch("/api/generate", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    presetId: basePresetId,
-    refs: refsToSend,
-    count,
-    overridePrompt,
-
-    // 🔥 NUEVO — exactamente como PictoLab
-    width: selectedSize?.w ?? 1024,
-    height: selectedSize?.h ?? 1024,
-    format: format ?? "jpg",
-    model: engine === "pro" ? "pro" : "standard",
-  }),
-});
-
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          presetId: basePresetId,
+          refs: refsToSend,
+          count,
+          overridePrompt,
+        }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error en la generación");
       setResultsByRef((prev) => {
