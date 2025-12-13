@@ -319,6 +319,11 @@ export default function Page() {
 
   // Cantidad
   const [count, setCount] = useState<number>(1);
+   // 🆕 Opciones de generación
+const [imageSize, setImageSize] = useState("1024x1024");
+const [imageFormat, setImageFormat] = useState("jpg");
+const [engine, setEngine] = useState<"standard" | "pro">("standard");
+
   const handleCountChange = (v: string) => {
     let n = Number(v);
     if (Number.isNaN(n) || n < 1) n = 1;
