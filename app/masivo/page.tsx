@@ -606,6 +606,13 @@ export default function Page() {
     saveAs(blob, finalName);
   };
 
+  /* ====== Función para el nuevo botón "Enviar a proyecto" ====== */
+  const handleSendToProject = () => {
+    console.log("Enviar a proyecto");
+    // Por ahora solo hace un console.log, según los requisitos
+    // Más adelante se implementará la lógica real de envío
+  };
+
   // Limpiar resultados + fuentes + numeración
   const clearAllImages = () => {
     if (!Object.keys(resultsByRef).length && urls.length === 0 && localImages.length === 0) return;
@@ -1676,6 +1683,23 @@ export default function Page() {
               }}
             >
               Descargar ZIP (Referencia)
+            </button>
+
+            {/* 🔵 NUEVO BOTÓN: "Enviar a proyecto" */}
+            <button
+              onClick={handleSendToProject}
+              style={{
+                borderRadius: 10,
+                padding: "8px 12px",
+                background: "#10b981", // Color verde
+                color: "#ffffff",
+                fontWeight: 700,
+                cursor: "pointer",
+                border: "1px solid rgba(0,0,0,.1)",
+              }}
+              title="Enviar imágenes seleccionadas al proyecto"
+            >
+              Enviar a proyecto
             </button>
 
             {/* Botón ASIN */}
