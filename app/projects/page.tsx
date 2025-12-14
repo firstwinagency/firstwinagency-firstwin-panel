@@ -20,7 +20,7 @@ export default function ProjectsPage() {
   const [preview, setPreview] = useState<string | null>(null);
 
   /* ======================
-     Cargar imágenes
+     CARGAR IMÁGENES
      ====================== */
   useEffect(() => {
     loadImages();
@@ -32,11 +32,13 @@ export default function ProjectsPage() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) setImages(data);
+    if (!error && data) {
+      setImages(data);
+    }
   }
 
   /* ======================
-     Selección
+     SELECCIÓN
      ====================== */
   function toggle(id: string) {
     setSelected((prev) => {
@@ -55,7 +57,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================
-     Eliminar
+     ELIMINAR
      ====================== */
   async function deleteSelected() {
     if (!selected.size) return;
@@ -68,7 +70,10 @@ export default function ProjectsPage() {
         .from("project-images")
         .remove([img.storage_path]);
 
-      await supabase.from("project_images").delete().eq("id", img.id);
+      await supabase
+        .from("project_images")
+        .delete()
+        .eq("id", img.id);
     }
 
     clearSelection();
@@ -76,7 +81,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================
-     Descargar ZIP
+     DESCARGAR ZIP
      ====================== */
   async function downloadZip(useAsin: boolean) {
     if (!images.length) return;
@@ -102,7 +107,10 @@ export default function ProjectsPage() {
     }
 
     const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(blob, useAsin ? "proyecto_asin.zip" : "proyecto_referencia.zip");
+    saveAs(
+      blob,
+      useAsin ? "proyecto_asin.zip" : "proyecto_referencia.zip"
+    );
   }
 
   /* ======================
@@ -110,12 +118,12 @@ export default function ProjectsPage() {
      ====================== */
   return (
     <div style={{ padding: 24, maxWidth: 1400, margin: "0 auto" }}>
-      <h1 style={{ fontWeight: 800, marginBottom: 12 }}>
+      <h1 style={{ fontWeight: 800, marginBottom: 16 }}>
         Proyectos · Galería
       </h1>
 
-      {/* BOTONES SUPERIORES */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+      {/* BOTONES */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <button onClick={() => downloadZip(false)} className="btn-primary">
           Descargar ZIP (Referencia)
         </button>
@@ -135,13 +143,15 @@ export default function ProjectsPage() {
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-          gap: 12,
+          gap: 14,
         }}
       >
         {images.map((img) => {
-          const publicUrl = supabase.storage
-            .from("project-images")
-            .getPublicUrl(img.storage_path).data.publicUrl;
+          const publicUrl =
+            supabase.storage
+              .from("project-images")
+              .getPublicUrl(img.storage_path)
+              .data.publicUrl;
 
           return (
             <div
@@ -151,14 +161,19 @@ export default function ProjectsPage() {
                   ? "2px solid #22c55e"
                   : "1px solid #e5e7eb",
                 borderRadius: 12,
-                overflow: "hidden",
                 background: "#fff",
+                overflow: "hidden",
               }}
             >
               <img
                 src={publicUrl}
-                style={{ width: "100%", height: 160, objectFit: "cover", cursor: "pointer" }}
                 onClick={() => setPreview(publicUrl)}
+                style={{
+                  width: "100%",
+                  height: 160,
+                  objectFit: "cover",
+                  cursor: "pointer",
+                }}
               />
 
               <div style={{ padding: 8 }}>
@@ -170,7 +185,8 @@ export default function ProjectsPage() {
                   />{" "}
                   Seleccionar
                 </label>
-                <div style={{ fontSize: 11, color: "#6b7280" }}>
+
+                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
                   {img.reference || img.asin}
                 </div>
               </div>
@@ -179,14 +195,14 @@ export default function ProjectsPage() {
         })}
       </div>
 
-      {/* LIGHTBOX */}
+      {/* VISOR */}
       {preview && (
         <div
           onClick={() => setPreview(null)}
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,.8)",
+            background: "rgba(0,0,0,0.85)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -195,7 +211,11 @@ export default function ProjectsPage() {
         >
           <img
             src={preview}
-            style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: 12 }}
+            style={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              borderRadius: 12,
+            }}
           />
         </div>
       )}
