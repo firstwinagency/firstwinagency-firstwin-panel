@@ -32,9 +32,7 @@ export default function ProjectsPage() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setImages(data);
-    }
+    if (!error && data) setImages(data);
   }
 
   /* ======================
@@ -70,10 +68,7 @@ export default function ProjectsPage() {
         .from("project-images")
         .remove([img.storage_path]);
 
-      await supabase
-        .from("project_images")
-        .delete()
-        .eq("id", img.id);
+      await supabase.from("project_images").delete().eq("id", img.id);
     }
 
     clearSelection();
@@ -87,7 +82,7 @@ export default function ProjectsPage() {
     if (!images.length) return;
 
     const zip = new JSZip();
-    let index = 1;
+    let index = 0;
 
     for (const img of images) {
       const { data } = await supabase.storage
@@ -101,8 +96,8 @@ export default function ProjectsPage() {
           ? img.asin
           : img.reference || "image";
 
-      // ✅ TEMPLATE STRING CORRECTA
-      zip.file(${base}_${index}.jpg, data);
+      // ✅ TEMPLATE STRING CORRECTA (ESTO ERA TODO EL PROBLEMA)
+      zip.file(`${base}_${index}.jpg`, data);
       index++;
     }
 
@@ -118,12 +113,12 @@ export default function ProjectsPage() {
      ====================== */
   return (
     <div style={{ padding: 24, maxWidth: 1400, margin: "0 auto" }}>
-      <h1 style={{ fontWeight: 800, marginBottom: 16 }}>
+      <h1 style={{ fontWeight: 800, marginBottom: 12 }}>
         Proyectos · Galería
       </h1>
 
       {/* BOTONES */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
         <button onClick={() => downloadZip(false)} className="btn-primary">
           Descargar ZIP (Referencia)
         </button>
@@ -143,37 +138,30 @@ export default function ProjectsPage() {
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-          gap: 14,
+          gap: 12,
         }}
       >
         {images.map((img) => {
-          const publicUrl =
-            supabase.storage
-              .from("project-images")
-              .getPublicUrl(img.storage_path)
-              .data.publicUrl;
+          const publicUrl = supabase.storage
+            .from("project-images")
+            .getPublicUrl(img.storage_path).data.publicUrl;
 
           return (
             <div
               key={img.id}
               style={{
                 border: selected.has(img.id)
-                  ? "2px solid #22c55e"
+                  ? "2px solid var(--brand-accent)"
                   : "1px solid #e5e7eb",
                 borderRadius: 12,
-                background: "#fff",
                 overflow: "hidden",
+                background: "#fff",
               }}
             >
               <img
                 src={publicUrl}
+                style={{ width: "100%", height: 160, objectFit: "cover", cursor: "pointer" }}
                 onClick={() => setPreview(publicUrl)}
-                style={{
-                  width: "100%",
-                  height: 160,
-                  objectFit: "cover",
-                  cursor: "pointer",
-                }}
               />
 
               <div style={{ padding: 8 }}>
@@ -185,8 +173,7 @@ export default function ProjectsPage() {
                   />{" "}
                   Seleccionar
                 </label>
-
-                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>
                   {img.reference || img.asin}
                 </div>
               </div>
@@ -202,7 +189,7 @@ export default function ProjectsPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.85)",
+            background: "rgba(0,0,0,.8)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -211,14 +198,11 @@ export default function ProjectsPage() {
         >
           <img
             src={preview}
-            style={{
-              maxWidth: "90%",
-              maxHeight: "90%",
-              borderRadius: 12,
-            }}
+            style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: 12 }}
           />
         </div>
       )}
     </div>
   );
 }
+
