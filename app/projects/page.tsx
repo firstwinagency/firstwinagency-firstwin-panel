@@ -82,7 +82,7 @@ export default function ProjectsPage() {
     if (!images.length) return;
 
     const zip = new JSZip();
-    let index = 0;
+    let index = 1;
 
     for (const img of images) {
       const { data } = await supabase.storage
@@ -96,16 +96,13 @@ export default function ProjectsPage() {
           ? img.asin
           : img.reference || "image";
 
-      // ✅ AQUÍ ESTABA EL ERROR
+      // ✅ TEMPLATE STRING CORRECTA
       zip.file(${base}_${index}.jpg, data);
       index++;
     }
 
     const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(
-      blob,
-      useAsin ? "proyecto_asin.zip" : "proyecto_referencia.zip"
-    );
+    saveAs(blob, useAsin ? "proyecto_asin.zip" : "proyecto_referencia.zip");
   }
 
   /* ======================
@@ -151,7 +148,7 @@ export default function ProjectsPage() {
               key={img.id}
               style={{
                 border: selected.has(img.id)
-                  ? "2px solid var(--brand-accent)"
+                  ? "2px solid #22c55e"
                   : "1px solid #e5e7eb",
                 borderRadius: 12,
                 overflow: "hidden",
@@ -160,7 +157,7 @@ export default function ProjectsPage() {
             >
               <img
                 src={publicUrl}
-                style={{ width: "100%", height: 160, objectFit: "cover", cursor: "zoom-in" }}
+                style={{ width: "100%", height: 160, objectFit: "cover", cursor: "pointer" }}
                 onClick={() => setPreview(publicUrl)}
               />
 
