@@ -20,7 +20,7 @@ export default function ProjectsPage() {
   const [preview, setPreview] = useState<string | null>(null);
 
   /* ======================
-     CARGAR IMÁGENES
+     Cargar imágenes
      ====================== */
   useEffect(() => {
     loadImages();
@@ -36,7 +36,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================
-     SELECCIÓN
+     Selección
      ====================== */
   function toggle(id: string) {
     setSelected((prev) => {
@@ -55,7 +55,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================
-     ELIMINAR
+     Eliminar
      ====================== */
   async function deleteSelected() {
     if (!selected.size) return;
@@ -76,7 +76,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================
-     DESCARGAR ZIP
+     Descargar ZIP
      ====================== */
   async function downloadZip(useAsin: boolean) {
     if (!images.length) return;
@@ -96,6 +96,7 @@ export default function ProjectsPage() {
           ? img.asin
           : img.reference || "image";
 
+      // ✅ AQUÍ ESTABA EL ERROR
       zip.file(${base}_${index}.jpg, data);
       index++;
     }
