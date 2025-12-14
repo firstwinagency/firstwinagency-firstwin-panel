@@ -9,14 +9,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Detectamos si NO estamos en home
+  // Mostrar menú en todas las páginas excepto la home
   const showMenu = pathname !== "/";
 
   return (
     <html lang="es">
       <body style={{ background: "#0b0c0e" }}>
 
-        {/* Mostrar menú en todas las páginas excepto la home */}
         {showMenu && (
           <>
             {/* Botón hamburguesa */}
@@ -50,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 left: open ? 0 : "-260px",
                 width: 260,
                 height: "100vh",
-                background: "white",
+                background: "#ffffff",
                 borderRight: "1px solid #eee",
                 padding: "28px 18px",
                 zIndex: 9998,
@@ -70,8 +69,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Kreative 360º
               </h1>
 
+              {/* MASIVO */}
               <Link
                 href="/masivo"
+                onClick={() => setOpen(false)}
                 style={{
                   padding: "14px 16px",
                   background: "#fff",
@@ -80,15 +81,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   marginBottom: 12,
                   fontWeight: 600,
                   color: "#000",
-                  transition: "0.15s ease",
+                  textDecoration: "none",
                 }}
-                onClick={() => setOpen(false)}
               >
                 Generador de Imágenes Masivo
               </Link>
 
+              {/* PROYECTOS */}
+              <Link
+                href="/projects"
+                onClick={() => setOpen(false)}
+                style={{
+                  padding: "14px 16px",
+                  background: "#e9fff2",
+                  borderRadius: 12,
+                  border: "1px solid #22c55e",
+                  marginBottom: 12,
+                  fontWeight: 700,
+                  color: "#15803d",
+                  textDecoration: "none",
+                }}
+              >
+                Proyectos
+              </Link>
+
+              {/* PICTULAB */}
               <Link
                 href="/pictulab"
+                onClick={() => setOpen(false)}
                 style={{
                   padding: "14px 16px",
                   background: "#fff",
@@ -97,9 +117,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   marginBottom: 12,
                   fontWeight: 600,
                   color: "#000",
-                  transition: "0.15s ease",
+                  textDecoration: "none",
                 }}
-                onClick={() => setOpen(false)}
               >
                 Panel PicTULAB
               </Link>
@@ -116,4 +135,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
