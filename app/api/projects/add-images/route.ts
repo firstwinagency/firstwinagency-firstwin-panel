@@ -1,38 +1,82 @@
-import { NextRequest, NextResponse } from "next/server";
-import { addImageToProject } from "@/lib/projectStore";
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabaseClient";
+import { v4 as uuidv4 } from "uuid";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
+    const body = await req.json();
 
-    const projectId = formData.get("projectId") as string;
-    const asin = formData.get("asin") as string | null;
-    const referencia = formData.get("referencia") as string | null;
-    const file = formData.get("file") as File;
+    const {
+      projectId,
+      images, // [{ base64, mime, filename, asin, reference }]
+    } = body;
 
-    if (!projectId || !file) {
+    if (!projectId || !images || !Array.isArray(images)) {
       return NextResponse.json(
-        { error: "projectId y file son obligatorios" },
+        { error: "Datos inválidos" },
         { status: 400 }
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const uploadedImages = [];
 
-    const image = await addImageToProject({
-      projectId,
-      fileBuffer: buffer,
-      fileName: file.name,
-      mimeType: file.type,
-      asin,
-      referencia,
+    for (const image of images) {
+      const {
+        base64,
+        mime,
+        filename,
+        asin,
+        reference,
+      } = image;
+
+      const buffer = Buffer.from(
+        base64.replace(/^data:image\/\w+;base64,/, ""),
+        "base64"
+      );
+
+      const storagePath = `${projectId}/${uuidv4()}-${filename}`;
+
+      // 1️⃣ Subir imagen a Storage (SIN pérdida de calidad)
+      const { error: uploadError } = await supabase.storage
+        .from("project-images")
+        .upload(storagePath, buffer, {
+          contentType: mime,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // 2️⃣ Guardar metadata en DB
+      const { data, error: dbError } = await supabase
+        .from("project_images")
+        .insert({
+          project_id: projectId,
+          reference,
+          asin,
+          filename,
+          mime,
+          storage_path: storagePath,
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      uploadedImages.push(data);
+    }
+
+    return NextResponse.json({
+      success: true,
+      images: uploadedImages,
     });
-
-    return NextResponse.json({ success: true, image });
-  } catch (err: any) {
-    console.error(err);
+  } catch (error: any) {
+    console.error("ADD IMAGES ERROR:", error);
     return NextResponse.json(
-      { error: err.message },
+      { error: error.message || "Error interno" },
       { status: 500 }
     );
   }
