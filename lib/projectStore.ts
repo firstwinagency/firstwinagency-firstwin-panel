@@ -1,146 +1,154 @@
 import { supabase } from "./supabaseClient";
-import JSZip from "jszip";
 
-/**
- * =========================
- * PROYECTOS
- * =========================
- */
+export type Project = {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  created_at: string;
+};
 
-export async function createProject(name: string, description?: string) {
+export type ProjectImage = {
+  id: string;
+  project_id: string;
+  referencia: string | null;
+  asin: string | null;
+  filename: string;
+  storage_path: string;
+  mime: string;
+  created_at: string;
+};
+
+/* =========================
+   PROYECTOS
+========================= */
+
+export async function createProject(
+  nombre: string,
+  descripcion?: string
+): Promise<Project> {
   const { data, error } = await supabase
     .from("projects")
-    .insert({ name, description })
+    .insert([{ nombre, descripcion }])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error creando proyecto:", error);
+    throw error;
+  }
+
   return data;
 }
 
-export async function getProjects() {
+export async function getProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from("projects")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.error("Error obteniendo proyectos:", error);
+    throw error;
+  }
+
+  return data || [];
 }
 
-/**
- * =========================
- * IMÁGENES DEL PROYECTO
- * =========================
- */
+/* =========================
+   IMÁGENES DEL PROYECTO
+========================= */
 
-export async function saveImageToProject({
-  projectId,
-  reference,
-  asin,
-  file,
-}: {
-  projectId: string;
-  reference: string;
-  asin: string;
+export async function saveProjectImage(params: {
+  project_id: string;
+  referencia?: string | null;
+  asin?: string | null;
   file: File;
-}) {
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${crypto.randomUUID()}.${fileExt}`;
-  const storagePath = `${projectId}/${fileName}`;
+}): Promise<ProjectImage> {
+  const { project_id, referencia, asin, file } = params;
 
-  // 1️⃣ Subir imagen a Storage (SIN tocar calidad)
+  const fileExt = file.name.split(".").pop();
+  const safeName = `${crypto.randomUUID()}.${fileExt}`;
+  const storagePath = `${project_id}/${safeName}`;
+
+  // 1️⃣ Subir imagen a Storage (SIN compresión)
   const { error: uploadError } = await supabase.storage
     .from("project-images")
     .upload(storagePath, file, {
-      upsert: false,
       contentType: file.type,
+      upsert: false,
     });
 
-  if (uploadError) throw uploadError;
+  if (uploadError) {
+    console.error("Error subiendo imagen:", uploadError);
+    throw uploadError;
+  }
 
-  // 2️⃣ Guardar metadata en BD
-  const { error: dbError } = await supabase.from("project_images").insert({
-    project_id: projectId,
-    reference,
-    asin,
-    file_name: fileName,
-    mime: file.type,
-    storage_path: storagePath,
-  });
-
-  if (dbError) throw dbError;
-}
-
-export async function getProjectImages(projectId: string) {
+  // 2️⃣ Guardar metadata en DB
   const { data, error } = await supabase
     .from("project_images")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: true });
+    .insert([
+      {
+        project_id,
+        referencia: referencia || null,
+        asin: asin || null,
+        filename: file.name,
+        storage_path: storagePath,
+        mime: file.type,
+      },
+    ])
+    .select()
+    .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error guardando imagen en DB:", error);
+    throw error;
+  }
+
   return data;
 }
 
-export async function deleteProjectImages(imageIds: string[]) {
+export async function getProjectImages(
+  project_id: string
+): Promise<ProjectImage[]> {
   const { data, error } = await supabase
     .from("project_images")
-    .delete()
-    .in("id", imageIds)
-    .select("storage_path");
+    .select("*")
+    .eq("project_id", project_id)
+    .order("created_at", { ascending: true });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error obteniendo imágenes:", error);
+    throw error;
+  }
 
-  // borrar también del storage
-  if (data?.length) {
-    const paths = data.map((img) => img.storage_path);
+  return data || [];
+}
+
+export async function deleteProjectImages(imageIds: string[]) {
+  if (imageIds.length === 0) return;
+
+  // 1️⃣ Obtener rutas de storage
+  const { data: images } = await supabase
+    .from("project_images")
+    .select("storage_path")
+    .in("id", imageIds);
+
+  const paths = images?.map((img) => img.storage_path) || [];
+
+  // 2️⃣ Borrar de storage
+  if (paths.length > 0) {
     await supabase.storage.from("project-images").remove(paths);
   }
-}
 
-/**
- * =========================
- * ZIP DEL PROYECTO
- * =========================
- */
+  // 3️⃣ Borrar de DB
+  const { error } = await supabase
+    .from("project_images")
+    .delete()
+    .in("id", imageIds);
 
-export async function downloadProjectZip({
-  projectId,
-  mode,
-}: {
-  projectId: string;
-  mode: "reference" | "asin";
-}) {
-  const images = await getProjectImages(projectId);
-  const zip = new JSZip();
-
-  let counterMap: Record<string, number> = {};
-
-  for (const img of images) {
-    const { data } = await supabase.storage
-      .from("project-images")
-      .download(img.storage_path);
-
-    if (!data) continue;
-
-    const key = mode === "reference" ? img.reference : img.asin;
-    counterMap[key] = (counterMap[key] || 0) + 1;
-
-    const ext = img.file_name.split(".").pop();
-    const fileName = `${key}_${counterMap[key]}.${ext}`;
-
-    zip.file(fileName, data);
+  if (error) {
+    console.error("Error borrando imágenes:", error);
+    throw error;
   }
-
-  const blob = await zip.generateAsync({ type: "blob" });
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `project_${projectId}_${mode}.zip`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
-
 
