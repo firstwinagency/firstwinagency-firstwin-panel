@@ -1,104 +1,76 @@
 import { supabase } from "./supabaseClient";
+import JSZip from "jszip";
 
 /**
  * =========================
- * TIPOS
+ * PROYECTOS
  * =========================
  */
 
-export type CreateProjectInput = {
-  name: string;
-  description?: string;
-};
-
-export type SaveProjectImageInput = {
-  projectId: string;
-  file: File; // imagen FINAL en máxima calidad
-  reference?: string;
-  asin?: string;
-};
-
-/**
- * =========================
- * CREAR PROYECTO
- * =========================
- */
-
-export async function createProject(input: CreateProjectInput) {
+export async function createProject(name: string, description?: string) {
   const { data, error } = await supabase
     .from("projects")
-    .insert({
-      name: input.name,
-      description: input.description ?? null,
-    })
+    .insert({ name, description })
     .select()
     .single();
 
-  if (error) {
-    console.error("Error creating project:", error);
-    throw error;
-  }
+  if (error) throw error;
+  return data;
+}
 
+export async function getProjects() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
   return data;
 }
 
 /**
  * =========================
- * GUARDAR IMAGEN EN PROYECTO
- * (Storage + DB)
+ * IMÁGENES DEL PROYECTO
  * =========================
  */
 
-export async function saveProjectImage(input: SaveProjectImageInput) {
-  const { projectId, file, reference, asin } = input;
+export async function saveImageToProject({
+  projectId,
+  reference,
+  asin,
+  file,
+}: {
+  projectId: string;
+  reference: string;
+  asin: string;
+  file: File;
+}) {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  const storagePath = `${projectId}/${fileName}`;
 
-  // 1️⃣ Generar nombre único
-  const extension = file.name.split(".").pop();
-  const filename = `${crypto.randomUUID()}.${extension}`;
-
-  // 2️⃣ Ruta dentro del bucket
-  const storagePath = `${projectId}/${filename}`;
-
-  // 3️⃣ Subir imagen a Storage (SIN COMPRESIÓN)
+  // 1️⃣ Subir imagen a Storage (SIN tocar calidad)
   const { error: uploadError } = await supabase.storage
     .from("project-images")
     .upload(storagePath, file, {
-      contentType: file.type,
       upsert: false,
+      contentType: file.type,
     });
 
-  if (uploadError) {
-    console.error("Error uploading image:", uploadError);
-    throw uploadError;
-  }
+  if (uploadError) throw uploadError;
 
-  // 4️⃣ Guardar metadata en BD
-  const { data, error: dbError } = await supabase
-    .from("project_images")
-    .insert({
-      project_id: projectId,
-      reference: reference ?? null,
-      asin: asin ?? null,
-      file_name: filename,
-      mime_type: file.type,
-      storage_path: storagePath,
-    })
-    .select()
-    .single();
+  // 2️⃣ Guardar metadata en BD
+  const { error: dbError } = await supabase.from("project_images").insert({
+    project_id: projectId,
+    reference,
+    asin,
+    file_name: fileName,
+    mime: file.type,
+    storage_path: storagePath,
+  });
 
-  if (dbError) {
-    console.error("Error saving image metadata:", dbError);
-    throw dbError;
-  }
-
-  return data;
+  if (dbError) throw dbError;
 }
-
-/**
- * =========================
- * OBTENER IMÁGENES DE UN PROYECTO
- * =========================
- */
 
 export async function getProjectImages(projectId: string) {
   const { data, error } = await supabase
@@ -107,48 +79,68 @@ export async function getProjectImages(projectId: string) {
     .eq("project_id", projectId)
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching project images:", error);
-    throw error;
-  }
-
+  if (error) throw error;
   return data;
+}
+
+export async function deleteProjectImages(imageIds: string[]) {
+  const { data, error } = await supabase
+    .from("project_images")
+    .delete()
+    .in("id", imageIds)
+    .select("storage_path");
+
+  if (error) throw error;
+
+  // borrar también del storage
+  if (data?.length) {
+    const paths = data.map((img) => img.storage_path);
+    await supabase.storage.from("project-images").remove(paths);
+  }
 }
 
 /**
  * =========================
- * ELIMINAR IMÁGENES DEL PROYECTO
+ * ZIP DEL PROYECTO
  * =========================
  */
 
-export async function deleteProjectImages(imageIds: string[]) {
-  // 1️⃣ Obtener rutas
-  const { data: images, error } = await supabase
-    .from("project_images")
-    .select("storage_path")
-    .in("id", imageIds);
+export async function downloadProjectZip({
+  projectId,
+  mode,
+}: {
+  projectId: string;
+  mode: "reference" | "asin";
+}) {
+  const images = await getProjectImages(projectId);
+  const zip = new JSZip();
 
-  if (error) throw error;
+  let counterMap: Record<string, number> = {};
 
-  const paths = images.map((img) => img.storage_path);
-
-  // 2️⃣ Borrar de Storage
-  if (paths.length > 0) {
-    const { error: storageError } = await supabase.storage
+  for (const img of images) {
+    const { data } = await supabase.storage
       .from("project-images")
-      .remove(paths);
+      .download(img.storage_path);
 
-    if (storageError) throw storageError;
+    if (!data) continue;
+
+    const key = mode === "reference" ? img.reference : img.asin;
+    counterMap[key] = (counterMap[key] || 0) + 1;
+
+    const ext = img.file_name.split(".").pop();
+    const fileName = `${key}_${counterMap[key]}.${ext}`;
+
+    zip.file(fileName, data);
   }
 
-  // 3️⃣ Borrar de BD
-  const { error: deleteError } = await supabase
-    .from("project_images")
-    .delete()
-    .in("id", imageIds);
+  const blob = await zip.generateAsync({ type: "blob" });
 
-  if (deleteError) throw deleteError;
-
-  return true;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `project_${projectId}_${mode}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
+
 
