@@ -118,14 +118,7 @@ export default function ProjectsPage() {
       </h1>
 
       {/* BOTONES SUPERIORES */}
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          marginBottom: 16,
-        }}
-      >
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
         <button onClick={() => downloadZip(false)} className="btn-primary">
           Descargar ZIP (Referencia)
         </button>
@@ -167,12 +160,7 @@ export default function ProjectsPage() {
             >
               <img
                 src={publicUrl}
-                style={{
-                  width: "100%",
-                  height: 160,
-                  objectFit: "cover",
-                  cursor: "zoom-in",
-                }}
+                style={{ width: "100%", height: 160, objectFit: "cover", cursor: "zoom-in" }}
                 onClick={() => setPreview(publicUrl)}
               />
 
@@ -206,16 +194,11 @@ export default function ProjectsPage() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 9999,
-            cursor: "zoom-out",
           }}
         >
           <img
             src={preview}
-            style={{
-              maxWidth: "90%",
-              maxHeight: "90%",
-              borderRadius: 12,
-            }}
+            style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: 12 }}
           />
         </div>
       )}
