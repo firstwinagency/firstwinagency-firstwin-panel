@@ -1,68 +1,164 @@
-import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { supabase } from "./supabaseClient";
 
-export type ProjectImage = {
-  id: string;
+/**
+ * =========================
+ * PROJECTS
+ * =========================
+ */
+
+export async function createProject(
+  name: string,
+  description?: string
+) {
+  const { data, error } = await supabase
+    .from("projects")
+    .insert([
+      {
+        nombre: name,
+        descripcion: description ?? null,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating project:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function getProjects() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching projects:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+/**
+ * =========================
+ * PROJECT IMAGES
+ * =========================
+ */
+
+export type SaveProjectImageParams = {
   projectId: string;
-  reference: string;
-  asin?: string;
-  presetId: string;
-  order: number;
-  mime: string;
-  base64: string;
-  createdAt: number;
+  file: File | Blob;
+  filename: string;
+  mimeType: string;
+  referencia?: string | null;
+  asin?: string | null;
 };
 
-interface ProjectDB extends DBSchema {
-  images: {
-    key: string;
-    value: ProjectImage;
-    indexes: {
-      "by-project": string;
-    };
-  };
-}
+export async function saveProjectImage({
+  projectId,
+  file,
+  filename,
+  mimeType,
+  referencia,
+  asin,
+}: SaveProjectImageParams) {
+  /**
+   * Estructura en storage:
+   * project-images/{projectId}/{filename}
+   */
+  const storagePath = `${projectId}/${filename}`;
 
-let dbPromise: Promise<IDBPDatabase<ProjectDB>> | null = null;
-
-function getDB() {
-  if (!dbPromise) {
-    dbPromise = openDB<ProjectDB>("kreative360-projects", 1, {
-      upgrade(db) {
-        const store = db.createObjectStore("images", {
-          keyPath: "id",
-        });
-        store.createIndex("by-project", "projectId");
-      },
+  // 1. Subir imagen a Storage (SIN pérdida de calidad)
+  const { error: uploadError } = await supabase.storage
+    .from("project-images")
+    .upload(storagePath, file, {
+      contentType: mimeType,
+      upsert: false,
     });
+
+  if (uploadError) {
+    console.error("Storage upload error:", uploadError);
+    throw uploadError;
   }
-  return dbPromise;
-}
 
-// ===============================
-// API PÚBLICA
-// ===============================
+  // 2. Guardar metadata en la base de datos
+  const { data, error } = await supabase
+    .from("project_images")
+    .insert([
+      {
+        project_id: projectId,
+        referencia: referencia ?? null,
+        asin: asin ?? null,
+        filename,
+        mime: mimeType,
+        storage_path: storagePath,
+      },
+    ])
+    .select()
+    .single();
 
-export async function addImageToProject(image: ProjectImage) {
-  const db = await getDB();
-  await db.put("images", image);
+  if (error) {
+    console.error("DB insert image error:", error);
+    throw error;
+  }
+
+  return data;
 }
 
 export async function getProjectImages(projectId: string) {
-  const db = await getDB();
-  return db.getAllFromIndex("images", "by-project", projectId);
-}
+  const { data, error } = await supabase
+    .from("project_images")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: true });
 
-export async function removeProjectImage(imageId: string) {
-  const db = await getDB();
-  await db.delete("images", imageId);
-}
-
-export async function clearProject(projectId: string) {
-  const db = await getDB();
-  const images = await getProjectImages(projectId);
-  const tx = db.transaction("images", "readwrite");
-  for (const img of images) {
-    tx.store.delete(img.id);
+  if (error) {
+    console.error("Error fetching project images:", error);
+    throw error;
   }
-  await tx.done;
+
+  return data;
+}
+
+export async function deleteProjectImage(imageId: string, storagePath: string) {
+  // 1. Borrar del storage
+  const { error: storageError } = await supabase.storage
+    .from("project-images")
+    .remove([storagePath]);
+
+  if (storageError) {
+    console.error("Storage delete error:", storageError);
+    throw storageError;
+  }
+
+  // 2. Borrar de la base de datos
+  const { error: dbError } = await supabase
+    .from("project_images")
+    .delete()
+    .eq("id", imageId);
+
+  if (dbError) {
+    console.error("DB delete image error:", dbError);
+    throw dbError;
+  }
+
+  return true;
+}
+
+/**
+ * =========================
+ * HELPERS
+ * =========================
+ */
+
+export function getPublicImageUrl(storagePath: string) {
+  const { data } = supabase.storage
+    .from("project-images")
+    .getPublicUrl(storagePath);
+
+  return data.publicUrl;
 }
