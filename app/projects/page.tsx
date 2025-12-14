@@ -19,25 +19,19 @@ export default function ProjectsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [preview, setPreview] = useState<string | null>(null);
 
-  /* ======================
-     CARGAR IMÁGENES
-     ====================== */
   useEffect(() => {
     loadImages();
   }, []);
 
   async function loadImages() {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("project_images")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) setImages(data);
+    if (data) setImages(data);
   }
 
-  /* ======================
-     SELECCIÓN
-     ====================== */
   function toggle(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -50,20 +44,11 @@ export default function ProjectsPage() {
     setSelected(new Set(images.map((i) => i.id)));
   }
 
-  function clearSelection() {
-    setSelected(new Set());
-  }
-
-  /* ======================
-     ELIMINAR
-     ====================== */
   async function deleteSelected() {
     if (!selected.size) return;
     if (!confirm("¿Eliminar imágenes seleccionadas?")) return;
 
-    const toDelete = images.filter((i) => selected.has(i.id));
-
-    for (const img of toDelete) {
+    for (const img of images.filter((i) => selected.has(i.id))) {
       await supabase.storage
         .from("project-images")
         .remove([img.storage_path]);
@@ -71,18 +56,13 @@ export default function ProjectsPage() {
       await supabase.from("project_images").delete().eq("id", img.id);
     }
 
-    clearSelection();
+    setSelected(new Set());
     loadImages();
   }
 
-  /* ======================
-     DESCARGAR ZIP
-     ====================== */
   async function downloadZip(useAsin: boolean) {
-    if (!images.length) return;
-
     const zip = new JSZip();
-    let index = 0;
+    let index = 1;
 
     for (const img of images) {
       const { data } = await supabase.storage
@@ -96,7 +76,6 @@ export default function ProjectsPage() {
           ? img.asin
           : img.reference || "image";
 
-      // ✅ TEMPLATE STRING CORRECTA (ESTO ERA TODO EL PROBLEMA)
       zip.file(`${base}_${index}.jpg`, data);
       index++;
     }
@@ -108,101 +87,109 @@ export default function ProjectsPage() {
     );
   }
 
-  /* ======================
-     UI
-     ====================== */
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: "0 auto" }}>
-      <h1 style={{ fontWeight: 800, marginBottom: 12 }}>
-        Proyectos · Galería
-      </h1>
-
-      {/* BOTONES */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-        <button onClick={() => downloadZip(false)} className="btn-primary">
-          Descargar ZIP (Referencia)
-        </button>
-        <button onClick={() => downloadZip(true)} className="btn-primary">
-          Descargar ZIP (ASIN)
-        </button>
-        <button onClick={selectAll} className="btn-ghost">
-          Seleccionar todo
-        </button>
-        <button onClick={deleteSelected} className="btn-danger">
-          Eliminar seleccionadas
-        </button>
+    <>
+      {/* TOP BAR (MISMO ESTILO QUE PICTULAB) */}
+      <div className="topbar">
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn-zoom" onClick={() => downloadZip(false)}>
+            Descargar ZIP · Referencia
+          </button>
+          <button className="btn-zoom" onClick={() => downloadZip(true)}>
+            Descargar ZIP · ASIN
+          </button>
+          <button className="btn-zoom" onClick={selectAll}>
+            Seleccionar todo
+          </button>
+          <button
+            className="btn-zoom"
+            style={{ background: "#ff6d6d", color: "#fff", borderColor: "#ff6d6d" }}
+            onClick={deleteSelected}
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
 
-      {/* GALERÍA */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-          gap: 12,
-        }}
-      >
-        {images.map((img) => {
-          const publicUrl = supabase.storage
-            .from("project-images")
-            .getPublicUrl(img.storage_path).data.publicUrl;
+      {/* CONTENIDO */}
+      <main style={{ paddingTop: 80, paddingInline: 24 }}>
+        <h1 style={{ fontWeight: 800, marginBottom: 16 }}>
+          Proyectos · Galería
+        </h1>
 
-          return (
-            <div
-              key={img.id}
-              style={{
-                border: selected.has(img.id)
-                  ? "2px solid var(--brand-accent)"
-                  : "1px solid #e5e7eb",
-                borderRadius: 12,
-                overflow: "hidden",
-                background: "#fff",
-              }}
-            >
-              <img
-                src={publicUrl}
-                style={{ width: "100%", height: 160, objectFit: "cover", cursor: "pointer" }}
-                onClick={() => setPreview(publicUrl)}
-              />
+        {/* GALERÍA */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+            gap: 14,
+          }}
+        >
+          {images.map((img) => {
+            const publicUrl = supabase.storage
+              .from("project-images")
+              .getPublicUrl(img.storage_path).data.publicUrl;
 
-              <div style={{ padding: 8 }}>
-                <label style={{ fontSize: 12 }}>
-                  <input
-                    type="checkbox"
-                    checked={selected.has(img.id)}
-                    onChange={() => toggle(img.id)}
-                  />{" "}
-                  Seleccionar
-                </label>
-                <div style={{ fontSize: 11, color: "#6b7280" }}>
-                  {img.reference || img.asin}
+            return (
+              <div
+                key={img.id}
+                style={{
+                  background: "white",
+                  borderRadius: 14,
+                  border: selected.has(img.id)
+                    ? "2px solid #ff6d6d"
+                    : "1px solid #ddd",
+                  overflow: "hidden",
+                  boxShadow: "0 1px 4px rgba(0,0,0,.12)",
+                }}
+              >
+                <img
+                  src={publicUrl}
+                  onClick={() => setPreview(publicUrl)}
+                  style={{
+                    width: "100%",
+                    height: 180,
+                    objectFit: "cover",
+                    cursor: "zoom-in",
+                  }}
+                />
+
+                <div style={{ padding: 10 }}>
+                  <label style={{ fontSize: 12 }}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(img.id)}
+                      onChange={() => toggle(img.id)}
+                    />{" "}
+                    Seleccionar
+                  </label>
+
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "#666",
+                      marginTop: 4,
+                    }}
+                  >
+                    {img.reference || img.asin}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </main>
 
       {/* VISOR */}
       {preview && (
         <div
+          className="viewer-overlay"
           onClick={() => setPreview(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,.8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
         >
-          <img
-            src={preview}
-            style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: 12 }}
-          />
+          <img src={preview} className="viewer-image" />
         </div>
       )}
-    </div>
+    </>
   );
 }
 
