@@ -13,7 +13,7 @@ const MAX_SLOTS = 24; // 4 filas x 6 columnas (puedes cambiarlo)
 export default function ProjectsPage() {
   const [images, setImages] = useState<ProjectImage[]>(
     Array.from({ length: MAX_SLOTS }).map((_, i) => ({
-      id: slot-${i},
+      id: `slot-${i}`,
       src: undefined,
       selected: false,
     }))
