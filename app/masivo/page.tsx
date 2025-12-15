@@ -1,10 +1,11 @@
+```typescript
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { PRESETS } from "../../lib/presets";
-import { createClient } from '@supabase/supabase-js'; // Añadir import de Supabase
+import { createClient } from "@supabase/supabase-js";
 
 /* ===========================
    Utils
@@ -607,84 +608,187 @@ export default function Page() {
     saveAs(blob, finalName);
   };
 
-  /* ====== Crear cliente Supabase ====== */
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  /* ====== Supabase Client ====== */
+  const supabase = useMemo(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase environment variables");
+      return null;
+    }
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+  }, []);
+
+  /* ====== Estado para el envío ====== */
+  const [isSending, setIsSending] = useState(false);
 
   /* ====== Función para el nuevo botón "Enviar a proyecto" ====== */
   const handleSendToProject = async () => {
-    try {
-      // Validar que hay imágenes seleccionadas
-      const targetRef = activeRef;
-      const entries = Object.entries(orderMap)
-        .filter(([k]) => k.startsWith(`${targetRef}::`))
-        .sort((a, b) => a[1] - b[1]);
+    if (!supabase) {
+      alert("❌ Error de configuración: cliente Supabase no disponible");
+      return;
+    }
 
-      if (entries.length === 0) {
-        alert("No hay imágenes seleccionadas con numeración asignada.");
-        return;
-      }
+    // Validar que haya al menos una de las dos (reference o asin)
+    const reference = activeRef || null;
+    const asin = activeAsin || null;
+    
+    if (!reference && !asin) {
+      alert("❌ No hay referencia ni ASIN activos. Asegúrate de tener una referencia activa.");
+      return;
+    }
 
-      // Obtener ASIN activo (puede estar vacío)
-      const currentAsin = batch.items.length > 0 
-        ? batch.items[batch.index]?.asin 
-        : "";
+    // Obtener imágenes seleccionadas para la referencia activa
+    const targetRef = activeRef;
+    const entries = Object.entries(orderMap)
+      .filter(([k]) => k.startsWith(`${targetRef}::`))
+      .sort((a, b) => a[1] - b[1]);
 
-      // Validar que reference y asin no sean ambos null
-      if (!targetRef && !currentAsin) {
-        alert("Error: La referencia y el ASIN no pueden ser ambos nulos.");
-        return;
-      }
+    if (entries.length === 0) {
+      alert("❌ No hay imágenes seleccionadas con numeración asignada.");
+      return;
+    }
 
-      // Preparar datos para insertar
-      const imagesToInsert = [];
-      const byRef = resultsByRef[targetRef] || {};
+    const byRef = resultsByRef[targetRef] || {};
+    const imagesToSend: Array<{
+      key: string;
+      presetId: string;
+      idx: number;
+      order: number;
+      image: ApiImage;
+    }> = [];
 
-      for (const [k, orderIndex] of entries) {
-        const [, presetId, idxStr] = k.split("::");
-        const idx = Number(idxStr);
-        const imgs = byRef[presetId] || [];
-        const img = imgs[idx];
-        
-        if (!img) continue;
-
-        // Crear objeto para insertar
-        imagesToInsert.push({
-          project_id: "default",
-          reference: targetRef || null,
-          asin: currentAsin || null,
-          index: orderIndex,
-          image_base64: img.base64,
-          created_at: new Date().toISOString()
+    for (const [k, order] of entries) {
+      const [, presetId, idxStr] = k.split("::");
+      const idx = Number(idxStr);
+      const imgs = byRef[presetId] || [];
+      const img = imgs[idx];
+      if (img) {
+        imagesToSend.push({
+          key: k,
+          presetId,
+          idx,
+          order,
+          image: img
         });
       }
+    }
 
-      if (imagesToInsert.length === 0) {
-        alert("No se encontraron imágenes válidas para insertar.");
-        return;
+    if (imagesToSend.length === 0) {
+      alert("❌ No se encontraron imágenes para enviar.");
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const item of imagesToSend) {
+        try {
+          // Convertir base64 a Blob
+          const base64Data = item.image.base64.split(',')[1] || item.image.base64;
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: item.image.mime || 'image/jpeg' });
+
+          // Determinar extensión
+          const mime = item.image.mime || 'image/jpeg';
+          const ext = mime.includes('png') ? 'png' :
+                     mime.includes('webp') ? 'webp' :
+                     mime.includes('gif') ? 'gif' : 'jpg';
+
+          // Nombre del archivo según patrón: default/<ref-or-asin>/<index>.<ext>
+          const refOrAsin = reference || asin || 'unknown';
+          const fileName = `default/${refOrAsin}/${item.order}.${ext}`;
+          const filePath = fileName;
+
+          // Subir a Supabase Storage
+          const { error: uploadError } = await supabase.storage
+            .from('project-images')
+            .upload(filePath, blob, {
+              contentType: mime,
+              upsert: true
+            });
+
+          if (uploadError) {
+            console.error('Error subiendo imagen:', uploadError);
+            errorCount++;
+            continue;
+          }
+
+          // Obtener URL pública
+          const { data: urlData } = supabase.storage
+            .from('project-images')
+            .getPublicUrl(filePath);
+
+          const imageUrl = urlData.publicUrl;
+
+          // Intentar insertar con todos los campos
+          const insertData: any = {
+            project_id: 'default',
+            reference,
+            asin,
+            index: item.order,
+            image_url: imageUrl,
+            storage_path: filePath,
+            mime: mime
+          };
+
+          const { error: insertError } = await supabase
+            .from('project_images')
+            .insert(insertData);
+
+          if (insertError) {
+            // Si falla, intentar con campos mínimos
+            console.warn('Insert falló con campos completos, intentando con campos mínimos:', insertError);
+            
+            const minimalData = {
+              project_id: 'default',
+              reference,
+              asin,
+              index: item.order,
+              image_url: imageUrl
+            };
+
+            const { error: minimalInsertError } = await supabase
+              .from('project_images')
+              .insert(minimalData);
+
+            if (minimalInsertError) {
+              console.error('Error insertando con campos mínimos:', minimalInsertError);
+              errorCount++;
+            } else {
+              successCount++;
+            }
+          } else {
+            successCount++;
+          }
+        } catch (error) {
+          console.error('Error procesando imagen:', error);
+          errorCount++;
+        }
       }
 
-      // Insertar en lote usando Supabase
-      const { data, error } = await supabase
-        .from('project_images')
-        .insert(imagesToInsert)
-        .select();
-
-      if (error) {
-        console.error("Error insertando imágenes:", error);
-        alert(`Error al enviar imágenes: ${error.message}`);
-        return;
+      if (successCount > 0) {
+        alert(`✅ ${successCount} imagen(es) enviada(s) correctamente al proyecto.`);
       }
-
-      // Mostrar éxito
-      alert(`✅ ${imagesToInsert.length} imágenes enviadas correctamente al proyecto.`);
-      console.log("Imágenes insertadas:", data);
+      
+      if (errorCount > 0) {
+        alert(`⚠️ ${errorCount} imagen(es) fallaron al enviarse. Revisa la consola para más detalles.`);
+      }
 
     } catch (error: any) {
-      console.error("Error en handleSendToProject:", error);
-      alert(`Error inesperado: ${error.message}`);
+      console.error('Error en handleSendToProject:', error);
+      alert(`❌ Error al enviar imágenes: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -1763,18 +1867,20 @@ export default function Page() {
             {/* 🔵 NUEVO BOTÓN: "Enviar a proyecto" */}
             <button
               onClick={handleSendToProject}
+              disabled={isSending}
               style={{
                 borderRadius: 10,
                 padding: "8px 12px",
-                background: "#10b981", // Color verde
+                background: "#10b981",
                 color: "#ffffff",
                 fontWeight: 700,
-                cursor: "pointer",
+                cursor: isSending ? "not-allowed" : "pointer",
                 border: "1px solid rgba(0,0,0,.1)",
+                opacity: isSending ? 0.7 : 1,
               }}
-              title="Enviar imágenes seleccionadas al proyecto"
+              title={isSending ? "Enviando imágenes..." : "Enviar imágenes seleccionadas al proyecto"}
             >
-              Enviar a proyecto
+              {isSending ? "Enviando..." : "Enviar a proyecto"}
             </button>
 
             {/* Botón ASIN */}
@@ -2284,5 +2390,5 @@ export default function Page() {
       )}
     </div>
   );
-      }
-   
+}
+```
