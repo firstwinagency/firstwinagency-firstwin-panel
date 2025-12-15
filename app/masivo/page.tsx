@@ -34,12 +34,12 @@ function parseUrls(raw: string): string[] {
   return unique;
 }
 
-function proxify(url: string) {
+function proxify(url: string): string {
   return `/api/img?url=${encodeURIComponent(url)}`;
 }
 
 // ✅ Normaliza la URL a mostrar en el lightbox (data/blob directo o proxificado)
-function getViewSrc(src: string) {
+function getViewSrc(src: string): string {
   return src.startsWith("data:") || src.startsWith("blob:") ? src : proxify(src);
 }
 
@@ -2390,4 +2390,3 @@ export default function Page() {
     </div>
   );
 }
-```
