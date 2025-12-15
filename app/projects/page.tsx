@@ -1,210 +1,167 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
+import { useState } from "react";
+
+/* =========================================================
+   TIPOS
+========================================================= */
 
 type ProjectImage = {
   id: string;
-  src: string;
+  src?: string;
   reference: string;
   asin?: string;
-  order: number;
+  index: number;
   selected: boolean;
 };
 
-const INITIAL_SLOTS = 18; // 3 filas * 6 columnas
+/* =========================================================
+   PAGE
+========================================================= */
 
 export default function ProjectsPage() {
-  const [images, setImages] = useState<ProjectImage[]>([]);
-  const [viewer, setViewer] = useState<ProjectImage | null>(null);
+  /* ---------- Estado mock (placeholder) ---------- */
+  const [images, setImages] = useState<ProjectImage[]>(
+    Array.from({ length: 24 }).map((_, i) => ({
+      id: `img-${i}`,
+      reference: "REF123",
+      asin: i % 2 === 0 ? "B0TESTASIN" : undefined,
+      index: i,
+      selected: false,
+    }))
+  );
 
-  /* =========================
-     GRID DINÁMICO
-     ========================= */
-  const slots = useMemo(() => {
-    const minSlots =
-      images.length <= INITIAL_SLOTS
-        ? INITIAL_SLOTS
-        : Math.ceil(images.length / 6) * 6;
-
-    return Array.from({ length: minSlots });
-  }, [images.length]);
-
-  /* =========================
-     SELECCIÓN
-     ========================= */
+  /* ---------- Selección ---------- */
   const selectAll = () =>
-    setImages((prev) => prev.map((i) => ({ ...i, selected: true })));
+    setImages((imgs) => imgs.map((i) => ({ ...i, selected: true })));
 
   const deselectAll = () =>
-    setImages((prev) => prev.map((i) => ({ ...i, selected: false })));
+    setImages((imgs) => imgs.map((i) => ({ ...i, selected: false })));
 
   const toggleSelect = (id: string) =>
-    setImages((prev) =>
-      prev.map((i) =>
+    setImages((imgs) =>
+      imgs.map((i) =>
         i.id === id ? { ...i, selected: !i.selected } : i
       )
     );
 
-  /* =========================
-     ZIP
-     ========================= */
-  const downloadZip = async (mode: "reference" | "asin") => {
-    const zip = new JSZip();
-    let count = 0;
-
-    images
-      .filter((i) => i.selected)
-      .forEach((img) => {
-        const base =
-          mode === "asin" && img.asin
-            ? img.asin
-            : img.reference;
-
-        const filename = `${base}_${img.order}.jpg`;
-        zip.file(filename, img.src.split(",")[1], { base64: true });
-        count++;
-      });
-
-    if (!count) {
-      alert("No hay imágenes seleccionadas");
-      return;
-    }
-
-    const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(blob, `proyecto_${mode}.zip`);
+  /* ---------- ZIP (placeholder) ---------- */
+  const downloadZipReference = () => {
+    console.log("ZIP por referencia");
   };
 
-  /* =========================
+  const downloadZipAsin = () => {
+    console.log("ZIP por ASIN");
+  };
+
+  /* =========================================================
      UI
-     ========================= */
+  ========================================================= */
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#ff6b6b",
-        padding: "0 24px",
-      }}
-    >
-      <div
+    <div style={{ display: "flex", minHeight: "100vh" }}>
+      {/* ===== LATERAL IZQUIERDO CORAL (AJUSTADO) ===== */}
+      <div style={{ width: 60, background: "#ff6b6b" }} />
+
+      {/* ===== CONTENIDO CENTRAL ===== */}
+      <main
         style={{
-          maxWidth: 1400,
-          margin: "0 auto",
+          flex: 1,
           background: "#ffffff",
-          minHeight: "100vh",
-          padding: "24px 24px 40px",
+          padding: "24px 32px",
         }}
       >
-        {/* TÍTULO */}
+        {/* ---------- TÍTULO ---------- */}
         <h1
           style={{
             textAlign: "center",
             fontFamily: "DM Serif Display",
-            fontSize: 36,
-            color: "#000",
-            marginBottom: 18,
+            fontSize: 34,
+            marginBottom: 16,
+            color: "#111",
           }}
         >
           Proyectos
         </h1>
 
-        {/* BOTONERA */}
+        {/* ---------- BOTONES ---------- */}
         <div
           style={{
             display: "flex",
             justifyContent: "center",
             gap: 12,
+            marginBottom: 28,
             flexWrap: "wrap",
-            marginBottom: 26,
           }}
         >
-          <Btn onClick={selectAll}>Seleccionar todo</Btn>
-          <Btn onClick={deselectAll}>Deseleccionar todo</Btn>
-          <Btn dark onClick={() => downloadZip("reference")}>
+          <button className="btn" onClick={selectAll}>
+            Seleccionar todo
+          </button>
+          <button className="btn" onClick={deselectAll}>
+            Deseleccionar todo
+          </button>
+          <button className="btn dark" onClick={downloadZipReference}>
             Descargar ZIP (Referencia)
-          </Btn>
-          <Btn accent onClick={() => downloadZip("asin")}>
+          </button>
+          <button className="btn coral" onClick={downloadZipAsin}>
             Descargar ZIP (ASIN)
-          </Btn>
+          </button>
         </div>
 
-        {/* GRID */}
+        {/* ---------- GRID (TAMAÑO RECUPERADO) ---------- */}
         <div
           style={{
+            maxWidth: 1400,              // ⬅️ MÁS ANCHO (CLAVE)
+            margin: "0 auto",
             display: "grid",
             gridTemplateColumns: "repeat(6, 1fr)",
             gap: 16,
           }}
         >
-          {slots.map((_, idx) => {
-            const img = images[idx];
-
-            if (!img) {
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    aspectRatio: "1 / 1",
-                    background: "#f3f3f3",
-                    borderRadius: 16,
-                    boxShadow: "0 4px 10px rgba(0,0,0,.08)",
-                  }}
-                />
-              );
-            }
+          {images.map((img) => {
+            const label = img.asin
+              ? `${img.reference} / ${img.asin} · ${img.index}`
+              : `${img.reference} · ${img.index}`;
 
             return (
               <div
                 key={img.id}
                 style={{
                   position: "relative",
+                  borderRadius: 14,
+                  background: "#f2f2f2",
                   aspectRatio: "1 / 1",
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  boxShadow: "0 6px 16px rgba(0,0,0,.15)",
                   cursor: "pointer",
+                  boxShadow: img.selected
+                    ? "0 0 0 3px #ff6b6b"
+                    : "0 1px 4px rgba(0,0,0,.12)",
                 }}
+                onClick={() => toggleSelect(img.id)}
               >
                 {/* CHECK */}
                 <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelect(img.id);
-                  }}
                   style={{
                     position: "absolute",
-                    top: 10,
-                    left: 10,
-                    zIndex: 3,
-                    width: 26,
-                    height: 26,
+                    top: 8,
+                    left: 8,
+                    width: 22,
+                    height: 22,
                     borderRadius: 6,
-                    background: img.selected ? "#ff6b6b" : "#ffffff",
-                    border: "1px solid #ddd",
-                    color: img.selected ? "#fff" : "#999",
-                    fontWeight: 800,
+                    background: img.selected ? "#ff6b6b" : "#fff",
+                    border: "1px solid #ccc",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: img.selected ? "#fff" : "transparent",
+                    zIndex: 2,
                   }}
                 >
                   ✓
                 </div>
 
-                {/* IMG */}
-                <img
-                  src={img.src}
-                  alt=""
-                  onClick={() => setViewer(img)}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-
-                {/* FOOTER INFO */}
+                {/* LABEL */}
                 <div
                   style={{
                     position: "absolute",
@@ -212,84 +169,25 @@ export default function ProjectsPage() {
                     left: 0,
                     right: 0,
                     padding: "6px 8px",
-                    background: "rgba(0,0,0,.65)",
+                    fontSize: 11,
+                    background: "rgba(0,0,0,.55)",
                     color: "#fff",
-                    fontSize: 12,
+                    borderBottomLeftRadius: 14,
+                    borderBottomRightRadius: 14,
                     textAlign: "center",
+                    fontWeight: 500,
                   }}
                 >
-                  {img.asin
-                    ? `${img.reference} / ${img.asin} · ${img.order}`
-                    : `${img.reference} · ${img.order}`}
+                  {label}
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </main>
 
-      {/* VISOR */}
-      {viewer && (
-        <div
-          onClick={() => setViewer(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,.8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <img
-            src={viewer.src}
-            alt=""
-            style={{
-              maxWidth: "90vw",
-              maxHeight: "90vh",
-              borderRadius: 14,
-              boxShadow: "0 20px 60px rgba(0,0,0,.5)",
-            }}
-          />
-        </div>
-      )}
+      {/* ===== LATERAL DERECHO CORAL (AJUSTADO) ===== */}
+      <div style={{ width: 60, background: "#ff6b6b" }} />
     </div>
-  );
-}
-
-/* =========================
-   BOTÓN REUTILIZABLE
-   ========================= */
-function Btn({
-  children,
-  onClick,
-  dark,
-  accent,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  dark?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: "10px 16px",
-        borderRadius: 10,
-        border: "1px solid #e5e7eb",
-        background: accent
-          ? "#ff6b6b"
-          : dark
-          ? "#000"
-          : "#fff",
-        color: accent ? "#fff" : dark ? "#ff6b6b" : "#111",
-        fontWeight: 700,
-        cursor: "pointer",
-      }}
-    >
-      {children}
-    </button>
   );
 }
