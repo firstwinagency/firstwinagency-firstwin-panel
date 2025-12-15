@@ -9,7 +9,6 @@ type ProjectImage = {
   id: string;
   reference: string | null;
   asin: string | null;
-  filename: string;
   storage_path: string;
   created_at: string;
 };
@@ -34,9 +33,9 @@ export default function ProjectsPage() {
 
   function toggle(id: string) {
     setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
     });
   }
 
@@ -48,12 +47,12 @@ export default function ProjectsPage() {
     if (!selected.size) return;
     if (!confirm("¿Eliminar imágenes seleccionadas?")) return;
 
-    for (const img of images.filter((i) => selected.has(i.id))) {
-      await supabase.storage
-        .from("project-images")
-        .remove([img.storage_path]);
+    for (const id of selected) {
+      const img = images.find((i) => i.id === id);
+      if (!img) continue;
 
-      await supabase.from("project_images").delete().eq("id", img.id);
+      await supabase.storage.from("project-images").remove([img.storage_path]);
+      await supabase.from("project_images").delete().eq("id", id);
     }
 
     setSelected(new Set());
@@ -62,7 +61,7 @@ export default function ProjectsPage() {
 
   async function downloadZip(useAsin: boolean) {
     const zip = new JSZip();
-    let index = 1;
+    let i = 1;
 
     for (const img of images) {
       const { data } = await supabase.storage
@@ -76,34 +75,35 @@ export default function ProjectsPage() {
           ? img.asin
           : img.reference || "image";
 
-      zip.file(`${base}_${index}.jpg`, data);
-      index++;
+      zip.file(`${base}_${i}.jpg`, data);
+      i++;
     }
 
     const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(
-      blob,
-      useAsin ? "proyecto_asin.zip" : "proyecto_referencia.zip"
-    );
+    saveAs(blob, useAsin ? "proyecto_asin.zip" : "proyecto_referencia.zip");
   }
 
   return (
     <>
-      {/* TOP BAR (MISMO ESTILO QUE PICTULAB) */}
-      <div className="topbar">
-        <div style={{ display: "flex", gap: 10 }}>
+      {/* TOP BAR */}
+      <div className="topbar" style={{ left: 0 }}>
+        <h1 style={{ fontWeight: 700, fontSize: 18 }}>
+          Proyectos · Galería
+        </h1>
+
+        <div style={{ display: "flex", gap: 8 }}>
           <button className="btn-zoom" onClick={() => downloadZip(false)}>
-            Descargar ZIP · Referencia
+            Descargar ZIP (Referencia)
           </button>
           <button className="btn-zoom" onClick={() => downloadZip(true)}>
-            Descargar ZIP · ASIN
+            Descargar ZIP (ASIN)
           </button>
           <button className="btn-zoom" onClick={selectAll}>
             Seleccionar todo
           </button>
           <button
             className="btn-zoom"
-            style={{ background: "#ff6d6d", color: "#fff", borderColor: "#ff6d6d" }}
+            style={{ background: "#ff6b6b", color: "#fff" }}
             onClick={deleteSelected}
           >
             Eliminar
@@ -112,21 +112,24 @@ export default function ProjectsPage() {
       </div>
 
       {/* CONTENIDO */}
-      <main style={{ paddingTop: 80, paddingInline: 24 }}>
-        <h1 style={{ fontWeight: 800, marginBottom: 16 }}>
-          Proyectos · Galería
-        </h1>
-
-        {/* GALERÍA */}
+      <main
+        style={{
+          paddingTop: 80,
+          paddingInline: 24,
+          background: "white",
+          height: "100vh",
+          overflowY: "auto",
+        }}
+      >
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-            gap: 14,
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 16,
           }}
         >
           {images.map((img) => {
-            const publicUrl = supabase.storage
+            const url = supabase.storage
               .from("project-images")
               .getPublicUrl(img.storage_path).data.publicUrl;
 
@@ -134,27 +137,26 @@ export default function ProjectsPage() {
               <div
                 key={img.id}
                 style={{
-                  background: "white",
-                  borderRadius: 14,
                   border: selected.has(img.id)
-                    ? "2px solid #ff6d6d"
+                    ? "2px solid #ff6b6b"
                     : "1px solid #ddd",
+                  borderRadius: 12,
                   overflow: "hidden",
-                  boxShadow: "0 1px 4px rgba(0,0,0,.12)",
+                  background: "#fff",
+                  cursor: "pointer",
                 }}
               >
                 <img
-                  src={publicUrl}
-                  onClick={() => setPreview(publicUrl)}
+                  src={url}
+                  onClick={() => setPreview(url)}
                   style={{
                     width: "100%",
-                    height: 180,
+                    height: 160,
                     objectFit: "cover",
-                    cursor: "zoom-in",
                   }}
                 />
 
-                <div style={{ padding: 10 }}>
+                <div style={{ padding: 8 }}>
                   <label style={{ fontSize: 12 }}>
                     <input
                       type="checkbox"
@@ -164,13 +166,7 @@ export default function ProjectsPage() {
                     Seleccionar
                   </label>
 
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "#666",
-                      marginTop: 4,
-                    }}
-                  >
+                  <div style={{ fontSize: 11, color: "#555" }}>
                     {img.reference || img.asin}
                   </div>
                 </div>
@@ -192,4 +188,3 @@ export default function ProjectsPage() {
     </>
   );
 }
-
