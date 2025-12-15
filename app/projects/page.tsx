@@ -1,171 +1,113 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
+import { useState } from "react";
 
 type ProjectImage = {
   id: string;
-  url: string;
   reference?: string;
   asin?: string;
-  index: number;
+  index?: number;
 };
 
 export default function ProjectsPage() {
-  const [images, setImages] = useState<ProjectImage[]>([]);
+  const [images] = useState<ProjectImage[]>(
+    Array.from({ length: 24 }).map((_, i) => ({
+      id: String(i),
+      // 🔴 NO ponemos textos fake
+    }))
+  );
+
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [preview, setPreview] = useState<ProjectImage | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
-  /* ======================
-     MOCK (sustituido luego por Supabase)
-     ====================== */
-  useEffect(() => {
-    const mock: ProjectImage[] = Array.from({ length: 24 }).map((_, i) => ({
-      id: `img-${i}`,
-      url: "",
-      reference: "REF123",
-      asin: i % 2 === 0 ? "B0TESTASIN" : undefined,
-      index: i,
-    }));
-    setImages(mock);
-  }, []);
+  const selectAll = () =>
+    setSelected(new Set(images.map((img) => img.id)));
 
-  /* ======================
-     Selección
-     ====================== */
-  function toggleSelect(id: string) {
+  const deselectAll = () => setSelected(new Set());
+
+  const toggleSelect = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  }
-
-  function selectAll() {
-    setSelected(new Set(images.map((i) => i.id)));
-  }
-
-  function deselectAll() {
-    setSelected(new Set());
-  }
-
-  /* ======================
-     Descargar ZIP
-     ====================== */
-  async function downloadZip(type: "reference" | "asin") {
-    const zip = new JSZip();
-    let count = 0;
-
-    images.forEach((img) => {
-      if (!selected.has(img.id)) return;
-
-      const base =
-        type === "asin" && img.asin
-          ? img.asin
-          : img.reference ?? "IMAGE";
-
-      const filename = `${base}-${img.index}.jpg`;
-      zip.file(filename, ""); // aquí irá el blob real
-      count++;
-    });
-
-    if (!count) return;
-
-    const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(blob, `proyecto_${type}.zip`);
-  }
+  };
 
   return (
     <div
       style={{
         minHeight: "100vh",
         background: "#fff",
-        padding: "0 32px", // 🔧 MÁRGENES CORAL MÁS ESTRECHOS (ANTES)
+        display: "flex",
       }}
     >
-      {/* TÍTULO */}
-      <h1
-        style={{
-          fontFamily: "DM Serif Display",
-          fontSize: 34,
-          textAlign: "center",
-          marginTop: 30,
-          marginBottom: 20,
-        }}
-      >
-        Proyectos
-      </h1>
+      {/* MARGEN IZQUIERDO CORAL */}
+      <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      {/* BOTONES */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 14,
-          marginBottom: 28,
-          flexWrap: "wrap",
-        }}
-      >
-        <button className="btn-zoom" onClick={selectAll}>
-          Seleccionar todo
-        </button>
-
-        <button className="btn-zoom" onClick={deselectAll}>
-          Deseleccionar todo
-        </button>
-
-        <button
-          className="btn-zoom"
-          style={{ background: "#000", color: "#fff" }}
-          onClick={() => downloadZip("reference")}
+      {/* CONTENIDO CENTRAL */}
+      <div style={{ flex: 1, padding: "28px 36px" }}>
+        {/* TÍTULO */}
+        <h1
+          style={{
+            fontFamily: "DM Serif Display",
+            fontSize: 34,
+            textAlign: "center",
+            marginBottom: 18,
+          }}
         >
-          Descargar ZIP (Referencia)
-        </button>
+          Proyectos
+        </h1>
 
-        <button
-          className="btn-zoom"
-          style={{ background: "#ff6d6d", color: "#fff" }}
-          onClick={() => downloadZip("asin")}
+        {/* BOTONES */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 12,
+            marginBottom: 28,
+            flexWrap: "wrap",
+          }}
         >
-          Descargar ZIP (ASIN)
-        </button>
-      </div>
+          <button className="btn-zoom" onClick={selectAll} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
+            Seleccionar todo
+          </button>
 
-      {/* GRID */}
-      <div
-        style={{
-          maxWidth: 1280, // 🔧 MISMO ANCHO QUE ANTES (CUADRADOS GRANDES)
-          margin: "0 auto",
-          display: "grid",
-          gridTemplateColumns: "repeat(6, 1fr)",
-          gap: 18,
-          paddingBottom: 60,
-        }}
-      >
-        {images.map((img) => {
-          const isSelected = selected.has(img.id);
+          <button className="btn-zoom" onClick={deselectAll} style={{ borderRadius: 999 }}>
+            Deseleccionar todo
+          </button>
 
-          return (
+          <button className="btn-zoom" style={{ background: "#000", color: "#fff", borderRadius: 999 }}>
+            Descargar ZIP (Referencia)
+          </button>
+
+          <button className="btn-zoom" style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
+            Descargar ZIP (ASIN)
+          </button>
+        </div>
+
+        {/* GALERÍA */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 18,
+          }}
+        >
+          {images.map((img) => (
             <div
               key={img.id}
               style={{
                 background: "#f2f2f2",
-                borderRadius: 14,
-                height: 220,
+                borderRadius: 16,
+                height: 240,
                 position: "relative",
                 cursor: "pointer",
-                boxShadow: isSelected
-                  ? "0 0 0 3px rgba(255,109,109,0.6)"
-                  : "0 2px 6px rgba(0,0,0,0.08)",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
               }}
             >
               {/* CHECK */}
               <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleSelect(img.id);
-                }}
+                onClick={() => toggleSelect(img.id)}
                 style={{
                   position: "absolute",
                   top: 10,
@@ -173,73 +115,56 @@ export default function ProjectsPage() {
                   width: 18,
                   height: 18,
                   borderRadius: 4,
-                  background: "#fff",
+                  background: selected.has(img.id) ? "#ff6b6b" : "#fff",
                   border: "1px solid #ccc",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  fontWeight: 700,
+                  zIndex: 2,
                 }}
-              >
-                {isSelected && "✓"}
-              </div>
+              />
 
-              {/* PREVIEW */}
+              {/* CLICK PREVIEW */}
               <div
-                onClick={() => setPreview(img)}
+                onClick={() => setPreview("image")}
                 style={{
                   width: "100%",
                   height: "100%",
                 }}
-              ></div>
+              />
 
-              {/* FOOTER */}
+              {/* FRANJA INFERIOR (VACÍA HASTA DATOS REALES) */}
               <div
                 style={{
                   position: "absolute",
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  background: "rgba(0,0,0,0.55)",
-                  color: "#fff",
+                  height: 32,
+                  background: "#6b6b6b",
+                  borderBottomLeftRadius: 16,
+                  borderBottomRightRadius: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontSize: 12,
-                  padding: "6px 8px",
-                  borderBottomLeftRadius: 14,
-                  borderBottomRightRadius: 14,
-                  textAlign: "center",
+                  color: "#fff",
                 }}
               >
-                {img.reference}
-                {img.asin && ` / ${img.asin}`} · {img.index}
+                {/* TEXTO REAL SE RENDERIZARÁ CUANDO EXISTA */}
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      {/* PREVIEW OVERLAY */}
+      {/* MARGEN DERECHO CORAL */}
+      <div style={{ width: 22, background: "#ff6b6b" }} />
+
+      {/* VISOR */}
       {preview && (
         <div
           onClick={() => setPreview(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
+          className="viewer-overlay"
         >
-          <div
-            style={{
-              width: "80%",
-              height: "80%",
-              background: "#fff",
-              borderRadius: 12,
-            }}
-          />
+          <div className="viewer-image" />
         </div>
       )}
     </div>
