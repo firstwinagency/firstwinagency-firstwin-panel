@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { PRESETS } from "../../lib/presets";
+import { createClient } from '@supabase/supabase-js'; // Añadir import de Supabase
 
 /* ===========================
    Utils
@@ -606,11 +607,85 @@ export default function Page() {
     saveAs(blob, finalName);
   };
 
+  /* ====== Crear cliente Supabase ====== */
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   /* ====== Función para el nuevo botón "Enviar a proyecto" ====== */
-  const handleSendToProject = () => {
-    console.log("Enviar a proyecto");
-    // Por ahora solo hace un console.log, según los requisitos
-    // Más adelante se implementará la lógica real de envío
+  const handleSendToProject = async () => {
+    try {
+      // Validar que hay imágenes seleccionadas
+      const targetRef = activeRef;
+      const entries = Object.entries(orderMap)
+        .filter(([k]) => k.startsWith(`${targetRef}::`))
+        .sort((a, b) => a[1] - b[1]);
+
+      if (entries.length === 0) {
+        alert("No hay imágenes seleccionadas con numeración asignada.");
+        return;
+      }
+
+      // Obtener ASIN activo (puede estar vacío)
+      const currentAsin = batch.items.length > 0 
+        ? batch.items[batch.index]?.asin 
+        : "";
+
+      // Validar que reference y asin no sean ambos null
+      if (!targetRef && !currentAsin) {
+        alert("Error: La referencia y el ASIN no pueden ser ambos nulos.");
+        return;
+      }
+
+      // Preparar datos para insertar
+      const imagesToInsert = [];
+      const byRef = resultsByRef[targetRef] || {};
+
+      for (const [k, orderIndex] of entries) {
+        const [, presetId, idxStr] = k.split("::");
+        const idx = Number(idxStr);
+        const imgs = byRef[presetId] || [];
+        const img = imgs[idx];
+        
+        if (!img) continue;
+
+        // Crear objeto para insertar
+        imagesToInsert.push({
+          project_id: "default",
+          reference: targetRef || null,
+          asin: currentAsin || null,
+          index: orderIndex,
+          image_base64: img.base64,
+          created_at: new Date().toISOString()
+        });
+      }
+
+      if (imagesToInsert.length === 0) {
+        alert("No se encontraron imágenes válidas para insertar.");
+        return;
+      }
+
+      // Insertar en lote usando Supabase
+      const { data, error } = await supabase
+        .from('project_images')
+        .insert(imagesToInsert)
+        .select();
+
+      if (error) {
+        console.error("Error insertando imágenes:", error);
+        alert(`Error al enviar imágenes: ${error.message}`);
+        return;
+      }
+
+      // Mostrar éxito
+      alert(`✅ ${imagesToInsert.length} imágenes enviadas correctamente al proyecto.`);
+      console.log("Imágenes insertadas:", data);
+
+    } catch (error: any) {
+      console.error("Error en handleSendToProject:", error);
+      alert(`Error inesperado: ${error.message}`);
+    }
   };
 
   // Limpiar resultados + fuentes + numeración
@@ -2209,4 +2284,5 @@ export default function Page() {
       )}
     </div>
   );
-}
+      }
+   
