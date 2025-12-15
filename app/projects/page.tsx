@@ -1,170 +1,222 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+import { supabase } from "@/lib/supabaseClient";
 
 type ProjectImage = {
   id: string;
-  reference?: string;
-  asin?: string;
-  index?: number;
+  reference: string | null;
+  asin: string | null;
+  order_index: number;
+  storage_path: string;
 };
 
 export default function ProjectsPage() {
-  const [images] = useState<ProjectImage[]>(
-    Array.from({ length: 24 }).map((_, i) => ({
-      id: String(i),
-      // 🔴 NO ponemos textos fake
-    }))
-  );
-
+  const [images, setImages] = useState<ProjectImage[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [preview, setPreview] = useState<string | null>(null);
 
-  const selectAll = () =>
-    setSelected(new Set(images.map((img) => img.id)));
+  useEffect(() => {
+    loadImages();
+  }, []);
 
-  const deselectAll = () => setSelected(new Set());
+  async function loadImages() {
+    const { data } = await supabase
+      .from("project_images")
+      .select("*")
+      .order("order_index", { ascending: true });
 
-  const toggleSelect = (id: string) => {
+    if (data) setImages(data);
+  }
+
+  function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  };
+  }
+
+  function selectAll() {
+    setSelected(new Set(images.map((i) => i.id)));
+  }
+
+  function deselectAll() {
+    setSelected(new Set());
+  }
+
+  async function downloadZip(mode: "reference" | "asin") {
+    const zip = new JSZip();
+    const imgs = images.filter((i) => selected.has(i.id));
+
+    for (const img of imgs) {
+      const { data } = await supabase.storage
+        .from("project-images")
+        .download(img.storage_path);
+
+      if (!data) continue;
+
+      const base =
+        mode === "asin" && img.asin
+          ? img.asin
+          : img.reference ?? "image";
+
+      const filename = `${base}-${img.order_index}.jpg`;
+      zip.file(filename, data);
+    }
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, `proyecto_${mode}.zip`);
+  }
 
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "#fff",
-        display: "flex",
+        height: "100vh",
+        overflowY: "auto", // ✅ SCROLL AÑADIDO
       }}
     >
-      {/* MARGEN IZQUIERDO CORAL */}
-      <div style={{ width: 22, background: "#ff6b6b" }} />
+      <div style={{ display: "flex" }}>
+        {/* MARGEN IZQUIERDO */}
+        <div style={{ width: 40, background: "#ff6d6d" }} />
 
-      {/* CONTENIDO CENTRAL */}
-      <div style={{ flex: 1, padding: "28px 36px" }}>
-        {/* TÍTULO */}
-        <h1
-          style={{
-            fontFamily: "DM Serif Display",
-            fontSize: 34,
-            textAlign: "center",
-            marginBottom: 18,
-          }}
-        >
-          Proyectos
-        </h1>
+        {/* CONTENIDO */}
+        <div style={{ flex: 1, padding: "40px 32px" }}>
+          <h1
+            style={{
+              fontFamily: "DM Serif Display",
+              fontSize: 32,
+              textAlign: "center",
+              marginBottom: 20,
+            }}
+          >
+            Proyectos
+          </h1>
 
-        {/* BOTONES */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 28,
-            flexWrap: "wrap",
-          }}
-        >
-          <button className="btn-zoom" onClick={selectAll} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
-            Seleccionar todo
-          </button>
+          {/* BOTONES */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 12,
+              marginBottom: 30,
+              flexWrap: "wrap",
+            }}
+          >
+            <button onClick={selectAll} className="btn-zoom">
+              Seleccionar todo
+            </button>
 
-          <button className="btn-zoom" onClick={deselectAll} style={{ borderRadius: 999 }}>
-            Deseleccionar todo
-          </button>
+            <button onClick={deselectAll} className="btn-zoom">
+              Deseleccionar todo
+            </button>
 
-          <button className="btn-zoom" style={{ background: "#000", color: "#fff", borderRadius: 999 }}>
-            Descargar ZIP (Referencia)
-          </button>
-
-          <button className="btn-zoom" style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
-            Descargar ZIP (ASIN)
-          </button>
-        </div>
-
-        {/* GALERÍA */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 18,
-          }}
-        >
-          {images.map((img) => (
-            <div
-              key={img.id}
-              style={{
-                background: "#f2f2f2",
-                borderRadius: 16,
-                height: 240,
-                position: "relative",
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-              }}
+            <button
+              onClick={() => downloadZip("reference")}
+              className="btn-zoom"
+              style={{ background: "#000", color: "#fff" }}
             >
-              {/* CHECK */}
-              <div
-                onClick={() => toggleSelect(img.id)}
-                style={{
-                  position: "absolute",
-                  top: 10,
-                  left: 10,
-                  width: 18,
-                  height: 18,
-                  borderRadius: 4,
-                  background: selected.has(img.id) ? "#ff6b6b" : "#fff",
-                  border: "1px solid #ccc",
-                  zIndex: 2,
-                }}
-              />
+              Descargar ZIP (Referencia)
+            </button>
 
-              {/* CLICK PREVIEW */}
-              <div
-                onClick={() => setPreview("image")}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                }}
-              />
+            <button
+              onClick={() => downloadZip("asin")}
+              className="btn-zoom"
+              style={{ background: "#ff6d6d", color: "#fff" }}
+            >
+              Descargar ZIP (ASIN)
+            </button>
+          </div>
 
-              {/* FRANJA INFERIOR (VACÍA HASTA DATOS REALES) */}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 32,
-                  background: "#6b6b6b",
-                  borderBottomLeftRadius: 16,
-                  borderBottomRightRadius: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  color: "#fff",
-                }}
-              >
-                {/* TEXTO REAL SE RENDERIZARÁ CUANDO EXISTA */}
-              </div>
-            </div>
-          ))}
+          {/* GRID */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(6, 1fr)",
+              gap: 20,
+            }}
+          >
+            {images.map((img) => {
+              const url = supabase.storage
+                .from("project-images")
+                .getPublicUrl(img.storage_path).data.publicUrl;
+
+              return (
+                <div
+                  key={img.id}
+                  style={{
+                    background: "#f3f3f3",
+                    borderRadius: 16,
+                    position: "relative",
+                    overflow: "hidden",
+                    cursor: "pointer",
+                  }}
+                >
+                  {/* CHECK */}
+                  <input
+                    type="checkbox"
+                    checked={selected.has(img.id)}
+                    onChange={() => toggleSelect(img.id)}
+                    style={{
+                      position: "absolute",
+                      top: 10,
+                      left: 10,
+                      zIndex: 2,
+                    }}
+                  />
+
+                  {/* IMAGEN */}
+                  <img
+                    src={url}
+                    onClick={() => setPreview(url)}
+                    style={{
+                      width: "100%",
+                      height: 220,
+                      objectFit: "cover",
+                    }}
+                  />
+
+                  {/* FOOTER (VACÍO HASTA DATOS REALES) */}
+                  <div
+                    style={{
+                      height: 32,
+                      background: "#6b6b6b",
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
+
+        {/* MARGEN DERECHO */}
+        <div style={{ width: 40, background: "#ff6d6d" }} />
       </div>
 
-      {/* MARGEN DERECHO CORAL */}
-      <div style={{ width: 22, background: "#ff6b6b" }} />
-
-      {/* VISOR */}
+      {/* PREVIEW */}
       {preview && (
         <div
           onClick={() => setPreview(null)}
-          className="viewer-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
         >
-          <div className="viewer-image" />
+          <img
+            src={preview}
+            style={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              borderRadius: 12,
+            }}
+          />
         </div>
       )}
     </div>
