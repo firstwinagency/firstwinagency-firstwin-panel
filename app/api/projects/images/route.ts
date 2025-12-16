@@ -3,42 +3,47 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   try {
+    /* 1️⃣ Obtener imágenes de BD */
     const { data, error } = await supabaseAdmin
       .from("project_images")
-      .select("id, reference, asin, storage_path")
+      .select(`
+        id,
+        reference,
+        asin,
+        index,
+        storage_path
+      `)
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("DB ERROR:", error);
-      throw error;
+      console.error("DB error:", error);
+      return NextResponse.json({ images: [] }, { status: 500 });
     }
 
-    const images = await Promise.all(
-      data.map(async (img) => {
-        const { data: signed, error: signError } =
-          await supabaseAdmin.storage
-            .from("project-images")
-            .createSignedUrl(img.storage_path, 60 * 60);
+    if (!data || data.length === 0) {
+      return NextResponse.json({ images: [] });
+    }
 
-        if (signError) {
-          console.error("SIGNED URL ERROR:", signError);
-          return null;
-        }
+    /* 2️⃣ Generar URLs públicas */
+    const images = data.map((img) => {
+      const { data: urlData } = supabaseAdmin
+        .storage
+        .from("project-images")
+        .getPublicUrl(img.storage_path);
 
-        return {
-          id: img.id,
-          reference: img.reference,
-          asin: img.asin,
-          url: signed.signedUrl,
-        };
-      })
-    );
-
-    return NextResponse.json({
-      images: images.filter(Boolean),
+      return {
+        id: img.id,
+        reference: img.reference ?? null,
+        asin: img.asin ?? null,
+        index: img.index ?? null,
+        url: urlData.publicUrl,
+      };
     });
-  } catch (e) {
-    console.error("IMAGES API FATAL ERROR:", e);
-    return NextResponse.json({ images: [] }, { status: 200 });
+
+    return NextResponse.json({ images });
+
+  } catch (err) {
+    console.error("API /projects/images error:", err);
+    return NextResponse.json({ images: [] }, { status: 500 });
   }
 }
