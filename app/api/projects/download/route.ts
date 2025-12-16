@@ -1,101 +1,73 @@
-import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import JSZip from "jszip";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { imageIds, mode } = body as {
-      imageIds: string[];
-      mode: "reference" | "asin";
-    };
+    const { ids, mode } = await req.json();
 
-    if (!imageIds || imageIds.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No hay imágenes seleccionadas" }),
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { error: "IDs inválidos" },
         { status: 400 }
       );
     }
 
     if (mode !== "reference" && mode !== "asin") {
-      return new Response(
-        JSON.stringify({ error: "Modo inválido" }),
+      return NextResponse.json(
+        { error: "Modo inválido" },
         { status: 400 }
       );
     }
 
-    // 1️⃣ Obtener metadata de imágenes
+    // 1️⃣ Obtener imágenes de la DB
     const { data: images, error } = await supabaseAdmin
       .from("project_images")
-      .select(
-        `
-        id,
-        reference,
-        asin,
-        index,
-        storage_path,
-        mime
-      `
-      )
-      .in("id", imageIds);
+      .select("*")
+      .in("id", ids);
 
     if (error || !images || images.length === 0) {
-      console.error(error);
-      return new Response(
-        JSON.stringify({ error: "No se pudieron cargar las imágenes" }),
-        { status: 500 }
+      return NextResponse.json(
+        { error: "Imágenes no encontradas" },
+        { status: 404 }
       );
     }
 
-    // 2️⃣ Crear ZIP
     const zip = new JSZip();
 
-    for (const img of images) {
-      if (!img.storage_path) continue;
+    // 2️⃣ Descargar cada imagen desde Storage y añadirla al ZIP
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
 
-      // Descargar archivo desde Supabase Storage
       const { data: fileData, error: downloadError } =
         await supabaseAdmin.storage
           .from("project-images")
           .download(img.storage_path);
 
       if (downloadError || !fileData) {
-        console.warn("Error descargando:", img.storage_path);
+        console.error("Error descargando imagen:", img.storage_path);
         continue;
       }
 
       const arrayBuffer = await fileData.arrayBuffer();
 
-      // Extensión
-      const ext =
-        img.mime?.includes("png")
-          ? "png"
-          : img.mime?.includes("webp")
-          ? "webp"
-          : img.mime?.includes("gif")
-          ? "gif"
-          : "jpg";
-
-      // Nombre base
       const baseName =
-        mode === "asin"
-          ? img.asin || img.reference || "imagen"
-          : img.reference || img.asin || "imagen";
+        mode === "reference"
+          ? img.reference || `imagen_${i + 1}`
+          : img.asin || `imagen_${i + 1}`;
 
-      const indexSuffix =
-        typeof img.index === "number" ? `_${img.index}` : "";
+      const extension = img.mime?.split("/")[1] || "jpg";
 
-      const filename = `${baseName}${indexSuffix}.${ext}`;
-
-      zip.file(filename, arrayBuffer);
+      zip.file(`${baseName}.${extension}`, arrayBuffer);
     }
 
-    // 3️⃣ Generar ZIP (FORMA CORRECTA PARA NEXT 14)
-    const zipBuffer = await zip.generateAsync({
+    // 3️⃣ Generar ZIP como ArrayBuffer (CLAVE)
+    const zipArrayBuffer = await zip.generateAsync({
       type: "arraybuffer",
     });
 
-    return new Response(zipBuffer, {
+    // 4️⃣ Responder correctamente
+    return new NextResponse(zipArrayBuffer, {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename=imagenes_${mode}.zip`,
@@ -103,10 +75,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("DOWNLOAD ZIP ERROR:", err);
-    return new Response(
-      JSON.stringify({ error: "Error interno generando ZIP" }),
+    return NextResponse.json(
+      { error: "Error generando ZIP" },
       { status: 500 }
     );
   }
 }
-
