@@ -4,29 +4,28 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const { images } = await req.json();
 
-    const {
-      images, // [{ base64, mime, filename, asin, reference }]
-    } = body;
-
-    if (!images || !Array.isArray(images)) {
-      return NextResponse.json(
-        { error: "Datos inválidos" },
-        { status: 400 }
-      );
+    if (!Array.isArray(images) || images.length === 0) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
+
+    // 🔢 Obtener último índice existente
+    const { data: lastImage } = await supabaseAdmin
+      .from("project_images")
+      .select("image_index")
+      .order("image_index", { ascending: false })
+      .limit(1)
+      .single();
+
+    let currentIndex = lastImage?.image_index ?? 0;
 
     const uploadedImages = [];
 
     for (const image of images) {
-      const {
-        base64,
-        mime,
-        filename,
-        asin,
-        reference,
-      } = image;
+      currentIndex++;
+
+      const { base64, mime, filename, asin, reference } = image;
 
       const buffer = Buffer.from(
         base64.replace(/^data:image\/\w+;base64,/, ""),
@@ -35,7 +34,7 @@ export async function POST(req: Request) {
 
       const storagePath = `default/${uuidv4()}-${filename}`;
 
-      // 1️⃣ Subir imagen a Storage
+      // 1️⃣ Subir imagen
       const { error: uploadError } = await supabaseAdmin.storage
         .from("project-images")
         .upload(storagePath, buffer, {
@@ -43,17 +42,16 @@ export async function POST(req: Request) {
           upsert: false,
         });
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      // 2️⃣ Guardar metadata en DB (SIN project_id)
+      // 2️⃣ Guardar metadata COMPLETA
       const { data, error: dbError } = await supabaseAdmin
         .from("project_images")
         .insert({
           project_id: null,
-          reference: reference || null,
-          asin: asin || null,
+          reference: reference ?? null,
+          asin: asin ?? null,
+          image_index: currentIndex,
           filename,
           mime,
           storage_path: storagePath,
@@ -61,17 +59,13 @@ export async function POST(req: Request) {
         .select()
         .single();
 
-      if (dbError) {
-        throw dbError;
-      }
+      if (dbError) throw dbError;
 
       uploadedImages.push(data);
     }
 
-    return NextResponse.json({
-      success: true,
-      images: uploadedImages,
-    });
+    return NextResponse.json({ success: true, images: uploadedImages });
+
   } catch (error: any) {
     console.error("ADD IMAGES ERROR:", error);
     return NextResponse.json(
@@ -80,4 +74,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
