@@ -47,8 +47,10 @@ export default function ProjectsPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
+      {/* MARGEN IZQUIERDO */}
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
+      {/* CONTENIDO */}
       <div
         style={{
           flex: 1,
@@ -57,6 +59,7 @@ export default function ProjectsPage() {
           height: "100vh",
         }}
       >
+        {/* TÍTULO */}
         <h1
           style={{
             fontFamily: "DM Serif Display",
@@ -68,17 +71,75 @@ export default function ProjectsPage() {
           Proyectos
         </h1>
 
+        {/* BOTONES (NO SE TOCAN) */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 18,
+            display: "flex",
+            justifyContent: "center",
+            gap: 12,
+            marginBottom: 28,
+            flexWrap: "wrap",
           }}
         >
-          {loading ? (
-            <p style={{ textAlign: "center" }}>Cargando imágenes…</p>
-          ) : (
-            images.map((img) => (
+          <button
+            className="btn-zoom"
+            onClick={selectAll}
+            style={{
+              background: "#ff6b6b",
+              color: "#fff",
+              borderRadius: 999,
+            }}
+          >
+            Seleccionar todo
+          </button>
+
+          <button
+            className="btn-zoom"
+            onClick={deselectAll}
+            style={{ borderRadius: 999 }}
+          >
+            Deseleccionar todo
+          </button>
+
+          <button
+            className="btn-zoom"
+            style={{
+              background: "#000",
+              color: "#fff",
+              borderRadius: 999,
+            }}
+          >
+            Descargar ZIP (Referencia)
+          </button>
+
+          <button
+            className="btn-zoom"
+            style={{
+              background: "#ff6b6b",
+              color: "#fff",
+              borderRadius: 999,
+            }}
+          >
+            Descargar ZIP (ASIN)
+          </button>
+        </div>
+
+        {/* GALERÍA */}
+        {loading ? (
+          <p style={{ textAlign: "center" }}>Cargando imágenes…</p>
+        ) : images.length === 0 ? (
+          <p style={{ textAlign: "center" }}>
+            No hay imágenes enviadas al proyecto todavía
+          </p>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(6, 1fr)",
+              gap: 18,
+            }}
+          >
+            {images.map((img) => (
               <div
                 key={img.id}
                 style={{
@@ -86,6 +147,7 @@ export default function ProjectsPage() {
                   borderRadius: 16,
                   height: 240,
                   position: "relative",
+                  cursor: "pointer",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
                   overflow: "hidden",
                 }}
@@ -106,7 +168,7 @@ export default function ProjectsPage() {
                   }}
                 />
 
-                {/* IMAGEN (solo si hay URL válida) */}
+                {/* IMAGEN */}
                 {img.url && (
                   <img
                     src={img.url}
@@ -120,7 +182,7 @@ export default function ProjectsPage() {
                   />
                 )}
 
-                {/* FRANJA INFERIOR INFO */}
+                {/* FRANJA INFERIOR */}
                 <div
                   style={{
                     position: "absolute",
@@ -143,13 +205,15 @@ export default function ProjectsPage() {
                   {img.index !== undefined && <span>| #{img.index}</span>}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* MARGEN DERECHO */}
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
+      {/* VISOR */}
       {preview && (
         <div onClick={() => setPreview(null)} className="viewer-overlay">
           <img src={preview} className="viewer-image" />
