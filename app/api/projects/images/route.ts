@@ -1,49 +1,41 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabase } from "@/lib/supabaseClient";
 
 export async function GET() {
   try {
-    /* 1️⃣ Obtener imágenes de BD */
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("project_images")
-      .select(`
-        id,
-        reference,
-        asin,
-        index,
-        storage_path
-      `)
+      .select("*")
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("DB error:", error);
+      console.error("Supabase error:", error);
       return NextResponse.json({ images: [] }, { status: 500 });
     }
+
+    console.log("IMAGES FROM DB:", data);
 
     if (!data || data.length === 0) {
       return NextResponse.json({ images: [] });
     }
 
-    /* 2️⃣ Generar URLs públicas */
-    const images = data.map((img) => {
-      const { data: urlData } = supabaseAdmin
-        .storage
+    const images = data.map((img: any) => {
+      const { data: urlData } = supabase.storage
         .from("project-images")
         .getPublicUrl(img.storage_path);
 
       return {
         id: img.id,
-        reference: img.reference ?? null,
-        asin: img.asin ?? null,
-        index: img.index ?? null,
+        reference: img.reference,
+        asin: img.asin,
+        index: img.index,
         url: urlData.publicUrl,
       };
     });
 
     return NextResponse.json({ images });
-
   } catch (err) {
-    console.error("API /projects/images error:", err);
+    console.error("Fatal error:", err);
     return NextResponse.json({ images: [] }, { status: 500 });
   }
 }
