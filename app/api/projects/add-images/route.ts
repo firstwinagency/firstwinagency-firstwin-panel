@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
@@ -36,8 +36,8 @@ export async function POST(req: Request) {
 
       const storagePath = `${projectId}/${uuidv4()}-${filename}`;
 
-      // 1️⃣ Subir imagen a Storage (SIN pérdida de calidad)
-      const { error: uploadError } = await supabase.storage
+      // 1️⃣ Subir imagen a Storage (SERVICE ROLE → sin RLS)
+      const { error: uploadError } = await supabaseAdmin.storage
         .from("project-images")
         .upload(storagePath, buffer, {
           contentType: mime,
@@ -48,8 +48,8 @@ export async function POST(req: Request) {
         throw uploadError;
       }
 
-      // 2️⃣ Guardar metadata en DB
-      const { data, error: dbError } = await supabase
+      // 2️⃣ Guardar metadata en DB (SERVICE ROLE → sin RLS)
+      const { data, error: dbError } = await supabaseAdmin
         .from("project_images")
         .insert({
           project_id: projectId,
