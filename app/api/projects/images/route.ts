@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("project_images")
-      .select("*")
+      .select(`
+        id,
+        reference,
+        asin,
+        image_index,
+        storage_path,
+        created_at
+      `)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -13,27 +20,33 @@ export async function GET() {
       return NextResponse.json({ images: [] }, { status: 500 });
     }
 
-    console.log("IMAGES FROM DB:", data);
-
     if (!data || data.length === 0) {
       return NextResponse.json({ images: [] });
     }
 
-    const images = data.map((img: any) => {
-      const { data: urlData } = supabase.storage
-        .from("project-images")
-        .getPublicUrl(img.storage_path);
+    const images = data
+      .map((img) => {
+        if (!img.storage_path) return null;
 
-      return {
-        id: img.id,
-        reference: img.reference,
-        asin: img.asin,
-        index: img.index,
-        url: urlData.publicUrl,
-      };
-    });
+        const { data: urlData } = supabaseAdmin
+          .storage
+          .from("project-images")
+          .getPublicUrl(img.storage_path);
+
+        if (!urlData?.publicUrl) return null;
+
+        return {
+          id: img.id,
+          reference: img.reference,
+          asin: img.asin,
+          index: img.image_index,
+          url: urlData.publicUrl,
+        };
+      })
+      .filter(Boolean);
 
     return NextResponse.json({ images });
+
   } catch (err) {
     console.error("Fatal error:", err);
     return NextResponse.json({ images: [] }, { status: 500 });
