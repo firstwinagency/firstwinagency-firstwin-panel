@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     }
 
     // 3️⃣ Generar ZIP
-    const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+    const zipBuffer = await zip.generateAsync({ type: "uint8array" });
 
     return new NextResponse(zipBuffer, {
       headers: {
