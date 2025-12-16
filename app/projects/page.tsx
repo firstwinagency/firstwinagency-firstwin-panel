@@ -6,7 +6,8 @@ type ProjectImage = {
   id: string;
   reference?: string;
   asin?: string;
-  url: string;
+  index?: number;
+  url?: string;
 };
 
 export default function ProjectsPage() {
@@ -45,17 +46,9 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#fff",
-        display: "flex",
-      }}
-    >
-      {/* MARGEN IZQUIERDO CORAL */}
+    <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      {/* CONTENIDO CENTRAL (🔽 SCROLL AQUÍ 🔽) */}
       <div
         style={{
           flex: 1,
@@ -64,7 +57,6 @@ export default function ProjectsPage() {
           height: "100vh",
         }}
       >
-        {/* TÍTULO */}
         <h1
           style={{
             fontFamily: "DM Serif Display",
@@ -76,71 +68,17 @@ export default function ProjectsPage() {
           Proyectos
         </h1>
 
-        {/* BOTONES */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 28,
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 18,
           }}
         >
-          <button
-            className="btn-zoom"
-            onClick={selectAll}
-            style={{
-              background: "#ff6b6b",
-              color: "#fff",
-              borderRadius: 999,
-            }}
-          >
-            Seleccionar todo
-          </button>
-
-          <button
-            className="btn-zoom"
-            onClick={deselectAll}
-            style={{ borderRadius: 999 }}
-          >
-            Deseleccionar todo
-          </button>
-
-          <button
-            className="btn-zoom"
-            style={{
-              background: "#000",
-              color: "#fff",
-              borderRadius: 999,
-            }}
-          >
-            Descargar ZIP (Referencia)
-          </button>
-
-          <button
-            className="btn-zoom"
-            style={{
-              background: "#ff6b6b",
-              color: "#fff",
-              borderRadius: 999,
-            }}
-          >
-            Descargar ZIP (ASIN)
-          </button>
-        </div>
-
-        {/* GALERÍA */}
-        {loading ? (
-          <p style={{ textAlign: "center" }}>Cargando imágenes…</p>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(6, 1fr)",
-              gap: 18,
-            }}
-          >
-            {images.map((img) => (
+          {loading ? (
+            <p style={{ textAlign: "center" }}>Cargando imágenes…</p>
+          ) : (
+            images.map((img) => (
               <div
                 key={img.id}
                 style={{
@@ -148,7 +86,6 @@ export default function ProjectsPage() {
                   borderRadius: 16,
                   height: 240,
                   position: "relative",
-                  cursor: "pointer",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
                   overflow: "hidden",
                 }}
@@ -169,19 +106,21 @@ export default function ProjectsPage() {
                   }}
                 />
 
-                {/* IMAGEN REAL */}
-                <img
-                  src={img.url}
-                  alt=""
-                  onClick={() => setPreview(img.url)}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
+                {/* IMAGEN (solo si hay URL válida) */}
+                {img.url && (
+                  <img
+                    src={img.url}
+                    alt=""
+                    onClick={() => setPreview(img.url!)}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
 
-                {/* FRANJA INFERIOR */}
+                {/* FRANJA INFERIOR INFO */}
                 <div
                   style={{
                     position: "absolute",
@@ -190,20 +129,27 @@ export default function ProjectsPage() {
                     right: 0,
                     height: 32,
                     background: "#6b6b6b",
-                    borderBottomLeftRadius: 16,
-                    borderBottomRightRadius: 16,
+                    color: "#fff",
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
                   }}
-                />
+                >
+                  {img.reference && <span>{img.reference}</span>}
+                  {img.reference && img.asin && <span>|</span>}
+                  {img.asin && <span>{img.asin}</span>}
+                  {img.index !== undefined && <span>| #{img.index}</span>}
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
 
-      {/* MARGEN DERECHO CORAL */}
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      {/* VISOR */}
       {preview && (
         <div onClick={() => setPreview(null)} className="viewer-overlay">
           <img src={preview} className="viewer-image" />
