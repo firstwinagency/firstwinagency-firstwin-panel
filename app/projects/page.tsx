@@ -16,19 +16,20 @@ export default function ProjectsPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadImages = async () => {
-      try {
-        const res = await fetch("/api/projects/images");
-        const data = await res.json();
-        setImages(data.images || []);
-      } catch (err) {
-        console.error("Error cargando imágenes", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadImages = async () => {
+    try {
+      const res = await fetch("/api/projects/images");
+      const data = await res.json();
+      setImages(data.images || []);
+      setSelected(new Set());
+    } catch (err) {
+      console.error("Error cargando imágenes", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadImages();
   }, []);
 
@@ -45,12 +46,67 @@ export default function ProjectsPage() {
     });
   };
 
+  /* =======================
+     DESCARGAR ZIP
+  ======================= */
+  const downloadZip = async (mode: "reference" | "asin") => {
+    if (selected.size === 0) {
+      alert("Selecciona al menos una imagen");
+      return;
+    }
+
+    const res = await fetch("/api/projects/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ids: Array.from(selected),
+        mode,
+      }),
+    });
+
+    if (!res.ok) {
+      alert("Error generando el ZIP");
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `imagenes_${mode}.zip`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  /* =======================
+     ELIMINAR IMÁGENES
+  ======================= */
+  const deleteImages = async () => {
+    if (selected.size === 0) return;
+
+    const ok = confirm("¿Estás seguro que deseas eliminar?");
+    if (!ok) return;
+
+    const res = await fetch("/api/projects/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ids: Array.from(selected),
+      }),
+    });
+
+    if (!res.ok) {
+      alert("Error eliminando imágenes");
+      return;
+    }
+
+    await loadImages();
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
-      {/* MARGEN IZQUIERDO */}
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      {/* CONTENIDO */}
       <div
         style={{
           flex: 1,
@@ -59,7 +115,6 @@ export default function ProjectsPage() {
           height: "100vh",
         }}
       >
-        {/* TÍTULO */}
         <h1
           style={{
             fontFamily: "DM Serif Display",
@@ -71,7 +126,7 @@ export default function ProjectsPage() {
           Proyectos
         </h1>
 
-        {/* BOTONES (NO SE TOCAN) */}
+        {/* BOTONES */}
         <div
           style={{
             display: "flex",
@@ -84,43 +139,44 @@ export default function ProjectsPage() {
           <button
             className="btn-zoom"
             onClick={selectAll}
-            style={{
-              background: "#ff6b6b",
-              color: "#fff",
-              borderRadius: 999,
-            }}
+            style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}
           >
             Seleccionar todo
           </button>
 
-          <button
-            className="btn-zoom"
-            onClick={deselectAll}
-            style={{ borderRadius: 999 }}
-          >
+          <button className="btn-zoom" onClick={deselectAll} style={{ borderRadius: 999 }}>
             Deseleccionar todo
           </button>
 
           <button
             className="btn-zoom"
-            style={{
-              background: "#000",
-              color: "#fff",
-              borderRadius: 999,
-            }}
+            onClick={() => downloadZip("reference")}
+            style={{ background: "#000", color: "#fff", borderRadius: 999 }}
           >
             Descargar ZIP (Referencia)
           </button>
 
           <button
             className="btn-zoom"
-            style={{
-              background: "#ff6b6b",
-              color: "#fff",
-              borderRadius: 999,
-            }}
+            onClick={() => downloadZip("asin")}
+            style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}
           >
             Descargar ZIP (ASIN)
+          </button>
+
+          {/* NUEVO BOTÓN ELIMINAR */}
+          <button
+            className="btn-zoom"
+            disabled={selected.size === 0}
+            onClick={deleteImages}
+            style={{
+              background: "#6b1d1d",
+              color: "#fff",
+              borderRadius: 999,
+              opacity: selected.size === 0 ? 0.5 : 1,
+            }}
+          >
+            Eliminar
           </button>
         </div>
 
@@ -152,7 +208,6 @@ export default function ProjectsPage() {
                   overflow: "hidden",
                 }}
               >
-                {/* CHECK */}
                 <div
                   onClick={() => toggleSelect(img.id)}
                   style={{
@@ -168,11 +223,9 @@ export default function ProjectsPage() {
                   }}
                 />
 
-                {/* IMAGEN */}
                 {img.url && (
                   <img
                     src={img.url}
-                    alt=""
                     onClick={() => setPreview(img.url!)}
                     style={{
                       width: "100%",
@@ -182,7 +235,6 @@ export default function ProjectsPage() {
                   />
                 )}
 
-                {/* FRANJA INFERIOR */}
                 <div
                   style={{
                     position: "absolute",
@@ -210,10 +262,8 @@ export default function ProjectsPage() {
         )}
       </div>
 
-      {/* MARGEN DERECHO */}
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      {/* VISOR */}
       {preview && (
         <div onClick={() => setPreview(null)} className="viewer-overlay">
           <img src={preview} className="viewer-image" />
