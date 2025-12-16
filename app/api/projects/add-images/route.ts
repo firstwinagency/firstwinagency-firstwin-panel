@@ -7,11 +7,10 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const {
-      projectId,
       images, // [{ base64, mime, filename, asin, reference }]
     } = body;
 
-    if (!projectId || !images || !Array.isArray(images)) {
+    if (!images || !Array.isArray(images)) {
       return NextResponse.json(
         { error: "Datos inválidos" },
         { status: 400 }
@@ -34,9 +33,9 @@ export async function POST(req: Request) {
         "base64"
       );
 
-      const storagePath = `${projectId}/${uuidv4()}-${filename}`;
+      const storagePath = `default/${uuidv4()}-${filename}`;
 
-      // 1️⃣ Subir imagen a Storage (SERVICE ROLE → sin RLS)
+      // 1️⃣ Subir imagen a Storage
       const { error: uploadError } = await supabaseAdmin.storage
         .from("project-images")
         .upload(storagePath, buffer, {
@@ -48,13 +47,13 @@ export async function POST(req: Request) {
         throw uploadError;
       }
 
-      // 2️⃣ Guardar metadata en DB (SERVICE ROLE → sin RLS)
+      // 2️⃣ Guardar metadata en DB (SIN project_id)
       const { data, error: dbError } = await supabaseAdmin
         .from("project_images")
         .insert({
-          project_id: projectId,
-          reference,
-          asin,
+          project_id: null,
+          reference: reference || null,
+          asin: asin || null,
           filename,
           mime,
           storage_path: storagePath,
@@ -81,3 +80,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
