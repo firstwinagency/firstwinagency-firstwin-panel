@@ -120,11 +120,16 @@ export default function ProjectsPage() {
             fontFamily: "DM Serif Display",
             fontSize: 34,
             textAlign: "center",
-            marginBottom: 18,
+            marginBottom: 6,
           }}
         >
           Proyectos
         </h1>
+
+        {/* CONTADOR */}
+        <p style={{ textAlign: "center", marginBottom: 18, opacity: 0.7 }}>
+          Imágenes en proyecto: {images.length}
+        </p>
 
         {/* BOTONES */}
         <div
@@ -164,7 +169,6 @@ export default function ProjectsPage() {
             Descargar ZIP (ASIN)
           </button>
 
-          {/* NUEVO BOTÓN ELIMINAR */}
           <button
             className="btn-zoom"
             disabled={selected.size === 0}
@@ -195,7 +199,7 @@ export default function ProjectsPage() {
               gap: 18,
             }}
           >
-            {images.map((img) => (
+            {images.map((img, idx) => (
               <div
                 key={img.id}
                 style={{
@@ -207,9 +211,14 @@ export default function ProjectsPage() {
                   boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
                   overflow: "hidden",
                 }}
+                onClick={() => img.url && setPreview(img.url)}
               >
+                {/* CHECK */}
                 <div
-                  onClick={() => toggleSelect(img.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelect(img.id);
+                  }}
                   style={{
                     position: "absolute",
                     top: 10,
@@ -226,7 +235,6 @@ export default function ProjectsPage() {
                 {img.url && (
                   <img
                     src={img.url}
-                    onClick={() => setPreview(img.url!)}
                     style={{
                       width: "100%",
                       height: "100%",
@@ -235,6 +243,7 @@ export default function ProjectsPage() {
                   />
                 )}
 
+                {/* FRANJA */}
                 <div
                   style={{
                     position: "absolute",
@@ -251,10 +260,10 @@ export default function ProjectsPage() {
                     gap: 6,
                   }}
                 >
-                  {img.reference && <span>{img.reference}</span>}
-                  {img.reference && img.asin && <span>|</span>}
-                  {img.asin && <span>{img.asin}</span>}
-                  {img.index !== undefined && <span>| #{img.index}</span>}
+                  <span>{img.reference || "REF"}</span>
+                  <span>|</span>
+                  <span>{img.asin || "ASIN"}</span>
+                  <span>| #{img.index ?? idx + 1}</span>
                 </div>
               </div>
             ))}
@@ -264,9 +273,30 @@ export default function ProjectsPage() {
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
+      {/* VISOR CORREGIDO */}
       {preview && (
-        <div onClick={() => setPreview(null)} className="viewer-overlay">
-          <img src={preview} className="viewer-image" />
+        <div
+          onClick={() => setPreview(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <img
+            src={preview}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              borderRadius: 12,
+              boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
+            }}
+          />
         </div>
       )}
     </div>
