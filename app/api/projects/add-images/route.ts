@@ -4,28 +4,35 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
   try {
-    const { images } = await req.json();
+    const body = await req.json();
+    const { images } = body;
 
-    if (!Array.isArray(images) || images.length === 0) {
+    if (!images || !Array.isArray(images)) {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
 
-    // 🔢 Obtener último índice existente
+    const uploadedImages = [];
+
+    // 1️⃣ Obtener el último índice actual
     const { data: lastImage } = await supabaseAdmin
       .from("project_images")
       .select("image_index")
       .order("image_index", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     let currentIndex = lastImage?.image_index ?? 0;
 
-    const uploadedImages = [];
-
     for (const image of images) {
-      currentIndex++;
+      const {
+        base64,
+        mime,
+        filename,
+        asin,
+        reference,
+      } = image;
 
-      const { base64, mime, filename, asin, reference } = image;
+      currentIndex += 1;
 
       const buffer = Buffer.from(
         base64.replace(/^data:image\/\w+;base64,/, ""),
@@ -34,7 +41,7 @@ export async function POST(req: Request) {
 
       const storagePath = `default/${uuidv4()}-${filename}`;
 
-      // 1️⃣ Subir imagen
+      // 2️⃣ Subir imagen a Storage
       const { error: uploadError } = await supabaseAdmin.storage
         .from("project-images")
         .upload(storagePath, buffer, {
@@ -44,7 +51,7 @@ export async function POST(req: Request) {
 
       if (uploadError) throw uploadError;
 
-      // 2️⃣ Guardar metadata COMPLETA
+      // 3️⃣ Guardar metadata COMPLETA en DB
       const { data, error: dbError } = await supabaseAdmin
         .from("project_images")
         .insert({
@@ -64,7 +71,10 @@ export async function POST(req: Request) {
       uploadedImages.push(data);
     }
 
-    return NextResponse.json({ success: true, images: uploadedImages });
+    return NextResponse.json({
+      success: true,
+      images: uploadedImages,
+    });
 
   } catch (error: any) {
     console.error("ADD IMAGES ERROR:", error);
