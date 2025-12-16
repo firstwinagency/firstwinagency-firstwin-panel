@@ -126,7 +126,6 @@ export default function ProjectsPage() {
           Proyectos
         </h1>
 
-        {/* CONTADOR */}
         <p style={{ textAlign: "center", marginBottom: 18, opacity: 0.7 }}>
           Imágenes en proyecto: {images.length}
         </p>
@@ -149,7 +148,11 @@ export default function ProjectsPage() {
             Seleccionar todo
           </button>
 
-          <button className="btn-zoom" onClick={deselectAll} style={{ borderRadius: 999 }}>
+          <button
+            className="btn-zoom"
+            onClick={deselectAll}
+            style={{ borderRadius: 999 }}
+          >
             Deseleccionar todo
           </button>
 
@@ -213,7 +216,6 @@ export default function ProjectsPage() {
                 }}
                 onClick={() => img.url && setPreview(img.url)}
               >
-                {/* CHECK */}
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
@@ -243,7 +245,6 @@ export default function ProjectsPage() {
                   />
                 )}
 
-                {/* FRANJA */}
                 <div
                   style={{
                     position: "absolute",
@@ -273,28 +274,29 @@ export default function ProjectsPage() {
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      {/* VISOR CORREGIDO */}
+      {/* VISOR – FIX DEFINITIVO */}
       {preview && (
         <div
           onClick={() => setPreview(null)}
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.8)",
+            background: "rgba(0,0,0,0.85)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 9999,
+            cursor: "zoom-out",
           }}
         >
           <img
             src={preview}
-            onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: "90%",
               maxHeight: "90%",
+              objectFit: "contain",
               borderRadius: 12,
-              boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
+              boxShadow: "0 0 40px rgba(0,0,0,0.6)",
             }}
           />
         </div>
@@ -302,3 +304,4 @@ export default function ProjectsPage() {
     </div>
   );
 }
+
