@@ -1,74 +1,112 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import JSZip from "jszip";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { ids, mode } = await req.json();
+    const body = await req.json();
+    const { imageIds, mode } = body as {
+      imageIds: string[];
+      mode: "reference" | "asin";
+    };
 
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json(
-        { error: "IDs inválidos" },
+    if (!imageIds || imageIds.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No hay imágenes seleccionadas" }),
         { status: 400 }
       );
     }
 
-    if (!["reference", "asin"].includes(mode)) {
-      return NextResponse.json(
-        { error: "Modo inválido" },
+    if (mode !== "reference" && mode !== "asin") {
+      return new Response(
+        JSON.stringify({ error: "Modo inválido" }),
         { status: 400 }
       );
     }
 
-    // 1️⃣ Obtener imágenes
+    // 1️⃣ Obtener metadata de imágenes
     const { data: images, error } = await supabaseAdmin
       .from("project_images")
-      .select("*")
-      .in("id", ids);
+      .select(
+        `
+        id,
+        reference,
+        asin,
+        index,
+        storage_path,
+        mime
+      `
+      )
+      .in("id", imageIds);
 
-    if (error) throw error;
-
-    const zip = new JSZip();
-
-    // 2️⃣ Descargar y añadir al ZIP
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-
-      const { data } = await supabaseAdmin.storage
-        .from("project-images")
-        .download(img.storage_path);
-
-      if (!data) continue;
-
-      const buffer = Buffer.from(await data.arrayBuffer());
-
-      const baseName =
-        mode === "reference"
-          ? img.reference || "sin-referencia"
-          : img.asin || "sin-asin";
-
-      const index = img.index ?? i + 1;
-      const ext = img.filename?.split(".").pop() || "jpg";
-
-      const fileName = `${baseName}_${index}.${ext}`;
-
-      zip.file(fileName, buffer);
+    if (error || !images || images.length === 0) {
+      console.error(error);
+      return new Response(
+        JSON.stringify({ error: "No se pudieron cargar las imágenes" }),
+        { status: 500 }
+      );
     }
 
-    // 3️⃣ Generar ZIP
-    const zipBuffer = await zip.generateAsync({ type: "uint8array" });
+    // 2️⃣ Crear ZIP
+    const zip = new JSZip();
 
-    return new NextResponse(zipBuffer, {
+    for (const img of images) {
+      if (!img.storage_path) continue;
+
+      // Descargar archivo desde Supabase Storage
+      const { data: fileData, error: downloadError } =
+        await supabaseAdmin.storage
+          .from("project-images")
+          .download(img.storage_path);
+
+      if (downloadError || !fileData) {
+        console.warn("Error descargando:", img.storage_path);
+        continue;
+      }
+
+      const arrayBuffer = await fileData.arrayBuffer();
+
+      // Extensión
+      const ext =
+        img.mime?.includes("png")
+          ? "png"
+          : img.mime?.includes("webp")
+          ? "webp"
+          : img.mime?.includes("gif")
+          ? "gif"
+          : "jpg";
+
+      // Nombre base
+      const baseName =
+        mode === "asin"
+          ? img.asin || img.reference || "imagen"
+          : img.reference || img.asin || "imagen";
+
+      const indexSuffix =
+        typeof img.index === "number" ? `_${img.index}` : "";
+
+      const filename = `${baseName}${indexSuffix}.${ext}`;
+
+      zip.file(filename, arrayBuffer);
+    }
+
+    // 3️⃣ Generar ZIP (FORMA CORRECTA PARA NEXT 14)
+    const zipBuffer = await zip.generateAsync({
+      type: "arraybuffer",
+    });
+
+    return new Response(zipBuffer, {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename=imagenes_${mode}.zip`,
       },
     });
-  } catch (error: any) {
-    console.error("ZIP ERROR:", error);
-    return NextResponse.json(
-      { error: error.message || "Error generando ZIP" },
+  } catch (err) {
+    console.error("DOWNLOAD ZIP ERROR:", err);
+    return new Response(
+      JSON.stringify({ error: "Error interno generando ZIP" }),
       { status: 500 }
     );
   }
 }
+
