@@ -8,20 +8,13 @@ export async function POST(req: Request) {
     const { images } = body;
 
     if (!images || !Array.isArray(images)) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Datos inválidos" },
+        { status: 400 }
+      );
     }
 
     const uploadedImages = [];
-
-    // 1️⃣ Obtener el último índice actual
-    const { data: lastImage } = await supabaseAdmin
-      .from("project_images")
-      .select("image_index")
-      .order("image_index", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    let currentIndex = lastImage?.image_index ?? 0;
 
     for (const image of images) {
       const {
@@ -30,9 +23,16 @@ export async function POST(req: Request) {
         filename,
         asin,
         reference,
+        image_index, // ✅ VIENE DEL PANEL MASIVO
       } = image;
 
-      currentIndex += 1;
+      // Validación mínima
+      if (typeof image_index !== "number") {
+        return NextResponse.json(
+          { error: "image_index inválido o ausente" },
+          { status: 400 }
+        );
+      }
 
       const buffer = Buffer.from(
         base64.replace(/^data:image\/\w+;base64,/, ""),
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
       const storagePath = `default/${uuidv4()}-${filename}`;
 
-      // 2️⃣ Subir imagen a Storage
+      // 1️⃣ Subir imagen a Storage
       const { error: uploadError } = await supabaseAdmin.storage
         .from("project-images")
         .upload(storagePath, buffer, {
@@ -51,14 +51,14 @@ export async function POST(req: Request) {
 
       if (uploadError) throw uploadError;
 
-      // 3️⃣ Guardar metadata COMPLETA en DB
+      // 2️⃣ Guardar metadata EXACTA (sin recalcular nada)
       const { data, error: dbError } = await supabaseAdmin
         .from("project_images")
         .insert({
           project_id: null,
           reference: reference ?? null,
           asin: asin ?? null,
-          image_index: currentIndex,
+          image_index, // ✅ SE GUARDA TAL CUAL
           filename,
           mime,
           storage_path: storagePath,
