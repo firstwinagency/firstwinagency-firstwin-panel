@@ -647,9 +647,10 @@ export default function Page() {
         return {
           base64: img.base64,
           mime,
-          filename: `${order}.${ext}`,
+          filename: `${reference}_${order}.${ext}`,
           reference,
           asin,
+          image_index: order
         };
       })
       .filter(Boolean);
