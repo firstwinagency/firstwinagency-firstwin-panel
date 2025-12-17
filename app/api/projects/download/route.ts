@@ -20,11 +20,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1️⃣ Obtener imágenes de la DB
+    // 1️⃣ Obtener imágenes ORDENADAS correctamente
     const { data: images, error } = await supabaseAdmin
       .from("project_images")
       .select("*")
-      .in("id", ids);
+      .in("id", ids)
+      .order("reference", { ascending: true })
+      .order("image_index", { ascending: true });
 
     if (error || !images || images.length === 0) {
       return NextResponse.json(
@@ -35,10 +37,8 @@ export async function POST(req: Request) {
 
     const zip = new JSZip();
 
-    // 2️⃣ Descargar cada imagen desde Storage y añadirla al ZIP
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-
+    // 2️⃣ Descargar y añadir imágenes respetando image_index
+    for (const img of images) {
       const { data: fileData, error: downloadError } =
         await supabaseAdmin.storage
           .from("project-images")
@@ -53,20 +53,24 @@ export async function POST(req: Request) {
 
       const baseName =
         mode === "reference"
-          ? img.reference || `imagen_${i + 1}`
-          : img.asin || `imagen_${i + 1}`;
+          ? img.reference
+          : img.asin;
+
+      if (!baseName) continue;
 
       const extension = img.mime?.split("/")[1] || "jpg";
 
-      zip.file(`${baseName}.${extension}`, arrayBuffer);
+      // ✅ nombre FINAL correcto
+      const filename = `${baseName}_${img.image_index}.${extension}`;
+
+      zip.file(filename, arrayBuffer);
     }
 
-    // 3️⃣ Generar ZIP como ArrayBuffer (CLAVE)
+    // 3️⃣ Generar ZIP
     const zipArrayBuffer = await zip.generateAsync({
       type: "arraybuffer",
     });
 
-    // 4️⃣ Responder correctamente
     return new NextResponse(zipArrayBuffer, {
       headers: {
         "Content-Type": "application/zip",
