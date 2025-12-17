@@ -1026,18 +1026,6 @@ export default function Page() {
     }
   }
 
-  /* ====== Función para descarga programática ====== */
-  const handleDownloadLightboxImage = () => {
-    if (!lightbox.src) return;
-
-    const a = document.createElement('a');
-    a.href = lightbox.src;
-    a.download = lightbox.name || '';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
   /* ===========================
      UI
      =========================== */
@@ -1441,7 +1429,7 @@ export default function Page() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <h2 style={{ margin: 0, fontWeight: 800, color: "var(--brand-accent)" }}>
             Kreative 360º · Generador de Imágenes Masivo IA
-          </h1>
+          </h2>
         </div>
 
         <p style={{ marginTop: 6, color: "#4b5563" }}>
@@ -2266,8 +2254,10 @@ export default function Page() {
             </div>
 
             <div style={{ marginTop: 12, textAlign: "center" }}>
-              <button
-                onClick={handleDownloadLightboxImage}
+              <a
+                href={lightbox.src}
+                // 🆕 nombre por defecto en descarga individual
+                download={lightbox.name || undefined}
                 style={{
                   marginRight: 12,
                   padding: "8px 14px",
@@ -2275,12 +2265,10 @@ export default function Page() {
                   color: "var(--brand-accent-ink)",
                   borderRadius: 8,
                   fontWeight: 700,
-                  cursor: "pointer",
-                  border: "none",
                 }}
               >
                 Descargar
-              </button>
+              </a>
               <button
                 onClick={closeLightbox}
                 style={{
@@ -2289,8 +2277,6 @@ export default function Page() {
                   color: "#fff",
                   borderRadius: 8,
                   fontWeight: 700,
-                  cursor: "pointer",
-                  border: "none",
                 }}
               >
                 Cerrar (Esc)
@@ -2301,4 +2287,4 @@ export default function Page() {
       )}
     </div>
   );
-                              }
+}
