@@ -10,6 +10,8 @@ type ProjectImage = {
   url?: string;
 };
 
+const CHUNK_SIZE = 100;
+
 export default function ProjectsPage() {
   const [images, setImages] = useState<ProjectImage[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -47,7 +49,7 @@ export default function ProjectsPage() {
   };
 
   /* =======================
-     DESCARGAR ZIP
+     DESCARGAR ZIP (CHUNKS)
   ======================= */
   const downloadZip = async (mode: "reference" | "asin") => {
     if (selected.size === 0) {
@@ -55,27 +57,44 @@ export default function ProjectsPage() {
       return;
     }
 
-    const res = await fetch("/api/projects/download", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ids: Array.from(selected),
-        mode,
-      }),
-    });
+    const ids = Array.from(selected);
+    const totalParts = Math.ceil(ids.length / CHUNK_SIZE);
 
-    if (!res.ok) {
-      alert("Error generando el ZIP");
-      return;
+    for (let part = 0; part < totalParts; part++) {
+      const chunk = ids.slice(
+        part * CHUNK_SIZE,
+        (part + 1) * CHUNK_SIZE
+      );
+
+      const res = await fetch("/api/projects/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: chunk,
+          mode,
+        }),
+      });
+
+      if (!res.ok) {
+        alert(`Error generando ZIP (parte ${part + 1})`);
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `imagenes_${mode}_part${part + 1}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      // Pequeña pausa para no saturar el navegador
+      await new Promise((r) => setTimeout(r, 300));
     }
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `imagenes_${mode}.zip`;
-    a.click();
-    window.URL.revokeObjectURL(url);
   };
 
   /* =======================
@@ -274,7 +293,7 @@ export default function ProjectsPage() {
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      {/* VISOR – FIX DEFINITIVO */}
+      {/* VISOR */}
       {preview && (
         <div
           onClick={() => setPreview(null)}
@@ -304,4 +323,5 @@ export default function ProjectsPage() {
     </div>
   );
 }
+
 
