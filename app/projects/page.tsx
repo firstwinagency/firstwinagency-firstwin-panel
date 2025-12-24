@@ -11,7 +11,7 @@ type ProjectImage = {
 };
 
 const CHUNK_SIZE = 100;
-const COLUMNS = 6;
+const IMAGES_PER_ROW = 6;
 
 export default function ProjectsPage() {
   const [images, setImages] = useState<ProjectImage[]>([]);
@@ -19,11 +19,9 @@ export default function ProjectsPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [downloadProgress, setDownloadProgress] = useState<{
-    current: number;
-    total: number;
-    mode: "reference" | "asin" | null;
-  }>({ current: 0, total: 0, mode: null });
+  const [downloading, setDownloading] = useState(false);
+  const [downloadPart, setDownloadPart] = useState(0);
+  const [downloadTotal, setDownloadTotal] = useState(0);
 
   const loadImages = async () => {
     try {
@@ -55,8 +53,24 @@ export default function ProjectsPage() {
     });
   };
 
+  const toggleRowSelect = (rowIndex: number) => {
+    const start = rowIndex * IMAGES_PER_ROW;
+    const rowImages = images.slice(start, start + IMAGES_PER_ROW);
+
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const allSelected = rowImages.every((img) => next.has(img.id));
+
+      rowImages.forEach((img) => {
+        allSelected ? next.delete(img.id) : next.add(img.id);
+      });
+
+      return next;
+    });
+  };
+
   /* =======================
-     DESCARGAR ZIP (CHUNKS + PROGRESO)
+     DESCARGAR ZIP (CHUNKS)
   ======================= */
   const downloadZip = async (mode: "reference" | "asin") => {
     if (selected.size === 0) {
@@ -67,14 +81,11 @@ export default function ProjectsPage() {
     const ids = Array.from(selected);
     const totalParts = Math.ceil(ids.length / CHUNK_SIZE);
 
-    setDownloadProgress({ current: 0, total: totalParts, mode });
+    setDownloading(true);
+    setDownloadTotal(totalParts);
 
     for (let part = 0; part < totalParts; part++) {
-      setDownloadProgress({
-        current: part + 1,
-        total: totalParts,
-        mode,
-      });
+      setDownloadPart(part + 1);
 
       const chunk = ids.slice(
         part * CHUNK_SIZE,
@@ -84,12 +95,15 @@ export default function ProjectsPage() {
       const res = await fetch("/api/projects/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: chunk, mode }),
+        body: JSON.stringify({
+          ids: chunk,
+          mode,
+        }),
       });
 
       if (!res.ok) {
         alert(`Error generando ZIP (parte ${part + 1})`);
-        setDownloadProgress({ current: 0, total: 0, mode: null });
+        setDownloading(false);
         return;
       }
 
@@ -108,7 +122,9 @@ export default function ProjectsPage() {
       await new Promise((r) => setTimeout(r, 300));
     }
 
-    setDownloadProgress({ current: 0, total: 0, mode: null });
+    setDownloading(false);
+    setDownloadPart(0);
+    setDownloadTotal(0);
   };
 
   /* =======================
@@ -140,7 +156,14 @@ export default function ProjectsPage() {
     <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
+      <div
+        style={{
+          flex: 1,
+          padding: "28px 36px",
+          overflowY: "auto",
+          height: "100vh",
+        }}
+      >
         <h1
           style={{
             fontFamily: "DM Serif Display",
@@ -156,33 +179,26 @@ export default function ProjectsPage() {
           Imágenes en proyecto: {images.length}
         </p>
 
-        {/* PROGRESO */}
-        {downloadProgress.total > 0 && (
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 14, marginBottom: 6 }}>
-              Descargando ZIP {downloadProgress.current} de{" "}
-              {downloadProgress.total} (
-              {downloadProgress.mode})
-            </div>
+        {/* BARRA PROGRESO DESCARGA */}
+        {downloading && (
+          <div style={{ maxWidth: 420, margin: "0 auto 20px" }}>
+            <p style={{ textAlign: "center", fontSize: 14 }}>
+              Descargando ZIP {downloadPart} de {downloadTotal}
+            </p>
             <div
               style={{
-                width: 300,
                 height: 8,
-                background: "#eee",
-                margin: "0 auto",
-                borderRadius: 4,
+                background: "#e0e0e0",
+                borderRadius: 6,
                 overflow: "hidden",
               }}
             >
               <div
                 style={{
-                  width: `${
-                    (downloadProgress.current /
-                      downloadProgress.total) *
-                    100
-                  }%`,
                   height: "100%",
+                  width: `${(downloadPart / downloadTotal) * 100}%`,
                   background: "#ff6b6b",
+                  transition: "width 0.3s",
                 }}
               />
             </div>
@@ -199,121 +215,165 @@ export default function ProjectsPage() {
             flexWrap: "wrap",
           }}
         >
-          <button className="btn-zoom" onClick={selectAll}>
+          <button
+            className="btn-zoom"
+            onClick={selectAll}
+            style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}
+          >
             Seleccionar todo
           </button>
-          <button className="btn-zoom" onClick={deselectAll}>
+
+          <button
+            className="btn-zoom"
+            onClick={deselectAll}
+            style={{ borderRadius: 999 }}
+          >
             Deseleccionar todo
           </button>
+
           <button
             className="btn-zoom"
             onClick={() => downloadZip("reference")}
-            disabled={downloadProgress.total > 0}
+            style={{ background: "#000", color: "#fff", borderRadius: 999 }}
           >
             Descargar ZIP (Referencia)
           </button>
+
           <button
             className="btn-zoom"
             onClick={() => downloadZip("asin")}
-            disabled={downloadProgress.total > 0}
+            style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}
           >
             Descargar ZIP (ASIN)
           </button>
+
           <button
             className="btn-zoom"
-            onClick={deleteImages}
             disabled={selected.size === 0}
+            onClick={deleteImages}
+            style={{
+              background: "#6b1d1d",
+              color: "#fff",
+              borderRadius: 999,
+              opacity: selected.size === 0 ? 0.5 : 1,
+            }}
           >
             Eliminar
           </button>
         </div>
 
         {/* GALERÍA */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`,
-            gap: 18,
-          }}
-        >
-          {images.map((img, idx) => {
-            const rowStart = Math.floor(idx / COLUMNS) * COLUMNS;
-            const rowImages = images.slice(rowStart, rowStart + COLUMNS);
-            const rowIds = rowImages.map((i) => i.id);
-            const rowSelected = rowIds.every((id) => selected.has(id));
+        {loading ? (
+          <p style={{ textAlign: "center" }}>Cargando imágenes…</p>
+        ) : images.length === 0 ? (
+          <p style={{ textAlign: "center" }}>
+            No hay imágenes enviadas al proyecto todavía
+          </p>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(6, 1fr)",
+              gap: 18,
+            }}
+          >
+            {images.map((img, idx) => {
+              const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
+              const isRowStart = idx % IMAGES_PER_ROW === 0;
 
-            return (
-              <div
-                key={img.id}
-                style={{
-                  background: "#f2f2f2",
-                  borderRadius: 16,
-                  height: 240,
-                  position: "relative",
-                  cursor: "pointer",
-                  overflow: "hidden",
-                }}
-                onClick={() => img.url && setPreview(img.url)}
-              >
-                {/* CHECK INDIVIDUAL */}
+              return (
                 <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelect(img.id);
-                  }}
+                  key={img.id}
                   style={{
-                    position: "absolute",
-                    top: 10,
-                    left: 10,
-                    width: 18,
-                    height: 18,
-                    background: selected.has(img.id)
-                      ? "#ff6b6b"
-                      : "#fff",
-                    border: "1px solid #ccc",
-                    zIndex: 2,
+                    background: "#f2f2f2",
+                    borderRadius: 16,
+                    height: 240,
+                    position: "relative",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+                    overflow: "hidden",
                   }}
-                />
+                  onClick={() => img.url && setPreview(img.url)}
+                >
+                  {isRowStart && (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleRowSelect(rowIndex);
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: 10,
+                        left: -26,
+                        width: 18,
+                        height: 18,
+                        borderRadius: 4,
+                        background: "#fff",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  )}
 
-                {/* CHECK FILA */}
-                {idx % COLUMNS === 0 && (
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelected((prev) => {
-                        const next = new Set(prev);
-                        rowIds.forEach((id) =>
-                          rowSelected ? next.delete(id) : next.add(id)
-                        );
-                        return next;
-                      });
+                      toggleSelect(img.id);
                     }}
                     style={{
                       position: "absolute",
                       top: 10,
-                      left: -26,
+                      left: 10,
                       width: 18,
                       height: 18,
-                      background: rowSelected ? "#000" : "#fff",
+                      borderRadius: 4,
+                      background: selected.has(img.id) ? "#ff6b6b" : "#fff",
                       border: "1px solid #ccc",
+                      zIndex: 2,
                     }}
                   />
-                )}
 
-                {img.url && (
-                  <img
-                    src={img.url}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  {img.url && (
+                    <img
+                      src={img.url}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 32,
+                      background: "#6b6b6b",
+                      color: "#fff",
+                      fontSize: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span>{img.reference || "REF"}</span>
+                    <span>|</span>
+                    <span>{img.asin || "ASIN"}</span>
+                    <span>| #{img.index ?? idx + 1}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
+      {/* VISOR */}
       {preview && (
         <div
           onClick={() => setPreview(null)}
@@ -325,6 +385,7 @@ export default function ProjectsPage() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 9999,
+            cursor: "zoom-out",
           }}
         >
           <img
@@ -333,6 +394,8 @@ export default function ProjectsPage() {
               maxWidth: "90%",
               maxHeight: "90%",
               objectFit: "contain",
+              borderRadius: 12,
+              boxShadow: "0 0 40px rgba(0,0,0,0.6)",
             }}
           />
         </div>
