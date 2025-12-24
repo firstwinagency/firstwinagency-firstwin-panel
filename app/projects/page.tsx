@@ -95,10 +95,7 @@ export default function ProjectsPage() {
       const res = await fetch("/api/projects/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ids: chunk,
-          mode,
-        }),
+        body: JSON.stringify({ ids: chunk, mode }),
       });
 
       if (!res.ok) {
@@ -118,7 +115,6 @@ export default function ProjectsPage() {
       a.remove();
 
       window.URL.revokeObjectURL(url);
-
       await new Promise((r) => setTimeout(r, 300));
     }
 
@@ -127,43 +123,11 @@ export default function ProjectsPage() {
     setDownloadTotal(0);
   };
 
-  /* =======================
-     ELIMINAR IMÁGENES
-  ======================= */
-  const deleteImages = async () => {
-    if (selected.size === 0) return;
-
-    const ok = confirm("¿Estás seguro que deseas eliminar?");
-    if (!ok) return;
-
-    const res = await fetch("/api/projects/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ids: Array.from(selected),
-      }),
-    });
-
-    if (!res.ok) {
-      alert("Error eliminando imágenes");
-      return;
-    }
-
-    await loadImages();
-  };
-
   return (
     <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
-      <div
-        style={{
-          flex: 1,
-          padding: "28px 36px",
-          overflowY: "auto",
-          height: "100vh",
-        }}
-      >
+      <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
         <h1
           style={{
             fontFamily: "DM Serif Display",
@@ -179,7 +143,6 @@ export default function ProjectsPage() {
           Imágenes en proyecto: {images.length}
         </p>
 
-        {/* BARRA PROGRESO DESCARGA */}
         {downloading && (
           <div style={{ maxWidth: 420, margin: "0 auto 20px" }}>
             <p style={{ textAlign: "center", fontSize: 14 }}>
@@ -205,7 +168,6 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {/* BOTONES */}
         <div
           style={{
             display: "flex",
@@ -215,191 +177,127 @@ export default function ProjectsPage() {
             flexWrap: "wrap",
           }}
         >
-          <button
-            className="btn-zoom"
-            onClick={selectAll}
-            style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}
-          >
+          <button className="btn-zoom" onClick={selectAll} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
             Seleccionar todo
           </button>
 
-          <button
-            className="btn-zoom"
-            onClick={deselectAll}
-            style={{ borderRadius: 999 }}
-          >
+          <button className="btn-zoom" onClick={deselectAll} style={{ borderRadius: 999 }}>
             Deseleccionar todo
           </button>
 
-          <button
-            className="btn-zoom"
-            onClick={() => downloadZip("reference")}
-            style={{ background: "#000", color: "#fff", borderRadius: 999 }}
-          >
+          <button className="btn-zoom" onClick={() => downloadZip("reference")} style={{ background: "#000", color: "#fff", borderRadius: 999 }}>
             Descargar ZIP (Referencia)
           </button>
 
-          <button
-            className="btn-zoom"
-            onClick={() => downloadZip("asin")}
-            style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}
-          >
+          <button className="btn-zoom" onClick={() => downloadZip("asin")} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
             Descargar ZIP (ASIN)
-          </button>
-
-          <button
-            className="btn-zoom"
-            disabled={selected.size === 0}
-            onClick={deleteImages}
-            style={{
-              background: "#6b1d1d",
-              color: "#fff",
-              borderRadius: 999,
-              opacity: selected.size === 0 ? 0.5 : 1,
-            }}
-          >
-            Eliminar
           </button>
         </div>
 
-        {/* GALERÍA */}
-        {loading ? (
-          <p style={{ textAlign: "center" }}>Cargando imágenes…</p>
-        ) : images.length === 0 ? (
-          <p style={{ textAlign: "center" }}>
-            No hay imágenes enviadas al proyecto todavía
-          </p>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(6, 1fr)",
-              gap: 18,
-            }}
-          >
-            {images.map((img, idx) => {
-              const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
-              const isRowStart = idx % IMAGES_PER_ROW === 0;
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 18,
+          }}
+        >
+          {images.map((img, idx) => {
+            const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
+            const isRowStart = idx % IMAGES_PER_ROW === 0;
 
-              return (
-                <div
-                  key={img.id}
-                  style={{
-                    background: "#f2f2f2",
-                    borderRadius: 16,
-                    height: 240,
-                    position: "relative",
-                    cursor: "pointer",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-                    overflow: "hidden",
-                  }}
-                  onClick={() => img.url && setPreview(img.url)}
-                >
-                  {isRowStart && (
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleRowSelect(rowIndex);
-                      }}
-                      style={{
-                        position: "absolute",
-                        top: 10,
-                        left: -26,
-                        width: 18,
-                        height: 18,
-                        borderRadius: 4,
-                        background: "#fff",
-                        border: "1px solid #ccc",
-                      }}
-                    />
-                  )}
-
+            return (
+              <div
+                key={img.id}
+                style={{
+                  background: "#f2f2f2",
+                  borderRadius: 16,
+                  height: 240,
+                  position: "relative",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+                  overflow: "hidden",
+                }}
+                onClick={() => img.url && setPreview(img.url)}
+              >
+                {isRowStart && (
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleSelect(img.id);
+                      toggleRowSelect(rowIndex);
                     }}
                     style={{
                       position: "absolute",
-                      top: 10,
+                      top: 40,
                       left: 10,
                       width: 18,
                       height: 18,
                       borderRadius: 4,
-                      background: selected.has(img.id) ? "#ff6b6b" : "#fff",
+                      background: "#fff",
                       border: "1px solid #ccc",
-                      zIndex: 2,
+                      zIndex: 3,
+                      cursor: "pointer",
+                    }}
+                    title="Seleccionar fila"
+                  />
+                )}
+
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelect(img.id);
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    left: 10,
+                    width: 18,
+                    height: 18,
+                    borderRadius: 4,
+                    background: selected.has(img.id) ? "#ff6b6b" : "#fff",
+                    border: "1px solid #ccc",
+                    zIndex: 2,
+                  }}
+                />
+
+                {img.url && (
+                  <img
+                    src={img.url}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
                     }}
                   />
+                )}
 
-                  {img.url && (
-                    <img
-                      src={img.url}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  )}
-
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 32,
-                      background: "#6b6b6b",
-                      color: "#fff",
-                      fontSize: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <span>{img.reference || "REF"}</span>
-                    <span>|</span>
-                    <span>{img.asin || "ASIN"}</span>
-                    <span>| #{img.index ?? idx + 1}</span>
-                  </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 32,
+                    background: "#6b6b6b",
+                    color: "#fff",
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  <span>{img.reference || "REF"}</span>
+                  <span>|</span>
+                  <span>{img.asin || "ASIN"}</span>
+                  <span>| #{img.index ?? idx + 1}</span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
-
-      {/* VISOR */}
-      {preview && (
-        <div
-          onClick={() => setPreview(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            cursor: "zoom-out",
-          }}
-        >
-          <img
-            src={preview}
-            style={{
-              maxWidth: "90%",
-              maxHeight: "90%",
-              objectFit: "contain",
-              borderRadius: 12,
-              boxShadow: "0 0 40px rgba(0,0,0,0.6)",
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }
