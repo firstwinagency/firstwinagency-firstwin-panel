@@ -23,6 +23,9 @@ export default function ProjectsPage() {
   const [downloadPart, setDownloadPart] = useState(0);
   const [downloadTotal, setDownloadTotal] = useState(0);
 
+  // 🆕 estado de orden
+  const [order, setOrder] = useState<"oldest" | "newest">("oldest");
+
   const loadImages = async () => {
     try {
       const res = await fetch("/api/projects/images");
@@ -69,7 +72,6 @@ export default function ProjectsPage() {
     });
   };
 
-  // 🆕 NUEVO: seleccionar 2 filas (12 imágenes)
   const toggleTwoRowsSelect = (rowIndex: number) => {
     const start = rowIndex * IMAGES_PER_ROW;
     const twoRowsImages = images.slice(start, start + IMAGES_PER_ROW * 2);
@@ -140,6 +142,10 @@ export default function ProjectsPage() {
     setDownloadTotal(0);
   };
 
+  // 🆕 imágenes ordenadas (sin mutar estado)
+  const displayedImages =
+    order === "oldest" ? images : [...images].reverse();
+
   return (
     <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
       <div style={{ width: 22, background: "#ff6b6b" }} />
@@ -209,6 +215,17 @@ export default function ProjectsPage() {
           <button className="btn-zoom" onClick={() => downloadZip("asin")} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
             Descargar ZIP (ASIN)
           </button>
+
+          {/* 🆕 BOTÓN ORDEN */}
+          <button
+            className="btn-zoom"
+            onClick={() =>
+              setOrder((prev) => (prev === "oldest" ? "newest" : "oldest"))
+            }
+            style={{ borderRadius: 999 }}
+          >
+            Ordenar: {order === "oldest" ? "nuevas → viejas" : "viejas → nuevas"}
+          </button>
         </div>
 
         <div
@@ -218,7 +235,7 @@ export default function ProjectsPage() {
             gap: 18,
           }}
         >
-          {images.map((img, idx) => {
+          {displayedImages.map((img, idx) => {
             const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
             const isRowStart = idx % IMAGES_PER_ROW === 0;
             const isTwoRowDivider = idx % (IMAGES_PER_ROW * 2) === 0;
@@ -255,7 +272,6 @@ export default function ProjectsPage() {
                       zIndex: 3,
                       cursor: "pointer",
                     }}
-                    title="Seleccionar fila"
                   />
                 )}
 
@@ -277,7 +293,6 @@ export default function ProjectsPage() {
                       zIndex: 3,
                       cursor: "pointer",
                     }}
-                    title="Seleccionar 2 filas"
                   />
                 )}
 
