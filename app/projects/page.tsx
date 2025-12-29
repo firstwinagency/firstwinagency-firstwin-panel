@@ -19,6 +19,9 @@ export default function ProjectsPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 NUEVO: orden
+  const [order, setOrder] = useState<"asc" | "desc">("asc");
+
   const [downloading, setDownloading] = useState(false);
   const [downloadPart, setDownloadPart] = useState(0);
   const [downloadTotal, setDownloadTotal] = useState(0);
@@ -40,8 +43,20 @@ export default function ProjectsPage() {
     loadImages();
   }, []);
 
+  /* =======================
+     ORDEN VISUAL
+  ======================= */
+  const orderedImages = [...images].sort((a, b) => {
+    const ai = a.index ?? 0;
+    const bi = b.index ?? 0;
+    return order === "asc" ? ai - bi : bi - ai;
+  });
+
+  /* =======================
+     SELECCIÓN
+  ======================= */
   const selectAll = () =>
-    setSelected(new Set(images.map((img) => img.id)));
+    setSelected(new Set(orderedImages.map((img) => img.id)));
 
   const deselectAll = () => setSelected(new Set());
 
@@ -55,13 +70,33 @@ export default function ProjectsPage() {
 
   const toggleRowSelect = (rowIndex: number) => {
     const start = rowIndex * IMAGES_PER_ROW;
-    const rowImages = images.slice(start, start + IMAGES_PER_ROW);
+    const rowImages = orderedImages.slice(start, start + IMAGES_PER_ROW);
 
     setSelected((prev) => {
       const next = new Set(prev);
       const allSelected = rowImages.every((img) => next.has(img.id));
 
       rowImages.forEach((img) => {
+        allSelected ? next.delete(img.id) : next.add(img.id);
+      });
+
+      return next;
+    });
+  };
+
+  // 🔹 NUEVO: seleccionar 2 filas (12 imágenes)
+  const toggleTwoRowsSelect = (rowIndex: number) => {
+    const start = rowIndex * IMAGES_PER_ROW;
+    const twoRows = orderedImages.slice(
+      start,
+      start + IMAGES_PER_ROW * 2
+    );
+
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const allSelected = twoRows.every((img) => next.has(img.id));
+
+      twoRows.forEach((img) => {
         allSelected ? next.delete(img.id) : next.add(img.id);
       });
 
@@ -128,14 +163,7 @@ export default function ProjectsPage() {
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
       <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
-        <h1
-          style={{
-            fontFamily: "DM Serif Display",
-            fontSize: 34,
-            textAlign: "center",
-            marginBottom: 6,
-          }}
-        >
+        <h1 style={{ fontFamily: "DM Serif Display", fontSize: 34, textAlign: "center", marginBottom: 6 }}>
           Proyectos
         </h1>
 
@@ -148,35 +176,20 @@ export default function ProjectsPage() {
             <p style={{ textAlign: "center", fontSize: 14 }}>
               Descargando ZIP {downloadPart} de {downloadTotal}
             </p>
-            <div
-              style={{
-                height: 8,
-                background: "#e0e0e0",
-                borderRadius: 6,
-                overflow: "hidden",
-              }}
-            >
+            <div style={{ height: 8, background: "#e0e0e0", borderRadius: 6 }}>
               <div
                 style={{
                   height: "100%",
                   width: `${(downloadPart / downloadTotal) * 100}%`,
                   background: "#ff6b6b",
-                  transition: "width 0.3s",
                 }}
               />
             </div>
           </div>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 28,
-            flexWrap: "wrap",
-          }}
-        >
+        {/* BOTONES + FILTRO */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
           <button className="btn-zoom" onClick={selectAll} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
             Seleccionar todo
           </button>
@@ -192,16 +205,21 @@ export default function ProjectsPage() {
           <button className="btn-zoom" onClick={() => downloadZip("asin")} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
             Descargar ZIP (ASIN)
           </button>
+
+          {/* 🔹 FILTRO */}
+          <select
+            value={order}
+            onChange={(e) => setOrder(e.target.value as "asc" | "desc")}
+            style={{ borderRadius: 999, padding: "6px 12px" }}
+          >
+            <option value="asc">Más antiguas → Más nuevas</option>
+            <option value="desc">Más nuevas → Más antiguas</option>
+          </select>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 18,
-          }}
-        >
-          {images.map((img, idx) => {
+        {/* GALERÍA */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 18 }}>
+          {orderedImages.map((img, idx) => {
             const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
             const isRowStart = idx % IMAGES_PER_ROW === 0;
 
@@ -219,6 +237,7 @@ export default function ProjectsPage() {
                 }}
                 onClick={() => img.url && setPreview(img.url)}
               >
+                {/* SELECCIONAR FILA */}
                 {isRowStart && (
                   <div
                     onClick={(e) => {
@@ -227,20 +246,42 @@ export default function ProjectsPage() {
                     }}
                     style={{
                       position: "absolute",
-                      top: 40,
-                      left: 10,
+                      top: 10,
+                      left: -26,
                       width: 18,
                       height: 18,
                       borderRadius: 4,
                       background: "#fff",
                       border: "1px solid #ccc",
-                      zIndex: 3,
                       cursor: "pointer",
                     }}
                     title="Seleccionar fila"
                   />
                 )}
 
+                {/* SELECCIONAR 2 FILAS */}
+                {isRowStart && (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTwoRowsSelect(rowIndex);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 40,
+                      left: -26,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      background: "#ddd",
+                      border: "1px solid #999",
+                      cursor: "pointer",
+                    }}
+                    title="Seleccionar 2 filas"
+                  />
+                )}
+
+                {/* SELECCIÓN INDIVIDUAL */}
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
@@ -255,18 +296,13 @@ export default function ProjectsPage() {
                     borderRadius: 4,
                     background: selected.has(img.id) ? "#ff6b6b" : "#fff",
                     border: "1px solid #ccc",
-                    zIndex: 2,
                   }}
                 />
 
                 {img.url && (
                   <img
                     src={img.url}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 )}
 
