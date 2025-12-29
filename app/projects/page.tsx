@@ -23,7 +23,6 @@ export default function ProjectsPage() {
   const [downloadPart, setDownloadPart] = useState(0);
   const [downloadTotal, setDownloadTotal] = useState(0);
 
-  // 🆕 estado de orden
   const [order, setOrder] = useState<"oldest" | "newest">("oldest");
 
   const loadImages = async () => {
@@ -43,8 +42,11 @@ export default function ProjectsPage() {
     loadImages();
   }, []);
 
+  const displayedImages =
+    order === "oldest" ? images : [...images].reverse();
+
   const selectAll = () =>
-    setSelected(new Set(images.map((img) => img.id)));
+    setSelected(new Set(displayedImages.map((img) => img.id)));
 
   const deselectAll = () => setSelected(new Set());
 
@@ -58,7 +60,7 @@ export default function ProjectsPage() {
 
   const toggleRowSelect = (rowIndex: number) => {
     const start = rowIndex * IMAGES_PER_ROW;
-    const rowImages = images.slice(start, start + IMAGES_PER_ROW);
+    const rowImages = displayedImages.slice(start, start + IMAGES_PER_ROW);
 
     setSelected((prev) => {
       const next = new Set(prev);
@@ -74,7 +76,10 @@ export default function ProjectsPage() {
 
   const toggleTwoRowsSelect = (rowIndex: number) => {
     const start = rowIndex * IMAGES_PER_ROW;
-    const twoRowsImages = images.slice(start, start + IMAGES_PER_ROW * 2);
+    const twoRowsImages = displayedImages.slice(
+      start,
+      start + IMAGES_PER_ROW * 2
+    );
 
     setSelected((prev) => {
       const next = new Set(prev);
@@ -88,9 +93,6 @@ export default function ProjectsPage() {
     });
   };
 
-  /* =======================
-     DESCARGAR ZIP (CHUNKS)
-  ======================= */
   const downloadZip = async (mode: "reference" | "asin") => {
     if (selected.size === 0) {
       alert("Selecciona al menos una imagen");
@@ -142,23 +144,12 @@ export default function ProjectsPage() {
     setDownloadTotal(0);
   };
 
-  // 🆕 imágenes ordenadas (sin mutar estado)
-  const displayedImages =
-    order === "oldest" ? images : [...images].reverse();
-
   return (
     <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
       <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
-        <h1
-          style={{
-            fontFamily: "DM Serif Display",
-            fontSize: 34,
-            textAlign: "center",
-            marginBottom: 6,
-          }}
-        >
+        <h1 style={{ fontFamily: "DM Serif Display", fontSize: 34, textAlign: "center", marginBottom: 6 }}>
           Proyectos
         </h1>
 
@@ -166,40 +157,7 @@ export default function ProjectsPage() {
           Imágenes en proyecto: {images.length}
         </p>
 
-        {downloading && (
-          <div style={{ maxWidth: 420, margin: "0 auto 20px" }}>
-            <p style={{ textAlign: "center", fontSize: 14 }}>
-              Descargando ZIP {downloadPart} de {downloadTotal}
-            </p>
-            <div
-              style={{
-                height: 8,
-                background: "#e0e0e0",
-                borderRadius: 6,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  width: `${(downloadPart / downloadTotal) * 100}%`,
-                  background: "#ff6b6b",
-                  transition: "width 0.3s",
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 28,
-            flexWrap: "wrap",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
           <button className="btn-zoom" onClick={selectAll} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
             Seleccionar todo
           </button>
@@ -216,25 +174,16 @@ export default function ProjectsPage() {
             Descargar ZIP (ASIN)
           </button>
 
-          {/* 🆕 BOTÓN ORDEN */}
           <button
             className="btn-zoom"
-            onClick={() =>
-              setOrder((prev) => (prev === "oldest" ? "newest" : "oldest"))
-            }
+            onClick={() => setOrder(order === "oldest" ? "newest" : "oldest")}
             style={{ borderRadius: 999 }}
           >
             Ordenar: {order === "oldest" ? "nuevas → viejas" : "viejas → nuevas"}
           </button>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 18,
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 18 }}>
           {displayedImages.map((img, idx) => {
             const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
             const isRowStart = idx % IMAGES_PER_ROW === 0;
@@ -270,7 +219,6 @@ export default function ProjectsPage() {
                       background: "#fff",
                       border: "1px solid #ccc",
                       zIndex: 3,
-                      cursor: "pointer",
                     }}
                   />
                 )}
@@ -291,7 +239,6 @@ export default function ProjectsPage() {
                       background: "#fff",
                       border: "1px solid #ccc",
                       zIndex: 3,
-                      cursor: "pointer",
                     }}
                   />
                 )}
@@ -317,11 +264,7 @@ export default function ProjectsPage() {
                 {img.url && (
                   <img
                     src={img.url}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 )}
 
@@ -375,7 +318,6 @@ export default function ProjectsPage() {
               maxHeight: "90%",
               objectFit: "contain",
               borderRadius: 12,
-              boxShadow: "0 0 40px rgba(0,0,0,0.6)",
             }}
           />
         </div>
