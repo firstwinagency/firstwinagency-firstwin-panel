@@ -65,11 +65,9 @@ export default function ProjectsPage() {
     setSelected((prev) => {
       const next = new Set(prev);
       const allSelected = rowImages.every((img) => next.has(img.id));
-
-      rowImages.forEach((img) => {
-        allSelected ? next.delete(img.id) : next.add(img.id);
-      });
-
+      rowImages.forEach((img) =>
+        allSelected ? next.delete(img.id) : next.add(img.id)
+      );
       return next;
     });
   };
@@ -84,11 +82,9 @@ export default function ProjectsPage() {
     setSelected((prev) => {
       const next = new Set(prev);
       const allSelected = twoRowsImages.every((img) => next.has(img.id));
-
-      twoRowsImages.forEach((img) => {
-        allSelected ? next.delete(img.id) : next.add(img.id);
-      });
-
+      twoRowsImages.forEach((img) =>
+        allSelected ? next.delete(img.id) : next.add(img.id)
+      );
       return next;
     });
   };
@@ -149,7 +145,14 @@ export default function ProjectsPage() {
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
       <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
-        <h1 style={{ fontFamily: "DM Serif Display", fontSize: 34, textAlign: "center", marginBottom: 6 }}>
+        <h1
+          style={{
+            fontFamily: "DM Serif Display",
+            fontSize: 34,
+            textAlign: "center",
+            marginBottom: 6,
+          }}
+        >
           Proyectos
         </h1>
 
@@ -157,7 +160,40 @@ export default function ProjectsPage() {
           Imágenes en proyecto: {images.length}
         </p>
 
-        <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
+        {downloading && (
+          <div style={{ maxWidth: 420, margin: "0 auto 20px" }}>
+            <p style={{ textAlign: "center", fontSize: 14 }}>
+              Descargando ZIP {downloadPart} de {downloadTotal}
+            </p>
+            <div
+              style={{
+                height: 8,
+                background: "#e0e0e0",
+                borderRadius: 6,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${(downloadPart / downloadTotal) * 100}%`,
+                  background: "#ff6b6b",
+                  transition: "width 0.3s",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 12,
+            marginBottom: 28,
+            flexWrap: "wrap",
+          }}
+        >
           <button className="btn-zoom" onClick={selectAll} style={{ background: "#ff6b6b", color: "#fff", borderRadius: 999 }}>
             Seleccionar todo
           </button>
