@@ -69,6 +69,23 @@ export default function ProjectsPage() {
     });
   };
 
+  // 🆕 NUEVO: seleccionar 2 filas (12 imágenes)
+  const toggleTwoRowsSelect = (rowIndex: number) => {
+    const start = rowIndex * IMAGES_PER_ROW;
+    const twoRowsImages = images.slice(start, start + IMAGES_PER_ROW * 2);
+
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const allSelected = twoRowsImages.every((img) => next.has(img.id));
+
+      twoRowsImages.forEach((img) => {
+        allSelected ? next.delete(img.id) : next.add(img.id);
+      });
+
+      return next;
+    });
+  };
+
   /* =======================
      DESCARGAR ZIP (CHUNKS)
   ======================= */
@@ -204,6 +221,7 @@ export default function ProjectsPage() {
           {images.map((img, idx) => {
             const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
             const isRowStart = idx % IMAGES_PER_ROW === 0;
+            const isTwoRowDivider = idx % (IMAGES_PER_ROW * 2) === 0;
 
             return (
               <div
@@ -238,6 +256,28 @@ export default function ProjectsPage() {
                       cursor: "pointer",
                     }}
                     title="Seleccionar fila"
+                  />
+                )}
+
+                {isTwoRowDivider && (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTwoRowsSelect(rowIndex);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 70,
+                      left: 10,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      background: "#fff",
+                      border: "1px solid #ccc",
+                      zIndex: 3,
+                      cursor: "pointer",
+                    }}
+                    title="Seleccionar 2 filas"
                   />
                 )}
 
@@ -298,6 +338,33 @@ export default function ProjectsPage() {
       </div>
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
+
+      {preview && (
+        <div
+          onClick={() => setPreview(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            cursor: "zoom-out",
+          }}
+        >
+          <img
+            src={preview}
+            style={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              objectFit: "contain",
+              borderRadius: 12,
+              boxShadow: "0 0 40px rgba(0,0,0,0.6)",
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
