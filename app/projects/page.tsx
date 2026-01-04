@@ -89,6 +89,9 @@ export default function ProjectsPage() {
     });
   };
 
+  /* =======================
+     DESCARGAR ZIP (CHUNKS)
+  ======================= */
   const downloadZip = async (mode: "reference" | "asin") => {
     if (selected.size === 0) {
       alert("Selecciona al menos una imagen");
@@ -138,6 +141,31 @@ export default function ProjectsPage() {
     setDownloading(false);
     setDownloadPart(0);
     setDownloadTotal(0);
+  };
+
+  /* =======================
+     ELIMINAR IMÁGENES
+  ======================= */
+  const deleteImages = async () => {
+    if (selected.size === 0) return;
+
+    const ok = confirm("¿Estás seguro que deseas eliminar las imágenes seleccionadas?");
+    if (!ok) return;
+
+    const res = await fetch("/api/projects/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ids: Array.from(selected),
+      }),
+    });
+
+    if (!res.ok) {
+      alert("Error eliminando imágenes");
+      return;
+    }
+
+    await loadImages();
   };
 
   return (
@@ -216,6 +244,20 @@ export default function ProjectsPage() {
             style={{ borderRadius: 999 }}
           >
             Ordenar: {order === "oldest" ? "nuevas → viejas" : "viejas → nuevas"}
+          </button>
+
+          <button
+            className="btn-zoom"
+            onClick={deleteImages}
+            disabled={selected.size === 0}
+            style={{
+              background: "#6b1d1d",
+              color: "#fff",
+              borderRadius: 999,
+              opacity: selected.size === 0 ? 0.5 : 1,
+            }}
+          >
+            Eliminar
           </button>
         </div>
 
