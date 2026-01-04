@@ -23,8 +23,8 @@ export function middleware(request: NextRequest) {
 }
 
 /**
- * 🔥 ESTO ES LO IMPORTANTE
- * SOLO protege las páginas del panel
+ * 🔒 SOLO protege las páginas
+ * ❌ NUNCA APIs
  */
 export const config = {
   matcher: [
