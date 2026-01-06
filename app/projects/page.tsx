@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 /* ======================================================
@@ -15,62 +15,63 @@ type Project = {
 export default function ProjectsPage() {
   const router = useRouter();
 
-  /* ======================================================
-     ESTADO
-  ====================================================== */
   const [projects, setProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [loading, setLoading] = useState(true);
 
   /* ======================================================
-     CARGAR PROYECTOS DESDE BD
+     CARGAR PROYECTOS (SIEMPRE)
   ====================================================== */
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     try {
-      const res = await fetch("/api/projects/list");
-      const data = await res.json();
+      setLoading(true);
 
+      const res = await fetch("/api/projects/list", {
+        cache: "no-store",
+      });
+
+      const data = await res.json();
       if (!data.projects) {
         setProjects([]);
         return;
       }
 
-      const projectsWithCounts = await Promise.all(
-        data.projects.map(async (project: { id: string; name: string }) => {
+      const withCounts = await Promise.all(
+        data.projects.map(async (project: Project) => {
           try {
             const res = await fetch(
-              `/api/projects/images?projectId=${project.id}`
+              `/api/projects/images?projectId=${project.id}`,
+              { cache: "no-store" }
             );
-            const imgData = await res.json();
+            const imgs = await res.json();
 
             return {
-              id: project.id,
-              name: project.name,
-              imagesCount: imgData.images?.length || 0,
+              ...project,
+              imagesCount: imgs.images?.length || 0,
             };
           } catch {
-            return {
-              id: project.id,
-              name: project.name,
-              imagesCount: 0,
-            };
+            return { ...project, imagesCount: 0 };
           }
         })
       );
 
-      setProjects(projectsWithCounts);
+      setProjects(withCounts);
     } catch (err) {
       console.error("Error cargando proyectos", err);
+      setProjects([]);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadProjects();
-  }, []);
+  }, [loadProjects]);
 
   /* ======================================================
-     CREAR PROYECTO (BD REAL)
+     CREAR PROYECTO (PERSISTENTE)
   ====================================================== */
   const createProject = async () => {
     if (!newProjectName.trim()) return;
@@ -83,22 +84,13 @@ export default function ProjectsPage() {
       });
 
       const data = await res.json();
-
       if (!data.project) {
         alert("Error creando proyecto");
         return;
       }
 
-      setProjects((prev) => [
-        ...prev,
-        {
-          id: data.project.id,
-          name: data.project.name,
-          imagesCount: 0,
-        },
-      ]);
-
       setNewProjectName("");
+      await loadProjects(); // 🔥 CLAVE
     } catch (err) {
       console.error(err);
       alert("Error creando proyecto");
@@ -106,8 +98,7 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     RENOMBRAR PROYECTO (SOLO UI)
-     (si luego quieres persistirlo, lo hacemos con API)
+     RENOMBRAR (UI)
   ====================================================== */
   const saveProjectName = (id: string) => {
     if (!editingName.trim()) {
@@ -126,11 +117,10 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     ELIMINAR PROYECTO (UI)
-     (no lo borramos aún de BD a propósito)
+     ELIMINAR (UI)
   ====================================================== */
   const deleteProject = (id: string) => {
-    const ok = confirm("¿Estás seguro que deseas eliminar el proyecto?");
+    const ok = confirm("¿Eliminar proyecto?");
     if (!ok) return;
 
     setProjects((prev) => prev.filter((p) => p.id !== id));
@@ -139,6 +129,14 @@ export default function ProjectsPage() {
   /* ======================================================
      UI
   ====================================================== */
+  if (loading) {
+    return (
+      <div style={{ padding: 40, textAlign: "center" }}>
+        Cargando proyectos…
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#fff", padding: 40 }}>
       <h1
@@ -184,6 +182,12 @@ export default function ProjectsPage() {
           Crear
         </button>
       </div>
+
+      {projects.length === 0 && (
+        <p style={{ textAlign: "center", opacity: 0.6 }}>
+          No hay proyectos todavía
+        </p>
+      )}
 
       <div
         style={{
