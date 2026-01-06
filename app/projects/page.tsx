@@ -1,91 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /* ======================================================
    TIPOS
 ====================================================== */
-type ProjectImage = {
-  id: string;
-  reference?: string;
-  asin?: string;
-  index?: number;
-  url?: string;
-};
-
 type Project = {
   id: string;
   name: string;
   imagesCount: number;
 };
 
-const CHUNK_SIZE = 100;
-const IMAGES_PER_ROW = 6;
-
 export default function ProjectsPage() {
+  const router = useRouter();
+
   /* ======================================================
-     ESTADO PROYECTOS (CAPA PREVIA)
+     ESTADO PROYECTOS
   ====================================================== */
- const [projects, setProjects] = useState<Project[]>([
-  {
-    id: "51155ece-583e-4b4c-a9de-dea373aca2a",
-    name: "JATA ELECTRODOMÉSTICOS",
-    imagesCount: 0,
-  },
-]);
-   
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [projects, setProjects] = useState<Project[]>([
+    {
+      id: "51155ece-583e-4b4c-a9de-dea373aca2a",
+      name: "JATA ELECTRODOMÉSTICOS",
+      imagesCount: 0,
+    },
+  ]);
+
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
-
-  /* ======================================================
-     ESTADO ORIGINAL GALERÍA
-  ====================================================== */
-  const [images, setImages] = useState<ProjectImage[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [preview, setPreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const [downloading, setDownloading] = useState(false);
-  const [downloadPart, setDownloadPart] = useState(0);
-  const [downloadTotal, setDownloadTotal] = useState(0);
-
-  const [order, setOrder] = useState<"oldest" | "newest">("oldest");
-
-  /* ======================================================
-     CARGA DE IMÁGENES
-  ====================================================== */
-  const loadImages = async () => {
-    if (!selectedProject) return;
-
-    try {
-      const res = await fetch(`/api/projects/images?projectId=${selectedProject.id}`)
-      const data = await res.json();
-      const imgs = data.images || [];
-
-      setImages(imgs);
-      setSelected(new Set());
-
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === selectedProject.id
-            ? { ...p, imagesCount: imgs.length }
-            : p
-        )
-      );
-    } catch (err) {
-      console.error("Error cargando imágenes", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedProject) {
-      loadImages();
-    }
-  }, [selectedProject]);
 
   /* ======================================================
      CRUD PROYECTOS (UI ONLY)
@@ -126,569 +69,144 @@ export default function ProjectsPage() {
     if (!ok) return;
 
     setProjects((prev) => prev.filter((p) => p.id !== id));
-
-    if (selectedProject?.id === id) {
-      setSelectedProject(null);
-    }
   };
 
   /* ======================================================
-     VISTA 1 — SELECCIÓN DE PROYECTO
+     UI
   ====================================================== */
-  if (!selectedProject) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#fff", padding: 40 }}>
-        <h1
-          style={{
-            fontFamily: "DM Serif Display",
-            fontSize: 34,
-            textAlign: "center",
-            marginBottom: 24,
-          }}
-        >
-          Proyectos
-        </h1>
+  return (
+    <div style={{ minHeight: "100vh", background: "#fff", padding: 40 }}>
+      <h1
+        style={{
+          fontFamily: "DM Serif Display",
+          fontSize: 34,
+          textAlign: "center",
+          marginBottom: 24,
+        }}
+      >
+        Proyectos
+      </h1>
 
-        <div
+      <div
+        style={{
+          maxWidth: 420,
+          margin: "0 auto 30px",
+          display: "flex",
+          gap: 10,
+        }}
+      >
+        <input
+          value={newProjectName}
+          onChange={(e) => setNewProjectName(e.target.value)}
+          placeholder="Nombre del proyecto"
           style={{
-            maxWidth: 420,
-            margin: "0 auto 30px",
-            display: "flex",
-            gap: 10,
+            flex: 1,
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid #ccc",
+          }}
+        />
+        <button
+          onClick={createProject}
+          className="btn-zoom"
+          style={{
+            background: "#ff6b6b",
+            color: "#fff",
+            borderRadius: 10,
+            padding: "0 18px",
           }}
         >
-          <input
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            placeholder="Nombre del proyecto"
-            style={{
-              flex: 1,
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid #ccc",
-            }}
-          />
-          <button
-            onClick={createProject}
+          Crear
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: 24,
+          maxWidth: 900,
+          margin: "0 auto",
+        }}
+      >
+        {projects.map((project) => (
+          <div
+            key={project.id}
+            onClick={() => router.push(`/projects/${project.id}`)}
             className="btn-zoom"
             style={{
               background: "#ff6b6b",
               color: "#fff",
-              borderRadius: 10,
-              padding: "0 18px",
+              borderRadius: 16,
+              padding: 18,
+              cursor: "pointer",
+              position: "relative",
             }}
           >
-            Crear
-          </button>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: 24,
-            maxWidth: 900,
-            margin: "0 auto",
-          }}
-        >
-          {projects.map((project) => (
             <div
-              key={project.id}
-              onClick={() => setSelectedProject(project)}
-              className="btn-zoom"
               style={{
-                background: "#ff6b6b",
-                color: "#fff",
-                borderRadius: 16,
-                padding: 18,
-                cursor: "pointer",
-                position: "relative",
+                position: "absolute",
+                top: 10,
+                right: 10,
+                display: "flex",
+                gap: 8,
               }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 10,
-                  right: 10,
-                  display: "flex",
-                  gap: 8,
+              <span
+                onClick={() => {
+                  setEditingProjectId(project.id);
+                  setEditingName(project.name);
                 }}
-                onClick={(e) => e.stopPropagation()}
+                style={{ cursor: "pointer" }}
               >
-                <span
-                  onClick={() => {
-                    setEditingProjectId(project.id);
-                    setEditingName(project.name);
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  ✏️
-                </span>
-                <span
-                  onClick={() => deleteProject(project.id)}
-                  style={{ cursor: "pointer" }}
-                >
-                  ✕
-                </span>
-              </div>
-
-              {editingProjectId === project.id ? (
-                <input
-                  value={editingName}
-                  autoFocus
-                  onChange={(e) => setEditingName(e.target.value)}
-                  onBlur={() => saveProjectName(project.id)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && saveProjectName(project.id)
-                  }
-                  style={{
-                    width: "100%",
-                    background: "transparent",
-                    border: "none",
-                    color: "#fff",
-                    fontSize: 18,
-                    fontWeight: 600,
-                    outline: "none",
-                  }}
-                />
-              ) : (
-                <h2
-                  style={{
-                    fontFamily: "DM Serif Display",
-                    fontSize: 20,
-                    marginBottom: 6,
-                  }}
-                >
-                  {project.name}
-                </h2>
-              )}
-
-              <p style={{ fontSize: 13, opacity: 0.9 }}>
-                {project.imagesCount} imágenes
-              </p>
+                ✏️
+              </span>
+              <span
+                onClick={() => deleteProject(project.id)}
+                style={{ cursor: "pointer" }}
+              >
+                ✕
+              </span>
             </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
-  /* ======================================================
-     VISTA 2 — GALERÍA ORIGINAL COMPLETA
-  ====================================================== */
-
-  const displayedImages =
-    order === "oldest" ? images : [...images].reverse();
-
-  const selectAll = () =>
-    setSelected(new Set(displayedImages.map((img) => img.id)));
-
-  const deselectAll = () => setSelected(new Set());
-
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const toggleRowSelect = (rowIndex: number) => {
-    const start = rowIndex * IMAGES_PER_ROW;
-    const rowImages = displayedImages.slice(start, start + IMAGES_PER_ROW);
-
-    setSelected((prev) => {
-      const next = new Set(prev);
-      const allSelected = rowImages.every((img) => next.has(img.id));
-      rowImages.forEach((img) =>
-        allSelected ? next.delete(img.id) : next.add(img.id)
-      );
-      return next;
-    });
-  };
-
-  const toggleTwoRowsSelect = (rowIndex: number) => {
-    const start = rowIndex * IMAGES_PER_ROW;
-    const twoRowsImages = displayedImages.slice(
-      start,
-      start + IMAGES_PER_ROW * 2
-    );
-
-    setSelected((prev) => {
-      const next = new Set(prev);
-      const allSelected = twoRowsImages.every((img) => next.has(img.id));
-      twoRowsImages.forEach((img) =>
-        allSelected ? next.delete(img.id) : next.add(img.id)
-      );
-      return next;
-    });
-  };
-
-  /* =======================
-     DESCARGAR ZIP
-  ======================= */
-  const downloadZip = async (mode: "reference" | "asin") => {
-    if (selected.size === 0) {
-      alert("Selecciona al menos una imagen");
-      return;
-    }
-
-    const ids = Array.from(selected);
-    const totalParts = Math.ceil(ids.length / CHUNK_SIZE);
-
-    setDownloading(true);
-    setDownloadTotal(totalParts);
-
-    for (let part = 0; part < totalParts; part++) {
-      setDownloadPart(part + 1);
-
-      const chunk = ids.slice(
-        part * CHUNK_SIZE,
-        (part + 1) * CHUNK_SIZE
-      );
-
-      const res = await fetch("/api/projects/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: chunk, mode }),
-      });
-
-      if (!res.ok) {
-        alert(`Error generando ZIP (parte ${part + 1})`);
-        setDownloading(false);
-        return;
-      }
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `imagenes_${mode}_part${part + 1}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      window.URL.revokeObjectURL(url);
-      await new Promise((r) => setTimeout(r, 300));
-    }
-
-    setDownloading(false);
-    setDownloadPart(0);
-    setDownloadTotal(0);
-  };
-
-  const deleteImages = async () => {
-    if (selected.size === 0) return;
-
-    const ok = confirm(
-      "¿Estás seguro que deseas eliminar las imágenes seleccionadas?"
-    );
-    if (!ok) return;
-
-    const res = await fetch("/api/projects/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ids: Array.from(selected),
-      }),
-    });
-
-    if (!res.ok) {
-      alert("Error eliminando imágenes");
-      return;
-    }
-
-    await loadImages();
-  };
-
-  return (
-    <div style={{ height: "100vh", background: "#fff", display: "flex" }}>
-      <div style={{ width: 22, background: "#ff6b6b" }} />
-
-      <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
-        <button
-          onClick={() => setSelectedProject(null)}
-          style={{
-            marginBottom: 16,
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            fontSize: 14,
-            opacity: 0.7,
-          }}
-        >
-          ← Volver a proyectos
-        </button>
-
-        {/* ===== TU GALERÍA ORIGINAL ===== */}
-
-        <h1
-          style={{
-            fontFamily: "DM Serif Display",
-            fontSize: 34,
-            textAlign: "center",
-            marginBottom: 6,
-          }}
-        >
-          Proyectos
-        </h1>
-
-        <p style={{ textAlign: "center", marginBottom: 18, opacity: 0.7 }}>
-          Imágenes en proyecto: {images.length}
-        </p>
-
-        {downloading && (
-          <div style={{ maxWidth: 420, margin: "0 auto 20px" }}>
-            <p style={{ textAlign: "center", fontSize: 14 }}>
-              Descargando ZIP {downloadPart} de {downloadTotal}
-            </p>
-            <div
-              style={{
-                height: 8,
-                background: "#e0e0e0",
-                borderRadius: 6,
-                overflow: "hidden",
-              }}
-            >
-              <div
+            {editingProjectId === project.id ? (
+              <input
+                value={editingName}
+                autoFocus
+                onChange={(e) => setEditingName(e.target.value)}
+                onBlur={() => saveProjectName(project.id)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && saveProjectName(project.id)
+                }
                 style={{
-                  height: "100%",
-                  width: `${(downloadPart / downloadTotal) * 100}%`,
-                  background: "#ff6b6b",
-                  transition: "width 0.3s",
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  outline: "none",
                 }}
               />
-            </div>
-          </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 28,
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            className="btn-zoom"
-            onClick={selectAll}
-            style={{
-              background: "#ff6b6b",
-              color: "#fff",
-              borderRadius: 999,
-            }}
-          >
-            Seleccionar todo
-          </button>
-
-          <button
-            className="btn-zoom"
-            onClick={deselectAll}
-            style={{ borderRadius: 999 }}
-          >
-            Deseleccionar todo
-          </button>
-
-          <button
-            className="btn-zoom"
-            onClick={() => downloadZip("reference")}
-            style={{ background: "#000", color: "#fff", borderRadius: 999 }}
-          >
-            Descargar ZIP (Referencia)
-          </button>
-
-          <button
-            className="btn-zoom"
-            onClick={() => downloadZip("asin")}
-            style={{
-              background: "#ff6b6b",
-              color: "#fff",
-              borderRadius: 999,
-            }}
-          >
-            Descargar ZIP (ASIN)
-          </button>
-
-          <button
-            className="btn-zoom"
-            onClick={() =>
-              setOrder(order === "oldest" ? "newest" : "oldest")
-            }
-            style={{ borderRadius: 999 }}
-          >
-            Ordenar:{" "}
-            {order === "oldest" ? "nuevas → viejas" : "viejas → nuevas"}
-          </button>
-
-          <button
-            className="btn-zoom"
-            onClick={deleteImages}
-            disabled={selected.size === 0}
-            style={{
-              background: "#6b1d1d",
-              color: "#fff",
-              borderRadius: 999,
-              opacity: selected.size === 0 ? 0.5 : 1,
-            }}
-          >
-            Eliminar
-          </button>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 18,
-          }}
-        >
-          {displayedImages.map((img, idx) => {
-            const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
-            const isRowStart = idx % IMAGES_PER_ROW === 0;
-            const isTwoRowDivider = idx % (IMAGES_PER_ROW * 2) === 0;
-
-            return (
-              <div
-                key={img.id}
+            ) : (
+              <h2
                 style={{
-                  background: "#f2f2f2",
-                  borderRadius: 16,
-                  height: 240,
-                  position: "relative",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-                  overflow: "hidden",
+                  fontFamily: "DM Serif Display",
+                  fontSize: 20,
+                  marginBottom: 6,
                 }}
-                onClick={() => img.url && setPreview(img.url)}
               >
-                {isRowStart && (
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleRowSelect(rowIndex);
-                    }}
-                    style={{
-                      position: "absolute",
-                      top: 40,
-                      left: 10,
-                      width: 18,
-                      height: 18,
-                      borderRadius: 4,
-                      background: "#fff",
-                      border: "1px solid #ccc",
-                      zIndex: 3,
-                    }}
-                  />
-                )}
+                {project.name}
+              </h2>
+            )}
 
-                {isTwoRowDivider && (
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleTwoRowsSelect(rowIndex);
-                    }}
-                    style={{
-                      position: "absolute",
-                      top: 70,
-                      left: 10,
-                      width: 18,
-                      height: 18,
-                      borderRadius: 4,
-                      background: "#fff",
-                      border: "1px solid #ccc",
-                      zIndex: 3,
-                    }}
-                  />
-                )}
-
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelect(img.id);
-                  }}
-                  style={{
-                    position: "absolute",
-                    top: 10,
-                    left: 10,
-                    width: 18,
-                    height: 18,
-                    borderRadius: 4,
-                    background: selected.has(img.id)
-                      ? "#ff6b6b"
-                      : "#fff",
-                    border: "1px solid #ccc",
-                    zIndex: 2,
-                  }}
-                />
-
-                {img.url && (
-                  <img
-                    src={img.url}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                )}
-
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 32,
-                    background: "#6b6b6b",
-                    color: "#fff",
-                    fontSize: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                  }}
-                >
-                  <span>{img.reference || "REF"}</span>
-                  <span>|</span>
-                  <span>{img.asin || "ASIN"}</span>
-                  <span>| #{img.index ?? idx + 1}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+            <p style={{ fontSize: 13, opacity: 0.9 }}>
+              {project.imagesCount} imágenes
+            </p>
+          </div>
+        ))}
       </div>
-
-      <div style={{ width: 22, background: "#ff6b6b" }} />
-
-      {preview && (
-        <div
-          onClick={() => setPreview(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            cursor: "zoom-out",
-          }}
-        >
-          <img
-            src={preview}
-            style={{
-              maxWidth: "90%",
-              maxHeight: "90%",
-              objectFit: "contain",
-              borderRadius: 12,
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }
