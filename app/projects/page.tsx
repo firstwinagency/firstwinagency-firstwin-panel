@@ -26,8 +26,6 @@ export default function ProjectsPage() {
   /* ======================================================
      ESTADO PROYECTOS (CAPA PREVIA)
   ====================================================== */
-  const [projects, setProjects] = useState<Project[]>([
-    {
  const [projects, setProjects] = useState<Project[]>([
   {
     id: "51155ece-583e-4b4c-a9de-dea373aca2a",
