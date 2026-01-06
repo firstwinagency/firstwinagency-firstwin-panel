@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-/**
- * ⛔ DESACTIVAR CACHÉ DE NEXT.JS (CLAVE)
- * Esto hace que los cambios en DB se reflejen INSTANTÁNEAMENTE
- */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -13,7 +9,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get("projectId");
 
-    // 🛑 Si no hay projectId, no devolvemos nada
     if (!projectId) {
       return NextResponse.json({ images: [] });
     }
@@ -25,8 +20,7 @@ export async function GET(request: Request) {
         project_id,
         reference,
         asin,
-        image_index,
-        storage_path,
+        filename,
         created_at
       `)
       .eq("project_id", projectId)
@@ -42,12 +36,14 @@ export async function GET(request: Request) {
     }
 
     const images = data
-      .map((img) => {
-        if (!img.storage_path) return null;
+      .map((img, index) => {
+        if (!img.filename) return null;
+
+        const storagePath = `${img.project_id}/${img.filename}`;
 
         const { data: urlData } = supabaseAdmin.storage
           .from("project-images")
-          .getPublicUrl(img.storage_path);
+          .getPublicUrl(storagePath);
 
         if (!urlData?.publicUrl) return null;
 
@@ -55,7 +51,7 @@ export async function GET(request: Request) {
           id: img.id,
           reference: img.reference,
           asin: img.asin,
-          index: img.image_index,
+          index: index + 1,
           url: urlData.publicUrl,
         };
       })
