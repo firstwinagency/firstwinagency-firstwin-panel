@@ -20,7 +20,7 @@ export default function ProjectsPage() {
   ====================================================== */
   const [projects, setProjects] = useState<Project[]>([
     {
-      id: "51155ece-583e-4b4c-a9de-dea373aca2a",
+      id: "51155ece-583e-4b4c-a9de-dea373acaa2a", // ✅ ID CORRECTO
       name: "JATA ELECTRODOMÉSTICOS",
       imagesCount: 0,
     },
