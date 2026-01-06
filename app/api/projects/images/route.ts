@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+/**
+ * ⛔ DESACTIVAR CACHÉ DE NEXT.JS
+ * Necesario para que los cambios se reflejen al instante
+ */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -21,17 +25,23 @@ export async function GET(request: Request) {
         reference,
         asin,
         image_index,
-        storage_path
+        storage_path,
+        created_at
       `)
-      .eq("project_id", projectId.toString())
-      .order("image_index", { ascending: true });
+      .eq("project_id", projectId)
+      // 👇 CLAVE ABSOLUTA: ORDEN REAL POR FECHA
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json({ images: [] }, { status: 500 });
     }
 
-    const images = (data || [])
+    if (!data || data.length === 0) {
+      return NextResponse.json({ images: [] });
+    }
+
+    const images = data
       .map((img) => {
         if (!img.storage_path) return null;
 
@@ -45,8 +55,8 @@ export async function GET(request: Request) {
           id: img.id,
           reference: img.reference,
           asin: img.asin,
-          index: img.image_index, // 🔥 CLAVE
-          url: urlData.publicUrl, // 🔥 CLAVE
+          index: img.image_index,
+          url: urlData.publicUrl,
         };
       })
       .filter(Boolean);
