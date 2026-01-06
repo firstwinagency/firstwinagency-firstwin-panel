@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /* ======================================================
@@ -20,7 +20,7 @@ export default function ProjectsPage() {
   ====================================================== */
   const [projects, setProjects] = useState<Project[]>([
     {
-      id: "51155ece-583e-4b4c-a9de-dea373acaa2a", // ✅ ID CORRECTO
+      id: "51155ece-583e-4b4c-a9de-dea373acaa2a",
       name: "JATA ELECTRODOMÉSTICOS",
       imagesCount: 0,
     },
@@ -29,6 +29,36 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+
+  /* ======================================================
+     CARGAR RECUENTO DE IMÁGENES (CLAVE)
+  ====================================================== */
+  useEffect(() => {
+    const loadImageCounts = async () => {
+      const updated = await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const res = await fetch(
+              `/api/projects/images?projectId=${project.id}`
+            );
+            const data = await res.json();
+
+            return {
+              ...project,
+              imagesCount: data.images?.length || 0,
+            };
+          } catch {
+            return project;
+          }
+        })
+      );
+
+      setProjects(updated);
+    };
+
+    loadImageCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ======================================================
      CRUD PROYECTOS (UI ONLY)
