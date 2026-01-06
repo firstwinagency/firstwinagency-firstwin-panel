@@ -40,7 +40,7 @@ export default function ProjectsPage() {
   const [editingName, setEditingName] = useState("");
 
   /* ======================================================
-     ESTADO ORIGINAL DE LA GALERÍA
+     ESTADO ORIGINAL GALERÍA
   ====================================================== */
   const [images, setImages] = useState<ProjectImage[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -54,7 +54,7 @@ export default function ProjectsPage() {
   const [order, setOrder] = useState<"oldest" | "newest">("oldest");
 
   /* ======================================================
-     CARGA DE IMÁGENES (SUPABASE)
+     CARGA DE IMÁGENES
   ====================================================== */
   const loadImages = async () => {
     try {
@@ -84,7 +84,7 @@ export default function ProjectsPage() {
   }, []);
 
   /* ======================================================
-     CRUD PROYECTOS (UI)
+     CRUD PROYECTOS (UI ONLY)
   ====================================================== */
   const createProject = () => {
     if (!newProjectName.trim()) return;
@@ -270,7 +270,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================================================
-     VISTA 2 — GALERÍA ORIGINAL (INTACTA)
+     VISTA 2 — GALERÍA ORIGINAL COMPLETA
   ====================================================== */
 
   const displayedImages =
@@ -374,9 +374,6 @@ export default function ProjectsPage() {
     setDownloadTotal(0);
   };
 
-  /* =======================
-     ELIMINAR IMÁGENES
-  ======================= */
   const deleteImages = async () => {
     if (selected.size === 0) return;
 
@@ -420,13 +417,274 @@ export default function ProjectsPage() {
           ← Volver a proyectos
         </button>
 
-        {/* ===== AQUÍ ESTÁ TU GALERÍA ORIGINAL COMPLETA ===== */}
-        {/* (JSX idéntico al que usabas antes, ya renderizado) */}
+        {/* ===== TU GALERÍA ORIGINAL ===== */}
 
-        {/* El resto del JSX de la galería ya está incluido arriba */}
+        <h1
+          style={{
+            fontFamily: "DM Serif Display",
+            fontSize: 34,
+            textAlign: "center",
+            marginBottom: 6,
+          }}
+        >
+          Proyectos
+        </h1>
+
+        <p style={{ textAlign: "center", marginBottom: 18, opacity: 0.7 }}>
+          Imágenes en proyecto: {images.length}
+        </p>
+
+        {downloading && (
+          <div style={{ maxWidth: 420, margin: "0 auto 20px" }}>
+            <p style={{ textAlign: "center", fontSize: 14 }}>
+              Descargando ZIP {downloadPart} de {downloadTotal}
+            </p>
+            <div
+              style={{
+                height: 8,
+                background: "#e0e0e0",
+                borderRadius: 6,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${(downloadPart / downloadTotal) * 100}%`,
+                  background: "#ff6b6b",
+                  transition: "width 0.3s",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 12,
+            marginBottom: 28,
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            className="btn-zoom"
+            onClick={selectAll}
+            style={{
+              background: "#ff6b6b",
+              color: "#fff",
+              borderRadius: 999,
+            }}
+          >
+            Seleccionar todo
+          </button>
+
+          <button
+            className="btn-zoom"
+            onClick={deselectAll}
+            style={{ borderRadius: 999 }}
+          >
+            Deseleccionar todo
+          </button>
+
+          <button
+            className="btn-zoom"
+            onClick={() => downloadZip("reference")}
+            style={{ background: "#000", color: "#fff", borderRadius: 999 }}
+          >
+            Descargar ZIP (Referencia)
+          </button>
+
+          <button
+            className="btn-zoom"
+            onClick={() => downloadZip("asin")}
+            style={{
+              background: "#ff6b6b",
+              color: "#fff",
+              borderRadius: 999,
+            }}
+          >
+            Descargar ZIP (ASIN)
+          </button>
+
+          <button
+            className="btn-zoom"
+            onClick={() =>
+              setOrder(order === "oldest" ? "newest" : "oldest")
+            }
+            style={{ borderRadius: 999 }}
+          >
+            Ordenar:{" "}
+            {order === "oldest" ? "nuevas → viejas" : "viejas → nuevas"}
+          </button>
+
+          <button
+            className="btn-zoom"
+            onClick={deleteImages}
+            disabled={selected.size === 0}
+            style={{
+              background: "#6b1d1d",
+              color: "#fff",
+              borderRadius: 999,
+              opacity: selected.size === 0 ? 0.5 : 1,
+            }}
+          >
+            Eliminar
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 18,
+          }}
+        >
+          {displayedImages.map((img, idx) => {
+            const rowIndex = Math.floor(idx / IMAGES_PER_ROW);
+            const isRowStart = idx % IMAGES_PER_ROW === 0;
+            const isTwoRowDivider = idx % (IMAGES_PER_ROW * 2) === 0;
+
+            return (
+              <div
+                key={img.id}
+                style={{
+                  background: "#f2f2f2",
+                  borderRadius: 16,
+                  height: 240,
+                  position: "relative",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+                  overflow: "hidden",
+                }}
+                onClick={() => img.url && setPreview(img.url)}
+              >
+                {isRowStart && (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleRowSelect(rowIndex);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 40,
+                      left: 10,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      background: "#fff",
+                      border: "1px solid #ccc",
+                      zIndex: 3,
+                    }}
+                  />
+                )}
+
+                {isTwoRowDivider && (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTwoRowsSelect(rowIndex);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 70,
+                      left: 10,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      background: "#fff",
+                      border: "1px solid #ccc",
+                      zIndex: 3,
+                    }}
+                  />
+                )}
+
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelect(img.id);
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    left: 10,
+                    width: 18,
+                    height: 18,
+                    borderRadius: 4,
+                    background: selected.has(img.id)
+                      ? "#ff6b6b"
+                      : "#fff",
+                    border: "1px solid #ccc",
+                    zIndex: 2,
+                  }}
+                />
+
+                {img.url && (
+                  <img
+                    src={img.url}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
+
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 32,
+                    background: "#6b6b6b",
+                    color: "#fff",
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  <span>{img.reference || "REF"}</span>
+                  <span>|</span>
+                  <span>{img.asin || "ASIN"}</span>
+                  <span>| #{img.index ?? idx + 1}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
+
+      {preview && (
+        <div
+          onClick={() => setPreview(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            cursor: "zoom-out",
+          }}
+        >
+          <img
+            src={preview}
+            style={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              objectFit: "contain",
+              borderRadius: 12,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
