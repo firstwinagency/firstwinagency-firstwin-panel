@@ -28,12 +28,13 @@ export default function ProjectsPage() {
   ====================================================== */
   const [projects, setProjects] = useState<Project[]>([
     {
-      id: "jata-electrodomesticos",
-      name: "JATA ELECTRODOMÉSTICOS",
-      imagesCount: 0,
-    },
-  ]);
-
+ const [projects, setProjects] = useState<Project[]>([
+  {
+    id: "51155ece-583e-4b4c-a9de-dea373aca2a",
+    name: "JATA ELECTRODOMÉSTICOS",
+    imagesCount: 0,
+  },
+]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
