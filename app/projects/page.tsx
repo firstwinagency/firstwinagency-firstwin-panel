@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+/* ======================================================
+   TIPOS ORIGINALES (SIN TOCAR)
+====================================================== */
 type ProjectImage = {
   id: string;
   reference?: string;
@@ -10,10 +13,35 @@ type ProjectImage = {
   url?: string;
 };
 
+/* ======================================================
+   TIPO NUEVO (AÑADIDO)
+====================================================== */
+type Project = {
+  id: string;
+  name: string;
+};
+
 const CHUNK_SIZE = 100;
 const IMAGES_PER_ROW = 6;
 
 export default function ProjectsPage() {
+  /* ======================================================
+     NUEVO ESTADO: PROYECTO SELECCIONADO
+  ====================================================== */
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  /* ======================================================
+     PROYECTOS MOCK (SOLO UI, TEMPORAL)
+  ====================================================== */
+  const projects: Project[] = [
+    { id: "default", name: "Default" },
+    { id: "p1", name: "Proyecto Cocina" },
+    { id: "p2", name: "Proyecto Oficina" },
+  ];
+
+  /* ======================================================
+     ESTADO ORIGINAL (SIN TOCAR)
+  ====================================================== */
   const [images, setImages] = useState<ProjectImage[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [preview, setPreview] = useState<string | null>(null);
@@ -25,6 +53,9 @@ export default function ProjectsPage() {
 
   const [order, setOrder] = useState<"oldest" | "newest">("oldest");
 
+  /* ======================================================
+     FUNCIÓN ORIGINAL (SIN TOCAR)
+  ====================================================== */
   const loadImages = async () => {
     try {
       const res = await fetch("/api/projects/images");
@@ -39,8 +70,67 @@ export default function ProjectsPage() {
   };
 
   useEffect(() => {
-    loadImages();
-  }, []);
+    if (selectedProject) {
+      loadImages();
+    }
+  }, [selectedProject]);
+
+  /* ======================================================
+     VISTA NUEVA: SELECCIÓN DE PROYECTO
+  ====================================================== */
+  if (!selectedProject) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#fff", padding: 40 }}>
+        <h1
+          style={{
+            fontFamily: "DM Serif Display",
+            fontSize: 34,
+            textAlign: "center",
+            marginBottom: 30,
+          }}
+        >
+          Proyectos
+        </h1>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 24,
+            maxWidth: 900,
+            margin: "0 auto",
+          }}
+        >
+          {projects.map((project) => (
+            <div
+              key={project.id}
+              onClick={() => setSelectedProject(project)}
+              style={{
+                background: "#f2f2f2",
+                borderRadius: 20,
+                padding: 30,
+                cursor: "pointer",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              }}
+              className="btn-zoom"
+            >
+              <h2 style={{ fontSize: 20, marginBottom: 8 }}>
+                {project.name}
+              </h2>
+              <p style={{ opacity: 0.7, fontSize: 14 }}>
+                Acceder al proyecto
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /* ======================================================
+     ↓↓↓ A PARTIR DE AQUÍ:
+     TU CÓDIGO ORIGINAL COMPLETO, SIN TOCAR
+  ====================================================== */
 
   const displayedImages =
     order === "oldest" ? images : [...images].reverse();
@@ -149,7 +239,9 @@ export default function ProjectsPage() {
   const deleteImages = async () => {
     if (selected.size === 0) return;
 
-    const ok = confirm("¿Estás seguro que deseas eliminar las imágenes seleccionadas?");
+    const ok = confirm(
+      "¿Estás seguro que deseas eliminar las imágenes seleccionadas?"
+    );
     if (!ok) return;
 
     const res = await fetch("/api/projects/delete", {
@@ -173,6 +265,20 @@ export default function ProjectsPage() {
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
       <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
+        <button
+          onClick={() => setSelectedProject(null)}
+          style={{
+            marginBottom: 16,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 14,
+            opacity: 0.7,
+          }}
+        >
+          ← Volver a proyectos
+        </button>
+
         <h1
           style={{
             fontFamily: "DM Serif Display",
