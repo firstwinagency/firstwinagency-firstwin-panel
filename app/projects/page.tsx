@@ -54,7 +54,7 @@ export default function ProjectsPage() {
   const [order, setOrder] = useState<"oldest" | "newest">("oldest");
 
   /* ======================================================
-     CARGA DE IMÁGENES
+     CARGA DE IMÁGENES (CORREGIDA)
   ====================================================== */
   const loadImages = async () => {
     if (!selectedProject) return;
@@ -278,7 +278,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================================================
-     VISTA 2 — GALERÍA ORIGINAL COMPLETA
+     VISTA 2 — GALERÍA ORIGINAL (ÍNTEGRA)
   ====================================================== */
 
   const displayedImages =
@@ -328,9 +328,6 @@ export default function ProjectsPage() {
     });
   };
 
-  /* =======================
-     DESCARGAR ZIP
-  ======================= */
   const downloadZip = async (mode: "reference" | "asin") => {
     if (selected.size === 0) {
       alert("Selecciona al menos una imagen");
@@ -412,11 +409,7 @@ export default function ProjectsPage() {
 
       <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
         <button
-          onClick={() => {
-            setSelectedProject(null);
-            setImages([]);
-            setSelected(new Set());
-          }}
+          onClick={() => setSelectedProject(null)}
           style={{
             marginBottom: 16,
             background: "transparent",
@@ -444,8 +437,93 @@ export default function ProjectsPage() {
           Imágenes en proyecto: {images.length}
         </p>
 
-        {/* (RESTO DE TU GALERÍA SE MANTIENE IGUAL) */}
-        {/* … */}
+        {downloading && (
+          <div style={{ maxWidth: 420, margin: "0 auto 20px" }}>
+            <p style={{ textAlign: "center", fontSize: 14 }}>
+              Descargando ZIP {downloadPart} de {downloadTotal}
+            </p>
+            <div
+              style={{
+                height: 8,
+                background: "#e0e0e0",
+                borderRadius: 6,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${(downloadPart / downloadTotal) * 100}%`,
+                  background: "#ff6b6b",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 12,
+            marginBottom: 28,
+            flexWrap: "wrap",
+          }}
+        >
+          <button className="btn-zoom" onClick={selectAll}>
+            Seleccionar todo
+          </button>
+          <button className="btn-zoom" onClick={deselectAll}>
+            Deseleccionar todo
+          </button>
+          <button className="btn-zoom" onClick={() => downloadZip("reference")}>
+            Descargar ZIP (Referencia)
+          </button>
+          <button className="btn-zoom" onClick={() => downloadZip("asin")}>
+            Descargar ZIP (ASIN)
+          </button>
+          <button
+            className="btn-zoom"
+            onClick={() =>
+              setOrder(order === "oldest" ? "newest" : "oldest")
+            }
+          >
+            Ordenar
+          </button>
+          <button className="btn-zoom" onClick={deleteImages}>
+            Eliminar
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 18,
+          }}
+        >
+          {displayedImages.map((img, idx) => (
+            <div
+              key={img.id}
+              style={{
+                background: "#f2f2f2",
+                borderRadius: 16,
+                height: 240,
+                position: "relative",
+                cursor: "pointer",
+                overflow: "hidden",
+              }}
+              onClick={() => img.url && setPreview(img.url)}
+            >
+              {img.url && (
+                <img
+                  src={img.url}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
@@ -461,7 +539,6 @@ export default function ProjectsPage() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 9999,
-            cursor: "zoom-out",
           }}
         >
           <img
@@ -470,7 +547,6 @@ export default function ProjectsPage() {
               maxWidth: "90%",
               maxHeight: "90%",
               objectFit: "contain",
-              borderRadius: 12,
             }}
           />
         </div>
@@ -478,4 +554,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-
