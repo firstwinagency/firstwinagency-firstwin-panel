@@ -8,18 +8,28 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("projectId");
+
+    // 🛑 Si no hay projectId, no devolvemos nada
+    if (!projectId) {
+      return NextResponse.json({ images: [] });
+    }
+
     const { data, error } = await supabaseAdmin
       .from("project_images")
       .select(`
         id,
+        project_id,
         reference,
         asin,
         image_index,
         storage_path,
         created_at
       `)
+      .eq("project_id", projectId)
       .order("created_at", { ascending: true });
 
     if (error) {
