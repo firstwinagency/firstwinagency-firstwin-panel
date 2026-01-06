@@ -22,7 +22,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
 
   /* ======================================================
-     CARGAR PROYECTOS (SIEMPRE)
+     CARGAR PROYECTOS (FUENTE ÚNICA DE VERDAD)
   ====================================================== */
   const loadProjects = useCallback(async () => {
     try {
@@ -98,7 +98,7 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     RENOMBRAR (UI)
+     RENOMBRAR (SOLO UI DE MOMENTO)
   ====================================================== */
   const saveProjectName = (id: string) => {
     if (!editingName.trim()) {
@@ -117,13 +117,31 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     ELIMINAR (UI)
+     ELIMINAR PROYECTO (BD REAL)
   ====================================================== */
-  const deleteProject = (id: string) => {
-    const ok = confirm("¿Eliminar proyecto?");
+  const deleteProject = async (id: string) => {
+    const ok = confirm("¿Estás seguro que deseas eliminar el proyecto?");
     if (!ok) return;
 
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+    try {
+      const res = await fetch("/api/projects/delete-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: id }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert("Error eliminando proyecto");
+        return;
+      }
+
+      await loadProjects(); // 🔥 SIEMPRE recargar desde BD
+    } catch (err) {
+      console.error(err);
+      alert("Error eliminando proyecto");
+    }
   };
 
   /* ======================================================
