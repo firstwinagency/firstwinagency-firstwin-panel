@@ -16,7 +16,7 @@ export default function ProjectsPage() {
   const router = useRouter();
 
   /* ======================================================
-     ESTADO PROYECTOS (VACÍO, VIENE DE BD)
+     ESTADO
   ====================================================== */
   const [projects, setProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState("");
@@ -24,40 +24,48 @@ export default function ProjectsPage() {
   const [editingName, setEditingName] = useState("");
 
   /* ======================================================
-     CARGAR PROYECTOS DESDE SUPABASE
+     CARGAR PROYECTOS DESDE BD
   ====================================================== */
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const res = await fetch("/api/projects/list");
-        const data = await res.json();
+  const loadProjects = async () => {
+    try {
+      const res = await fetch("/api/projects/list");
+      const data = await res.json();
 
-        if (!data.projects) return;
-
-        const withCounts = await Promise.all(
-          data.projects.map(async (project: Project) => {
-            try {
-              const res = await fetch(
-                `/api/projects/images?projectId=${project.id}`
-              );
-              const imgs = await res.json();
-
-              return {
-                ...project,
-                imagesCount: imgs.images?.length || 0,
-              };
-            } catch {
-              return { ...project, imagesCount: 0 };
-            }
-          })
-        );
-
-        setProjects(withCounts);
-      } catch (err) {
-        console.error("Error cargando proyectos", err);
+      if (!data.projects) {
+        setProjects([]);
+        return;
       }
-    };
 
+      const projectsWithCounts = await Promise.all(
+        data.projects.map(async (project: { id: string; name: string }) => {
+          try {
+            const res = await fetch(
+              `/api/projects/images?projectId=${project.id}`
+            );
+            const imgData = await res.json();
+
+            return {
+              id: project.id,
+              name: project.name,
+              imagesCount: imgData.images?.length || 0,
+            };
+          } catch {
+            return {
+              id: project.id,
+              name: project.name,
+              imagesCount: 0,
+            };
+          }
+        })
+      );
+
+      setProjects(projectsWithCounts);
+    } catch (err) {
+      console.error("Error cargando proyectos", err);
+    }
+  };
+
+  useEffect(() => {
     loadProjects();
   }, []);
 
@@ -83,7 +91,11 @@ export default function ProjectsPage() {
 
       setProjects((prev) => [
         ...prev,
-        { ...data.project, imagesCount: 0 },
+        {
+          id: data.project.id,
+          name: data.project.name,
+          imagesCount: 0,
+        },
       ]);
 
       setNewProjectName("");
@@ -95,6 +107,7 @@ export default function ProjectsPage() {
 
   /* ======================================================
      RENOMBRAR PROYECTO (SOLO UI)
+     (si luego quieres persistirlo, lo hacemos con API)
   ====================================================== */
   const saveProjectName = (id: string) => {
     if (!editingName.trim()) {
@@ -114,6 +127,7 @@ export default function ProjectsPage() {
 
   /* ======================================================
      ELIMINAR PROYECTO (UI)
+     (no lo borramos aún de BD a propósito)
   ====================================================== */
   const deleteProject = (id: string) => {
     const ok = confirm("¿Estás seguro que deseas eliminar el proyecto?");
