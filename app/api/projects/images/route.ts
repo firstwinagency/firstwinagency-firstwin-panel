@@ -20,30 +20,24 @@ export async function GET(request: Request) {
         project_id,
         reference,
         asin,
-        filename,
-        created_at
+        image_index,
+        storage_path
       `)
       .eq("project_id", projectId)
-      .order("created_at", { ascending: true });
+      .order("image_index", { ascending: true });
 
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json({ images: [] }, { status: 500 });
     }
 
-    if (!data || data.length === 0) {
-      return NextResponse.json({ images: [] });
-    }
-
-    const images = data
-      .map((img, index) => {
-        if (!img.filename) return null;
-
-        const storagePath = `${img.project_id}/${img.filename}`;
+    const images = (data || [])
+      .map((img) => {
+        if (!img.storage_path) return null;
 
         const { data: urlData } = supabaseAdmin.storage
           .from("project-images")
-          .getPublicUrl(storagePath);
+          .getPublicUrl(img.storage_path);
 
         if (!urlData?.publicUrl) return null;
 
@@ -51,8 +45,8 @@ export async function GET(request: Request) {
           id: img.id,
           reference: img.reference,
           asin: img.asin,
-          index: index + 1,
-          url: urlData.publicUrl,
+          index: img.image_index, // 🔥 CLAVE
+          url: urlData.publicUrl, // 🔥 CLAVE
         };
       })
       .filter(Boolean);
@@ -63,3 +57,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ images: [] }, { status: 500 });
   }
 }
+
