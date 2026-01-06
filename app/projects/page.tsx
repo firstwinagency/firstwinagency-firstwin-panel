@@ -16,6 +16,7 @@ type ProjectImage = {
 type Project = {
   id: string;
   name: string;
+  imagesCount: number;
 };
 
 const CHUNK_SIZE = 100;
@@ -23,15 +24,27 @@ const IMAGES_PER_ROW = 6;
 
 export default function ProjectsPage() {
   /* ======================================================
-     PROYECTO ÚNICO (ESTADO ACTUAL REAL)
+     CONSTANTES
   ====================================================== */
-  const PROJECT_ID = "jata-electrodomesticos";
-  const PROJECT_NAME = "JATA ELECTRODOMÉSTICOS";
-
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const MAIN_PROJECT_ID = "jata-electrodomesticos";
+  const MAIN_PROJECT_NAME = "JATA ELECTRODOMÉSTICOS";
 
   /* ======================================================
-     ESTADO ORIGINAL (IMÁGENES)
+     ESTADO PROYECTOS
+  ====================================================== */
+  const [projects, setProjects] = useState<Project[]>([
+    {
+      id: MAIN_PROJECT_ID,
+      name: MAIN_PROJECT_NAME,
+      imagesCount: 0, // se rellena dinámicamente
+    },
+  ]);
+
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [newProjectName, setNewProjectName] = useState("");
+
+  /* ======================================================
+     ESTADO IMÁGENES (ORIGINAL)
   ====================================================== */
   const [images, setImages] = useState<ProjectImage[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -51,7 +64,18 @@ export default function ProjectsPage() {
     try {
       const res = await fetch("/api/projects/images");
       const data = await res.json();
-      setImages(data.images || []);
+      const imgs = data.images || [];
+      setImages(imgs);
+
+      // Actualizar contador del proyecto principal
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === MAIN_PROJECT_ID
+            ? { ...p, imagesCount: imgs.length }
+            : p
+        )
+      );
+
       setSelected(new Set());
     } catch (err) {
       console.error("Error cargando imágenes", err);
@@ -60,15 +84,49 @@ export default function ProjectsPage() {
     }
   };
 
-  // Cargamos imágenes una vez para:
-  // - contador real
-  // - galería
   useEffect(() => {
     loadImages();
   }, []);
 
   /* ======================================================
-     VISTA 1: SELECCIÓN DE PROYECTO (ÚNICO)
+     CRUD PROYECTOS (UI)
+  ====================================================== */
+  const createProject = () => {
+    if (!newProjectName.trim()) return;
+
+    setProjects((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name: newProjectName.trim(),
+        imagesCount: 0,
+      },
+    ]);
+
+    setNewProjectName("");
+  };
+
+  const renameProject = (id: string, name: string) => {
+    setProjects((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, name } : p))
+    );
+  };
+
+  const deleteProject = (id: string) => {
+    const confirm1 = confirm(
+      "¿Estás seguro de que deseas eliminar este proyecto?"
+    );
+    if (!confirm1) return;
+
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+
+    if (selectedProject?.id === id) {
+      setSelectedProject(null);
+    }
+  };
+
+  /* ======================================================
+     VISTA 1: LISTA DE PROYECTOS
   ====================================================== */
   if (!selectedProject) {
     return (
@@ -78,53 +136,124 @@ export default function ProjectsPage() {
             fontFamily: "DM Serif Display",
             fontSize: 34,
             textAlign: "center",
-            marginBottom: 30,
+            marginBottom: 24,
           }}
         >
           Proyectos
         </h1>
 
+        {/* Crear proyecto */}
         <div
           style={{
             maxWidth: 420,
-            margin: "0 auto",
+            margin: "0 auto 30px",
+            display: "flex",
+            gap: 10,
           }}
         >
-          <div
-            onClick={() =>
-              setSelectedProject({ id: PROJECT_ID, name: PROJECT_NAME })
-            }
+          <input
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            placeholder="Nombre del proyecto"
+            style={{
+              flex: 1,
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #ccc",
+            }}
+          />
+          <button
+            onClick={createProject}
             className="btn-zoom"
             style={{
               background: "#ff6b6b",
               color: "#fff",
-              borderRadius: 20,
-              padding: 28,
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              borderRadius: 10,
+              padding: "0 18px",
             }}
           >
-            <h2
+            Crear
+          </button>
+        </div>
+
+        {/* Grid proyectos */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 24,
+            maxWidth: 1000,
+            margin: "0 auto",
+          }}
+        >
+          {projects.map((project) => (
+            <div
+              key={project.id}
               style={{
-                fontFamily: "DM Serif Display",
-                fontSize: 22,
-                marginBottom: 8,
+                background: "#ff6b6b",
+                color: "#fff",
+                borderRadius: 20,
+                padding: 22,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
             >
-              {PROJECT_NAME}
-            </h2>
+              <input
+                value={project.name}
+                onChange={(e) =>
+                  renameProject(project.id, e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  marginBottom: 6,
+                }}
+              />
 
-            <p style={{ fontSize: 14, opacity: 0.9 }}>
-              {loading ? "Cargando imágenes…" : `${images.length} imágenes`}
-            </p>
-          </div>
+              <p style={{ fontSize: 13, opacity: 0.9 }}>
+                {project.imagesCount} imágenes
+              </p>
+
+              <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                <button
+                  onClick={() => setSelectedProject(project)}
+                  className="btn-zoom"
+                  style={{
+                    flex: 1,
+                    background: "#000",
+                    color: "#fff",
+                    borderRadius: 10,
+                    padding: "6px 0",
+                  }}
+                >
+                  Abrir
+                </button>
+
+                <button
+                  onClick={() => deleteProject(project.id)}
+                  className="btn-zoom"
+                  style={{
+                    background: "#6b1d1d",
+                    color: "#fff",
+                    borderRadius: 10,
+                    padding: "6px 10px",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   /* ======================================================
-     GALERÍA ORIGINAL (SIN CAMBIOS)
+     GALERÍA (ORIGINAL)
   ====================================================== */
 
   const displayedImages =
@@ -282,7 +411,7 @@ export default function ProjectsPage() {
             marginBottom: 6,
           }}
         >
-          {PROJECT_NAME}
+          {selectedProject.name}
         </h1>
 
         <p style={{ textAlign: "center", marginBottom: 18, opacity: 0.7 }}>
