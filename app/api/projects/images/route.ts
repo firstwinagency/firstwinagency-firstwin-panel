@@ -23,7 +23,7 @@ export async function GET(request: Request) {
         image_index,
         storage_path
       `)
-      .eq("project_id", projectId)
+      .eq("project_id", projectId.toString())
       .order("image_index", { ascending: true });
 
     if (error) {
