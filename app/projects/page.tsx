@@ -16,68 +16,86 @@ export default function ProjectsPage() {
   const router = useRouter();
 
   /* ======================================================
-     ESTADO PROYECTOS
+     ESTADO PROYECTOS (VACÍO, VIENE DE BD)
   ====================================================== */
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: "51155ece-583e-4b4c-a9de-dea373acaa2a",
-      name: "JATA ELECTRODOMÉSTICOS",
-      imagesCount: 0,
-    },
-  ]);
-
+  const [projects, setProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
   /* ======================================================
-     CARGAR RECUENTO DE IMÁGENES (CLAVE)
+     CARGAR PROYECTOS DESDE SUPABASE
   ====================================================== */
   useEffect(() => {
-    const loadImageCounts = async () => {
-      const updated = await Promise.all(
-        projects.map(async (project) => {
-          try {
-            const res = await fetch(
-              `/api/projects/images?projectId=${project.id}`
-            );
-            const data = await res.json();
+    const loadProjects = async () => {
+      try {
+        const res = await fetch("/api/projects/list");
+        const data = await res.json();
 
-            return {
-              ...project,
-              imagesCount: data.images?.length || 0,
-            };
-          } catch {
-            return project;
-          }
-        })
-      );
+        if (!data.projects) return;
 
-      setProjects(updated);
+        const withCounts = await Promise.all(
+          data.projects.map(async (project: Project) => {
+            try {
+              const res = await fetch(
+                `/api/projects/images?projectId=${project.id}`
+              );
+              const imgs = await res.json();
+
+              return {
+                ...project,
+                imagesCount: imgs.images?.length || 0,
+              };
+            } catch {
+              return { ...project, imagesCount: 0 };
+            }
+          })
+        );
+
+        setProjects(withCounts);
+      } catch (err) {
+        console.error("Error cargando proyectos", err);
+      }
     };
 
-    loadImageCounts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadProjects();
   }, []);
 
   /* ======================================================
-     CRUD PROYECTOS (UI ONLY)
+     CREAR PROYECTO (BD REAL)
   ====================================================== */
-  const createProject = () => {
+  const createProject = async () => {
     if (!newProjectName.trim()) return;
 
-    setProjects((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: newProjectName.trim(),
-        imagesCount: 0,
-      },
-    ]);
+    try {
+      const res = await fetch("/api/projects/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newProjectName.trim() }),
+      });
 
-    setNewProjectName("");
+      const data = await res.json();
+
+      if (!data.project) {
+        alert("Error creando proyecto");
+        return;
+      }
+
+      setProjects((prev) => [
+        ...prev,
+        { ...data.project, imagesCount: 0 },
+      ]);
+
+      setNewProjectName("");
+    } catch (err) {
+      console.error(err);
+      alert("Error creando proyecto");
+    }
   };
 
+  /* ======================================================
+     RENOMBRAR PROYECTO (SOLO UI)
+  ====================================================== */
   const saveProjectName = (id: string) => {
     if (!editingName.trim()) {
       setEditingProjectId(null);
@@ -94,6 +112,9 @@ export default function ProjectsPage() {
     setEditingName("");
   };
 
+  /* ======================================================
+     ELIMINAR PROYECTO (UI)
+  ====================================================== */
   const deleteProject = (id: string) => {
     const ok = confirm("¿Estás seguro que deseas eliminar el proyecto?");
     if (!ok) return;
