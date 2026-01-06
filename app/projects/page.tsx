@@ -58,7 +58,7 @@ export default function ProjectsPage() {
   ====================================================== */
   const loadImages = async () => {
     try {
-      const res = await fetch("/api/projects/images");
+      const res = await fetch(`/api/projects/images?projectId=${selectedProject.id}`)
       const data = await res.json();
       const imgs = data.images || [];
 
