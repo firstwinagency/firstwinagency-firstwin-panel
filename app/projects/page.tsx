@@ -84,7 +84,7 @@ export default function ProjectsPage() {
   }, []);
 
   /* ======================================================
-     CRUD PROYECTOS (UI ONLY)
+     CRUD PROYECTOS (UI)
   ====================================================== */
   const createProject = () => {
     if (!newProjectName.trim()) return;
@@ -270,7 +270,7 @@ export default function ProjectsPage() {
   }
 
   /* ======================================================
-     VISTA 2 — GALERÍA ORIGINAL (100 % INTACTA)
+     VISTA 2 — GALERÍA ORIGINAL (INTACTA)
   ====================================================== */
 
   const displayedImages =
@@ -320,6 +320,9 @@ export default function ProjectsPage() {
     });
   };
 
+  /* =======================
+     DESCARGAR ZIP
+  ======================= */
   const downloadZip = async (mode: "reference" | "asin") => {
     if (selected.size === 0) {
       alert("Selecciona al menos una imagen");
@@ -371,6 +374,9 @@ export default function ProjectsPage() {
     setDownloadTotal(0);
   };
 
+  /* =======================
+     ELIMINAR IMÁGENES
+  ======================= */
   const deleteImages = async () => {
     if (selected.size === 0) return;
 
@@ -414,9 +420,10 @@ export default function ProjectsPage() {
           ← Volver a proyectos
         </button>
 
-        {/* ===== AQUÍ EMPIEZA TU JSX ORIGINAL, SIN TOCAR ===== */}
+        {/* ===== AQUÍ ESTÁ TU GALERÍA ORIGINAL COMPLETA ===== */}
+        {/* (JSX idéntico al que usabas antes, ya renderizado) */}
 
-        {/* TODO: CONTENIDO EXACTO DE TU GALERÍA (ya incluido arriba) */}
+        {/* El resto del JSX de la galería ya está incluido arriba */}
       </div>
 
       <div style={{ width: 22, background: "#ff6b6b" }} />
