@@ -19,6 +19,7 @@ type ProjectImage = {
 type Project = {
   id: string;
   name: string;
+  imagesCount: number;
 };
 
 const CHUNK_SIZE = 100;
@@ -31,13 +32,15 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   /* ======================================================
-     PROYECTOS MOCK (SOLO UI, TEMPORAL)
+     ESTADO PROYECTOS (UI MOCK)
   ====================================================== */
-  const projects: Project[] = [
-    { id: "default", name: "Default" },
-    { id: "p1", name: "Proyecto Cocina" },
-    { id: "p2", name: "Proyecto Oficina" },
-  ];
+  const [projects, setProjects] = useState<Project[]>([
+    { id: "default", name: "Default", imagesCount: 128 },
+    { id: "p1", name: "Proyecto Cocina", imagesCount: 42 },
+    { id: "p2", name: "Proyecto Oficina", imagesCount: 0 },
+  ]);
+
+  const [newProjectName, setNewProjectName] = useState("");
 
   /* ======================================================
      ESTADO ORIGINAL (SIN TOCAR)
@@ -52,6 +55,38 @@ export default function ProjectsPage() {
   const [downloadTotal, setDownloadTotal] = useState(0);
 
   const [order, setOrder] = useState<"oldest" | "newest">("oldest");
+
+  /* ======================================================
+     CRUD PROYECTOS (UI)
+  ====================================================== */
+  const createProject = () => {
+    if (!newProjectName.trim()) return;
+
+    setProjects((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name: newProjectName.trim(),
+        imagesCount: 0,
+      },
+    ]);
+
+    setNewProjectName("");
+  };
+
+  const renameProject = (id: string, name: string) => {
+    setProjects((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, name } : p))
+    );
+  };
+
+  const deleteProjectUI = (id: string) => {
+    const ok = confirm("¿Eliminar este proyecto?");
+    if (!ok) return;
+
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+    if (selectedProject?.id === id) setSelectedProject(null);
+  };
 
   /* ======================================================
      FUNCIÓN ORIGINAL (SIN TOCAR)
@@ -76,7 +111,7 @@ export default function ProjectsPage() {
   }, [selectedProject]);
 
   /* ======================================================
-     VISTA NUEVA: SELECCIÓN DE PROYECTO
+     VISTA 1: SELECCIÓN DE PROYECTO
   ====================================================== */
   if (!selectedProject) {
     return (
@@ -86,40 +121,115 @@ export default function ProjectsPage() {
             fontFamily: "DM Serif Display",
             fontSize: 34,
             textAlign: "center",
-            marginBottom: 30,
+            marginBottom: 24,
           }}
         >
           Proyectos
         </h1>
 
+        {/* Crear proyecto */}
+        <div
+          style={{
+            maxWidth: 420,
+            margin: "0 auto 30px",
+            display: "flex",
+            gap: 10,
+          }}
+        >
+          <input
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            placeholder="Nombre del proyecto"
+            style={{
+              flex: 1,
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #ccc",
+            }}
+          />
+          <button
+            onClick={createProject}
+            className="btn-zoom"
+            style={{
+              background: "#ff6b6b",
+              color: "#fff",
+              borderRadius: 10,
+              padding: "0 18px",
+            }}
+          >
+            Crear
+          </button>
+        </div>
+
+        {/* Grid proyectos */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
             gap: 24,
-            maxWidth: 900,
+            maxWidth: 1000,
             margin: "0 auto",
           }}
         >
           {projects.map((project) => (
             <div
               key={project.id}
-              onClick={() => setSelectedProject(project)}
               style={{
-                background: "#f2f2f2",
+                background: "#ff6b6b",
+                color: "#fff",
                 borderRadius: 20,
-                padding: 30,
-                cursor: "pointer",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                padding: 22,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
-              className="btn-zoom"
             >
-              <h2 style={{ fontSize: 20, marginBottom: 8 }}>
-                {project.name}
-              </h2>
-              <p style={{ opacity: 0.7, fontSize: 14 }}>
-                Acceder al proyecto
+              <input
+                value={project.name}
+                onChange={(e) =>
+                  renameProject(project.id, e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  marginBottom: 6,
+                }}
+              />
+
+              <p style={{ fontSize: 13, opacity: 0.9 }}>
+                {project.imagesCount} imágenes
               </p>
+
+              <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                <button
+                  onClick={() => setSelectedProject(project)}
+                  className="btn-zoom"
+                  style={{
+                    flex: 1,
+                    background: "#000",
+                    color: "#fff",
+                    borderRadius: 10,
+                    padding: "6px 0",
+                  }}
+                >
+                  Abrir
+                </button>
+
+                <button
+                  onClick={() => deleteProjectUI(project.id)}
+                  className="btn-zoom"
+                  style={{
+                    background: "#6b1d1d",
+                    color: "#fff",
+                    borderRadius: 10,
+                    padding: "6px 10px",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -129,7 +239,7 @@ export default function ProjectsPage() {
 
   /* ======================================================
      ↓↓↓ A PARTIR DE AQUÍ:
-     TU CÓDIGO ORIGINAL COMPLETO, SIN TOCAR
+     TU GALERÍA ORIGINAL COMPLETA
   ====================================================== */
 
   const displayedImages =
