@@ -12,47 +12,41 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1️⃣ Obtener imágenes del proyecto
-    const { data: images, error: fetchError } = await supabaseAdmin
-      .from("project_images")
-      .select("storage_path")
-      .eq("project_id", projectId);
-
-    if (fetchError) throw fetchError;
-
-    // 2️⃣ Borrar archivos del storage
-    if (images && images.length > 0) {
-      const paths = images.map((img) => img.storage_path);
-
-      const { error: storageError } = await supabaseAdmin.storage
-        .from("project-images")
-        .remove(paths);
-
-      if (storageError) throw storageError;
-    }
-
-    // 3️⃣ Borrar imágenes de la BD
-    const { error: deleteImagesError } = await supabaseAdmin
+    // 1️⃣ Borrar imágenes del proyecto (DB)
+    const { error: imagesError } = await supabaseAdmin
       .from("project_images")
       .delete()
       .eq("project_id", projectId);
 
-    if (deleteImagesError) throw deleteImagesError;
+    if (imagesError) {
+      console.error(imagesError);
+      return NextResponse.json(
+        { error: "Error eliminando imágenes" },
+        { status: 500 }
+      );
+    }
 
-    // 4️⃣ Borrar proyecto
-    const { error: deleteProjectError } = await supabaseAdmin
+    // 2️⃣ Borrar proyecto
+    const { error: projectError } = await supabaseAdmin
       .from("projects")
       .delete()
       .eq("id", projectId);
 
-    if (deleteProjectError) throw deleteProjectError;
+    if (projectError) {
+      console.error(projectError);
+      return NextResponse.json(
+        { error: "Error eliminando proyecto" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("DELETE PROJECT ERROR:", error);
+  } catch (err) {
+    console.error("DELETE PROJECT ERROR:", err);
     return NextResponse.json(
-      { error: error.message || "Error eliminando proyecto" },
+      { error: "Error interno" },
       { status: 500 }
     );
   }
 }
+
