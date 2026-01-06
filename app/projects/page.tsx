@@ -35,6 +35,7 @@ export default function ProjectsPage() {
     imagesCount: 0,
   },
 ]);
+   
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
