@@ -399,7 +399,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fff", display: "flex" }}>
+    <div style={{ height: "100vh", background: "#fff", display: "flex" }}>
       <div style={{ width: 22, background: "#ff6b6b" }} />
 
       <div style={{ flex: 1, padding: "28px 36px", overflowY: "auto" }}>
