@@ -22,17 +22,15 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
 
   /* ======================================================
-     CARGAR PROYECTOS (FUENTE ÚNICA DE VERDAD)
+     CARGA INICIAL (SOLO UNA VEZ)
   ====================================================== */
   const loadProjects = useCallback(async () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/projects/list", {
-        cache: "no-store",
-      });
-
+      const res = await fetch("/api/projects/list", { cache: "no-store" });
       const data = await res.json();
+
       if (!data.projects) {
         setProjects([]);
         return;
@@ -71,34 +69,50 @@ export default function ProjectsPage() {
   }, [loadProjects]);
 
   /* ======================================================
-     CREAR PROYECTO (PERSISTENTE)
+     CREAR PROYECTO (OPTIMISTIC UI)
   ====================================================== */
   const createProject = async () => {
-    if (!newProjectName.trim()) return;
+    const name = newProjectName.trim();
+    if (!name) return;
+
+    // 1️⃣ Crear proyecto temporal en UI
+    const tempId = crypto.randomUUID();
+    const tempProject: Project = {
+      id: tempId,
+      name,
+      imagesCount: 0,
+    };
+
+    setProjects((prev) => [tempProject, ...prev]);
+    setNewProjectName("");
 
     try {
+      // 2️⃣ Crear en backend
       const res = await fetch("/api/projects/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newProjectName.trim() }),
+        body: JSON.stringify({ name }),
       });
 
       const data = await res.json();
-      if (!data.project) {
-        alert("Error creando proyecto");
-        return;
-      }
+      if (!data.project) throw new Error("Error creando proyecto");
 
-      setNewProjectName("");
-      await loadProjects(); // 🔥 CLAVE
+      // 3️⃣ Reemplazar temp por real
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === tempId ? { ...data.project, imagesCount: 0 } : p
+        )
+      );
     } catch (err) {
       console.error(err);
+      // rollback
+      setProjects((prev) => prev.filter((p) => p.id !== tempId));
       alert("Error creando proyecto");
     }
   };
 
   /* ======================================================
-     RENOMBRAR (SOLO UI DE MOMENTO)
+     RENOMBRAR (SOLO UI)
   ====================================================== */
   const saveProjectName = (id: string) => {
     if (!editingName.trim()) {
@@ -117,11 +131,15 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     ELIMINAR PROYECTO (BD REAL)
+     ELIMINAR PROYECTO (OPTIMISTIC UI)
   ====================================================== */
   const deleteProject = async (id: string) => {
     const ok = confirm("¿Estás seguro que deseas eliminar el proyecto?");
     if (!ok) return;
+
+    // 1️⃣ Quitar de UI al instante
+    const backup = projects;
+    setProjects((prev) => prev.filter((p) => p.id !== id));
 
     try {
       const res = await fetch("/api/projects/delete-project", {
@@ -131,15 +149,11 @@ export default function ProjectsPage() {
       });
 
       const data = await res.json();
-
-      if (!data.success) {
-        alert("Error eliminando proyecto");
-        return;
-      }
-
-      await loadProjects(); // 🔥 SIEMPRE recargar desde BD
+      if (!data.success) throw new Error("Error eliminando proyecto");
     } catch (err) {
       console.error(err);
+      // rollback
+      setProjects(backup);
       alert("Error eliminando proyecto");
     }
   };
@@ -147,7 +161,15 @@ export default function ProjectsPage() {
   /* ======================================================
      UI
   ====================================================== */
- return (
+  if (loading) {
+    return (
+      <div style={{ padding: 40, textAlign: "center" }}>
+        Cargando proyectos…
+      </div>
+    );
+  }
+
+  return (
     <div style={{ minHeight: "100vh", background: "#fff", padding: 40 }}>
       <h1
         style={{
@@ -289,3 +311,4 @@ export default function ProjectsPage() {
     </div>
   );
 }
+
