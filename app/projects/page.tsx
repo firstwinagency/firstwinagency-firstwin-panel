@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 /* ======================================================
    TIPOS
@@ -13,26 +13,22 @@ type Project = {
 };
 
 export default function ProjectsPage() {
-  const router = useRouter();
-
   const [projects, setProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const hasLoadedOnce = useRef(false); // 🔑 evita pantallas negras
+  const hasLoadedOnce = useRef(false);
 
   /* ======================================================
-     CARGAR PROYECTOS (SIN PANTALLA NEGRA)
+     CARGAR PROYECTOS
   ====================================================== */
   const loadProjects = useCallback(async () => {
     try {
-      const res = await fetch("/api/projects/list", {
-        cache: "no-store",
-      });
-
+      const res = await fetch("/api/projects/list", { cache: "no-store" });
       const data = await res.json();
+
       if (!data.projects) {
         setProjects([]);
         return;
@@ -74,7 +70,7 @@ export default function ProjectsPage() {
   }, [loadProjects]);
 
   /* ======================================================
-     CREAR PROYECTO (OPTIMISTIC + BD)
+     CREAR PROYECTO
   ====================================================== */
   const createProject = async () => {
     const name = newProjectName.trim();
@@ -82,7 +78,6 @@ export default function ProjectsPage() {
 
     const tempId = crypto.randomUUID();
 
-    // 1️⃣ Optimistic UI
     setProjects((prev) => [
       { id: tempId, name, imagesCount: 0 },
       ...prev,
@@ -97,19 +92,14 @@ export default function ProjectsPage() {
       });
 
       const data = await res.json();
-      if (!data.project) throw new Error("Error creando proyecto");
+      if (!data.project) throw new Error();
 
-      // 2️⃣ Reemplazar temporal por real
       setProjects((prev) =>
         prev.map((p) =>
-          p.id === tempId
-            ? { ...data.project, imagesCount: 0 }
-            : p
+          p.id === tempId ? { ...data.project, imagesCount: 0 } : p
         )
       );
-    } catch (err) {
-      console.error(err);
-      // rollback
+    } catch {
       setProjects((prev) => prev.filter((p) => p.id !== tempId));
       alert("Error creando proyecto");
     }
@@ -135,15 +125,13 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     ELIMINAR PROYECTO (OPTIMISTIC + BD)
+     ELIMINAR PROYECTO
   ====================================================== */
   const deleteProject = async (id: string) => {
     const ok = confirm("¿Estás seguro que deseas eliminar el proyecto?");
     if (!ok) return;
 
     const backup = projects;
-
-    // 1️⃣ Quitar de UI al instante
     setProjects((prev) => prev.filter((p) => p.id !== id));
 
     try {
@@ -154,10 +142,8 @@ export default function ProjectsPage() {
       });
 
       const data = await res.json();
-      if (!data.success) throw new Error("Error eliminando proyecto");
-    } catch (err) {
-      console.error(err);
-      // rollback
+      if (!data.success) throw new Error();
+    } catch {
       setProjects(backup);
       alert("Error eliminando proyecto");
     }
@@ -166,14 +152,6 @@ export default function ProjectsPage() {
   /* ======================================================
      UI
   ====================================================== */
-  if (loading) {
-    return (
-      <div style={{ padding: 40, textAlign: "center" }}>
-        Cargando proyectos…
-      </div>
-    );
-  }
-
   return (
     <div style={{ minHeight: "100vh", background: "#fff", padding: 40 }}>
       <h1
@@ -186,6 +164,12 @@ export default function ProjectsPage() {
       >
         Proyectos
       </h1>
+
+      {loading && (
+        <p style={{ textAlign: "center", opacity: 0.6, marginBottom: 20 }}>
+          Cargando proyectos…
+        </p>
+      )}
 
       <div
         style={{
@@ -220,12 +204,6 @@ export default function ProjectsPage() {
         </button>
       </div>
 
-      {projects.length === 0 && (
-        <p style={{ textAlign: "center", opacity: 0.6 }}>
-          No hay proyectos todavía
-        </p>
-      )}
-
       <div
         style={{
           display: "grid",
@@ -236,81 +214,79 @@ export default function ProjectsPage() {
         }}
       >
         {projects.map((project) => (
-          <div
+          <Link
             key={project.id}
-            onClick={() => router.push(`/projects/${project.id}`)}
-            className="btn-zoom"
-            style={{
-              background: "#ff6b6b",
-              color: "#fff",
-              borderRadius: 16,
-              padding: 18,
-              cursor: "pointer",
-              position: "relative",
-            }}
+            href={`/projects/${project.id}`}
+            style={{ textDecoration: "none" }}
           >
             <div
+              className="btn-zoom"
               style={{
-                position: "absolute",
-                top: 10,
-                right: 10,
-                display: "flex",
-                gap: 8,
+                background: "#ff6b6b",
+                color: "#fff",
+                borderRadius: 16,
+                padding: 18,
+                cursor: "pointer",
+                position: "relative",
               }}
-              onClick={(e) => e.stopPropagation()}
             >
-              <span
-                onClick={() => {
-                  setEditingProjectId(project.id);
-                  setEditingName(project.name);
+              <div
+                style={{
+                  position: "absolute",
+                  top: 10,
+                  right: 10,
+                  display: "flex",
+                  gap: 8,
                 }}
-                style={{ cursor: "pointer" }}
+                onClick={(e) => e.preventDefault()}
               >
-                ✏️
-              </span>
-              <span
-                onClick={() => deleteProject(project.id)}
-                style={{ cursor: "pointer" }}
-              >
-                ✕
-              </span>
+                <span
+                  onClick={() => {
+                    setEditingProjectId(project.id);
+                    setEditingName(project.name);
+                  }}
+                >
+                  ✏️
+                </span>
+                <span onClick={() => deleteProject(project.id)}>✕</span>
+              </div>
+
+              {editingProjectId === project.id ? (
+                <input
+                  value={editingName}
+                  autoFocus
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onBlur={() => saveProjectName(project.id)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && saveProjectName(project.id)
+                  }
+                  style={{
+                    width: "100%",
+                    background: "transparent",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: 18,
+                    fontWeight: 600,
+                    outline: "none",
+                  }}
+                />
+              ) : (
+                <h2
+                  style={{
+                    fontFamily: "DM Serif Display",
+                    fontSize: 20,
+                    marginBottom: 6,
+                  }}
+                >
+                  {project.name}
+                </h2>
+              )}
+
+              <p style={{ fontSize: 13, opacity: 0.9 }}>
+                {project.imagesCount} imágenes
+              </p>
             </div>
-
-            {editingProjectId === project.id ? (
-              <input
-                value={editingName}
-                autoFocus
-                onChange={(e) => setEditingName(e.target.value)}
-                onBlur={() => saveProjectName(project.id)}
-                onKeyDown={(e) =>
-                  e.key === "Enter" && saveProjectName(project.id)
-                }
-                style={{
-                  width: "100%",
-                  background: "transparent",
-                  border: "none",
-                  color: "#fff",
-                  fontSize: 18,
-                  fontWeight: 600,
-                  outline: "none",
-                }}
-              />
-            ) : (
-              <h2
-                style={{
-                  fontFamily: "DM Serif Display",
-                  fontSize: 20,
-                  marginBottom: 6,
-                }}
-              >
-                {project.name}
-              </h2>
-            )}
-
-            <p style={{ fontSize: 13, opacity: 0.9 }}>
-              {project.imagesCount} imágenes
-            </p>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
