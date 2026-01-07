@@ -234,7 +234,7 @@ type Overrides = {
 
 export default function Page() {
   /* ====== Estados para los selectores ====== */
-  const [imageSize, setImageSize] = useState<string>("1024x1024");
+  const [imageSize, setImageSize] = useState<string>("2000x2000");
   const [imageFormat, setImageFormat] = useState<string>("jpg");
   const [engine, setEngine] = useState<"standard" | "pro">("standard");
 
@@ -1734,7 +1734,7 @@ export default function Page() {
           <small style={{ color: "#6b7280" }}>(máx. 6)</small>
         </div>
 
-        {/* 🆕 Fila: SELECTOR DE PROYECTO + DOS CAMPOS ZIP + DOS BOTONES */}
+        {/* 🆕 Fila: SELECTOR DE PROYECTO + DOS CAMPOS ZIP + BOTÓN ENVIAR A PROYECTO */}
         <div
           style={{
             display: "flex",
@@ -1848,19 +1848,7 @@ export default function Page() {
               )}
             </div>
 
-            {/* Botón Referencia */}
-            <button
-              onClick={() => handleDownloadSelected(false)}
-              style={{
-                borderRadius: 10, padding: "8px 12px",
-                background: "var(--brand-accent)", color: "var(--brand-accent-ink)",
-                fontWeight: 700, cursor: "pointer",
-              }}
-            >
-              Descargar ZIP (Referencia)
-            </button>
-
-            {/* 🔵 BOTÓN "Enviar a proyecto" - AHORA CONTROLADO POR EL SELECTOR */}
+            {/* 🔵 BOTÓN "Enviar a proyecto" - AHORA EN POSICIÓN PRINCIPAL */}
             <button
               onClick={handleSendToProject}
               disabled={isSending || !selectedProjectId}
@@ -1884,8 +1872,34 @@ export default function Page() {
             >
               {isSending ? "Enviando..." : "Enviar a proyecto"}
             </button>
+          </div>
+        </div>
 
-            {/* Botón ASIN */}
+        {/* 🆕 FILA INFERIOR: Botones de descarga y marca finalizada */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 8,
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {/* Botón Descargar ZIP (Referencia) */}
+            <button
+              onClick={() => handleDownloadSelected(false)}
+              style={{
+                borderRadius: 10, padding: "8px 12px",
+                background: "var(--brand-accent)", color: "var(--brand-accent-ink)",
+                fontWeight: 700, cursor: "pointer",
+              }}
+            >
+              Descargar ZIP (Referencia)
+            </button>
+
+            {/* Botón Descargar ZIP (ASIN) */}
             <button
               onClick={() => handleDownloadSelected(true)}
               disabled={!zipNameAsin.trim()}
@@ -1901,6 +1915,7 @@ export default function Page() {
             </button>
           </div>
 
+          {/* Botón Marcar referencia como finalizada */}
           <button
             onClick={markCurrentAsDone}
             disabled={batch.items.length === 0}
