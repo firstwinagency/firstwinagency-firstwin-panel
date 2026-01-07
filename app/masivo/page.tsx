@@ -215,6 +215,7 @@ type Mode = "csv" | "url" | "local";
 const LS_PRESET_OVERRIDES = "presetOverrides:v1"; // {names, prompts}
 const LS_PRESET_ORDER = "presetOrder:v1";         // string[] de ids en orden
 const LS_CUSTOM_REFS = "customRefs:v1";           // Record<presetId, string>
+const LS_SELECTED_PROJECT = "selectedProject:v1"; // 🆕 ID del proyecto seleccionado
 
 /* Instrucción automática para prompts custom con imagen de referencia */
 const REFERENCE_INSTRUCTION_EN = `
@@ -606,11 +607,65 @@ export default function Page() {
     saveAs(blob, finalName);
   };
 
+  /* ====== NUEVO: Estado para proyectos ====== */
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+
+  // 🆕 Cargar proyectos desde API
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        setIsLoadingProjects(true);
+        const res = await fetch("/api/projects/list");
+        if (!res.ok) throw new Error("Error cargando proyectos");
+        const data = await res.json();
+        setProjects(data.projects || []);
+      } catch (error) {
+        console.error("Error cargando proyectos:", error);
+        // Mantener estado vacío pero no romper la UI
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+
+    loadProjects();
+  }, []); // Solo se carga una vez al montar
+
+  // 🆕 Cargar proyecto seleccionado desde localStorage al iniciar
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_SELECTED_PROJECT);
+      if (saved) {
+        setSelectedProjectId(saved);
+      }
+    } catch (e) {
+      console.warn("No se pudo cargar proyecto seleccionado de localStorage", e);
+    }
+  }, []);
+
+  // 🆕 Guardar proyecto seleccionado en localStorage
+  useEffect(() => {
+    if (selectedProjectId) {
+      try {
+        localStorage.setItem(LS_SELECTED_PROJECT, selectedProjectId);
+      } catch (e) {
+        console.warn("No se pudo guardar proyecto seleccionado en localStorage", e);
+      }
+    }
+  }, [selectedProjectId]);
+
   /* ====== Estado para el envío ====== */
   const [isSending, setIsSending] = useState(false);
 
   /* ====== Función para el nuevo botón "Enviar a proyecto" ====== */
   const handleSendToProject = async () => {
+    // 🆕 Verificar que hay proyecto seleccionado
+    if (!selectedProjectId) {
+      alert("Selecciona un proyecto antes de enviar imágenes.");
+      return;
+    }
+
     const reference = activeRef || null;
     const asin = activeAsin || null;
 
@@ -667,7 +722,7 @@ export default function Page() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          projectId: "default",
+          projectId: selectedProjectId, // 🆕 Usar el proyecto seleccionado
           images,
         }),
       });
@@ -1679,7 +1734,7 @@ export default function Page() {
           <small style={{ color: "#6b7280" }}>(máx. 6)</small>
         </div>
 
-        {/* 🆕 Fila: DOS CAMPOS ZIP + DOS BOTONES */}
+        {/* 🆕 Fila: SELECTOR DE PROYECTO + DOS CAMPOS ZIP + DOS BOTONES */}
         <div
           style={{
             display: "flex",
@@ -1691,6 +1746,50 @@ export default function Page() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {/* 🆕 Selector de Proyecto */}
+            <div style={{ position: "relative" }}>
+              <select
+                value={selectedProjectId || ""}
+                onChange={(e) => setSelectedProjectId(e.target.value || null)}
+                disabled={isLoadingProjects}
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 10,
+                  padding: "8px 30px 8px 12px",
+                  minWidth: 180,
+                  background: "#fff",
+                  color: selectedProjectId ? "#111" : "#9ca3af",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  appearance: "none",
+                }}
+                title={
+                  selectedProjectId 
+                    ? `Proyecto seleccionado: ${projects.find(p => p.id === selectedProjectId)?.name || selectedProjectId}`
+                    : "Selecciona un proyecto para enviar imágenes"
+                }
+              >
+                <option value="">{isLoadingProjects ? "Cargando..." : "Seleccionar proyecto"}</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              <div
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  color: "#6b7280",
+                }}
+              >
+                ▼
+              </div>
+            </div>
+
             {/* Campo Referencia */}
             <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
               <input
@@ -1761,21 +1860,27 @@ export default function Page() {
               Descargar ZIP (Referencia)
             </button>
 
-            {/* 🔵 NUEVO BOTÓN: "Enviar a proyecto" */}
+            {/* 🔵 BOTÓN "Enviar a proyecto" - AHORA CONTROLADO POR EL SELECTOR */}
             <button
               onClick={handleSendToProject}
-              disabled={isSending}
+              disabled={isSending || !selectedProjectId}
               style={{
                 borderRadius: 10,
                 padding: "8px 12px",
-                background: "#10b981",
-                color: "#ffffff",
+                background: selectedProjectId ? "#10b981" : "#e5e7eb",
+                color: selectedProjectId ? "#ffffff" : "#9ca3af",
                 fontWeight: 700,
-                cursor: isSending ? "not-allowed" : "pointer",
+                cursor: (isSending || !selectedProjectId) ? "not-allowed" : "pointer",
                 border: "1px solid rgba(0,0,0,.1)",
                 opacity: isSending ? 0.7 : 1,
               }}
-              title={isSending ? "Enviando imágenes..." : "Enviar imágenes seleccionadas al proyecto"}
+              title={
+                !selectedProjectId 
+                  ? "Selecciona un proyecto primero" 
+                  : isSending 
+                    ? "Enviando imágenes..." 
+                    : `Enviar imágenes seleccionadas al proyecto`
+              }
             >
               {isSending ? "Enviando..." : "Enviar a proyecto"}
             </button>
