@@ -147,15 +147,7 @@ export default function ProjectsPage() {
   /* ======================================================
      UI
   ====================================================== */
-  if (loading) {
-    return (
-      <div style={{ padding: 40, textAlign: "center" }}>
-        Cargando proyectos…
-      </div>
-    );
-  }
-
-  return (
+ return (
     <div style={{ minHeight: "100vh", background: "#fff", padding: 40 }}>
       <h1
         style={{
