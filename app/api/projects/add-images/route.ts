@@ -5,11 +5,19 @@ import { v4 as uuidv4 } from "uuid";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { images } = body;
+    const { projectId, images } = body;
+
+    // ✅ Validaciones básicas
+    if (!projectId || typeof projectId !== "string") {
+      return NextResponse.json(
+        { error: "projectId requerido o inválido" },
+        { status: 400 }
+      );
+    }
 
     if (!images || !Array.isArray(images)) {
       return NextResponse.json(
-        { error: "Datos inválidos" },
+        { error: "Datos de imágenes inválidos" },
         { status: 400 }
       );
     }
@@ -34,6 +42,13 @@ export async function POST(req: Request) {
         );
       }
 
+      if (!base64 || !filename || !mime) {
+        return NextResponse.json(
+          { error: "Datos de imagen incompletos" },
+          { status: 400 }
+        );
+      }
+
       const buffer = Buffer.from(
         base64.replace(/^data:image\/\w+;base64,/, ""),
         "base64"
@@ -51,11 +66,11 @@ export async function POST(req: Request) {
 
       if (uploadError) throw uploadError;
 
-      // 2️⃣ Guardar metadata EXACTA (sin recalcular nada)
+      // 2️⃣ Guardar metadata CORRECTA en DB
       const { data, error: dbError } = await supabaseAdmin
         .from("project_images")
         .insert({
-          project_id: null,
+          project_id: projectId, // ✅ FIX CRÍTICO
           reference: reference ?? null,
           asin: asin ?? null,
           image_index, // ✅ SE GUARDA TAL CUAL
@@ -75,7 +90,6 @@ export async function POST(req: Request) {
       success: true,
       images: uploadedImages,
     });
-
   } catch (error: any) {
     console.error("ADD IMAGES ERROR:", error);
     return NextResponse.json(
