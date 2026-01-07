@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 /* ======================================================
@@ -21,16 +21,18 @@ export default function ProjectsPage() {
   const [editingName, setEditingName] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const hasLoadedOnce = useRef(false); // 🔑 evita pantallas negras
+
   /* ======================================================
-     CARGA INICIAL (SOLO UNA VEZ)
+     CARGAR PROYECTOS (SIN PANTALLA NEGRA)
   ====================================================== */
   const loadProjects = useCallback(async () => {
     try {
-      setLoading(true);
+      const res = await fetch("/api/projects/list", {
+        cache: "no-store",
+      });
 
-      const res = await fetch("/api/projects/list", { cache: "no-store" });
       const data = await res.json();
-
       if (!data.projects) {
         setProjects([]);
         return;
@@ -60,7 +62,10 @@ export default function ProjectsPage() {
       console.error("Error cargando proyectos", err);
       setProjects([]);
     } finally {
-      setLoading(false);
+      if (!hasLoadedOnce.current) {
+        setLoading(false);
+        hasLoadedOnce.current = true;
+      }
     }
   }, []);
 
@@ -69,25 +74,22 @@ export default function ProjectsPage() {
   }, [loadProjects]);
 
   /* ======================================================
-     CREAR PROYECTO (OPTIMISTIC UI)
+     CREAR PROYECTO (OPTIMISTIC + BD)
   ====================================================== */
   const createProject = async () => {
     const name = newProjectName.trim();
     if (!name) return;
 
-    // 1️⃣ Crear proyecto temporal en UI
     const tempId = crypto.randomUUID();
-    const tempProject: Project = {
-      id: tempId,
-      name,
-      imagesCount: 0,
-    };
 
-    setProjects((prev) => [tempProject, ...prev]);
+    // 1️⃣ Optimistic UI
+    setProjects((prev) => [
+      { id: tempId, name, imagesCount: 0 },
+      ...prev,
+    ]);
     setNewProjectName("");
 
     try {
-      // 2️⃣ Crear en backend
       const res = await fetch("/api/projects/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,10 +99,12 @@ export default function ProjectsPage() {
       const data = await res.json();
       if (!data.project) throw new Error("Error creando proyecto");
 
-      // 3️⃣ Reemplazar temp por real
+      // 2️⃣ Reemplazar temporal por real
       setProjects((prev) =>
         prev.map((p) =>
-          p.id === tempId ? { ...data.project, imagesCount: 0 } : p
+          p.id === tempId
+            ? { ...data.project, imagesCount: 0 }
+            : p
         )
       );
     } catch (err) {
@@ -112,7 +116,7 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     RENOMBRAR (SOLO UI)
+     RENOMBRAR (UI)
   ====================================================== */
   const saveProjectName = (id: string) => {
     if (!editingName.trim()) {
@@ -131,14 +135,15 @@ export default function ProjectsPage() {
   };
 
   /* ======================================================
-     ELIMINAR PROYECTO (OPTIMISTIC UI)
+     ELIMINAR PROYECTO (OPTIMISTIC + BD)
   ====================================================== */
   const deleteProject = async (id: string) => {
     const ok = confirm("¿Estás seguro que deseas eliminar el proyecto?");
     if (!ok) return;
 
-    // 1️⃣ Quitar de UI al instante
     const backup = projects;
+
+    // 1️⃣ Quitar de UI al instante
     setProjects((prev) => prev.filter((p) => p.id !== id));
 
     try {
@@ -311,4 +316,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-
