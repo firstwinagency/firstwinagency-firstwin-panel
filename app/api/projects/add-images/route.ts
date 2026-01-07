@@ -7,7 +7,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { projectId, images } = body;
 
-    // ✅ Validaciones básicas
     if (!projectId || typeof projectId !== "string") {
       return NextResponse.json(
         { error: "projectId requerido o inválido" },
@@ -31,10 +30,9 @@ export async function POST(req: Request) {
         filename,
         asin,
         reference,
-        image_index, // ✅ VIENE DEL PANEL MASIVO
+        image_index,
       } = image;
 
-      // Validación mínima
       if (typeof image_index !== "number") {
         return NextResponse.json(
           { error: "image_index inválido o ausente" },
@@ -54,9 +52,9 @@ export async function POST(req: Request) {
         "base64"
       );
 
-      const storagePath = `default/${uuidv4()}-${filename}`;
+      // ✅ STORAGE ORDENADO POR PROYECTO
+      const storagePath = `projects/${projectId}/${uuidv4()}-${filename}`;
 
-      // 1️⃣ Subir imagen a Storage
       const { error: uploadError } = await supabaseAdmin.storage
         .from("project-images")
         .upload(storagePath, buffer, {
@@ -66,14 +64,13 @@ export async function POST(req: Request) {
 
       if (uploadError) throw uploadError;
 
-      // 2️⃣ Guardar metadata CORRECTA en DB
       const { data, error: dbError } = await supabaseAdmin
         .from("project_images")
         .insert({
-          project_id: projectId, // ✅ FIX CRÍTICO
+          project_id: projectId,
           reference: reference ?? null,
           asin: asin ?? null,
-          image_index, // ✅ SE GUARDA TAL CUAL
+          image_index,
           filename,
           mime,
           storage_path: storagePath,
